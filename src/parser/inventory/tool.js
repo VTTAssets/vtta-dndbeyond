@@ -1,0 +1,126 @@
+import DICTIONARY from "../dictionary.js";
+import utils from "../../utils.js";
+
+/**
+ * Checks the proficiency of the character with this specific weapon
+ * @param {obj} data Item data
+ * @param {array} proficiencies The character's proficiencies as an array of `{ name: 'PROFICIENCYNAME' }` objects
+ */
+let getProficient = (data, proficiencies) => {
+  return (
+    proficiencies.find(
+      proficiency => proficiency.name === data.definition.name
+    ) !== undefined
+  );
+};
+
+/**
+ * Gets the sourcebook for a subset of dndbeyond sources
+ * @param {obj} data Item data
+ */
+let getSource = data => {
+  if (data.definition.sourceId) {
+    let source = DICTIONARY.sources.find(
+      source => source.id === data.definition.sourceId
+    );
+    if (source) {
+      return data.definition.sourcePageNumber
+        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
+        : source.name;
+    }
+  }
+  return "";
+};
+
+/**
+ * Checks if the character can attune to an item and if yes, if he is attuned to it.
+ */
+let getAttuned = data => {
+  if (
+    data.definition.canAttune !== undefined &&
+    data.definition.canAttune === true
+  )
+    return data.isAttuned;
+};
+
+/**
+ * Checks if the character can equip an item and if yes, if he is has it currently equipped.
+ */
+let getEquipped = data => {
+  if (
+    data.definition.canEquip !== undefined &&
+    data.definition.canEquip === true
+  )
+    return data.equipped;
+};
+
+export default function parseTool(data, character) {
+  /**
+   * MAIN parseTool
+   */
+  let tool = {
+    name: data.definition.name,
+    type: "tool",
+    data: JSON.parse(utils.getTemplate("tool")),
+    flags: {
+      vtta: {
+        dndbeyond: {
+          type: data.definition.type
+        }
+      }
+    }
+  };
+
+  /* "ability": "int", */
+  // well. How should I know how YOU are using those tools. By pure intellect? Or with your hands?
+  tool.data.ability = "dex";
+
+  /* description: { 
+       value: '', 
+       chat: '', 
+       unidentified: '' 
+   }, */
+  tool.data.description = {
+    value: data.definition.description,
+    chat: data.definition.description,
+    unidentified: data.definition.type
+  };
+
+  /* proficient: true, */
+  tool.data.proficient = getProficient(
+    data,
+    character.flags.vtta.dndbeyond.proficiencies
+  )
+    ? 1
+    : 0; // note: here, proficiency is not a bool, but a number (0, 0.5, 1, 2) based on not/jack of all trades/proficient/expert.
+
+  /* source: '', */
+  tool.data.source = getSource(data);
+
+  /* quantity: 1, */
+  tool.data.quantity = data.quantity ? data.quantity : 1;
+
+  /* weight */
+  //tool.data.weight = data.definition.weight ? data.definition.weight : 0;
+  let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
+  let totalWeight = data.definition.weight ? data.definition.weight : 0;
+  tool.data.weight =
+    (totalWeight / bundleSize) * (tool.data.quantity / bundleSize);
+
+  /* price */
+  tool.data.price = data.definition.cost ? data.definition.cost : 0;
+
+  /* attuned: false, */
+  tool.data.attuned = getAttuned(data);
+
+  /* equipped: false, */
+  tool.data.equipped = getEquipped(data);
+
+  /* rarity: '', */
+  tool.data.rarity = data.definition.rarity;
+
+  /* identified: true, */
+  tool.data.identified = true;
+
+  return tool;
+}

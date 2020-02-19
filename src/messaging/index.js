@@ -1,0 +1,239 @@
+import utils from '../utils.js';
+import queryEntity from './type/queryEntity.js';
+import importEntity from './type/importEntity.js';
+import addEntity from './type/addEntity.js';
+import rollEntity from './type/rollEntity.js';
+
+let uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+class EventPort {
+  constructor() {
+    this.id = uuidv4();
+  }
+
+  start() {
+    document.addEventListener('vtta-dndbeyond:module:message', async event => {
+      utils.log('Foundry module: Received message', 'communication');
+      utils.log(event.detail, 'communication');
+      let { head, body } = event.detail;
+
+      // switching to see how to process each message received
+      if (head.type === 'query') {
+        queryEntity(body)
+          .then(response => {
+            utils.log('Query successful', 'extension');
+            utils.log(response, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: 200,
+                  },
+                  body: response,
+                },
+              })
+            );
+          })
+          .catch(error => {
+            utils.log('Error in query', 'extension');
+            utils.log(error, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: error.code,
+                  },
+                  body: error.message,
+                },
+              })
+            );
+          });
+      }
+
+      if (head.type === 'import') {
+        importEntity(body)
+          .then(response => {
+            utils.log('Import successful', 'extension');
+            utils.log(response, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: 200,
+                  },
+                  body: response,
+                },
+              })
+            );
+          })
+          .catch(error => {
+            utils.log('Error in import', 'extension');
+            utils.log(error, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: error.code,
+                  },
+                  body: error.message,
+                },
+              })
+            );
+          });
+      }
+
+      if (head.type === 'add') {
+        addEntity(body)
+          .then(response => {
+            utils.log('Add successful: ', 'extension');
+            utils.log(response, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: 200,
+                  },
+                  body: response,
+                },
+              })
+            );
+          })
+          .catch(error => {
+            utils.log('Error in import', 'extension');
+            utils.log(error, 'extension');
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body,
+                    code: error.code,
+                  },
+                  body: error.message,
+                },
+              })
+            );
+          });
+      }
+
+      if (head.type === 'roll') {
+        let entityName = body.data.name;
+
+        // check the current scene first
+        let persona = undefined;
+        if (game.scenes.active) {
+          let token = game.scenes.active.data.tokens.find(token => token.name === entityName);
+          if (token) {
+            persona = game.actors.entities.find(actor => actor.id === token.actorId);
+          }
+        }
+        if (persona === undefined) {
+          persona = game.actors.entities.find(actor => actor.name === entityName);
+        }
+
+        // report failure to roll to the user
+        if (persona === undefined) {
+          document.dispatchEvent(
+            new CustomEvent(head.id, {
+              detail: {
+                head: {
+                  id: head.id,
+                  type: body,
+                  code: 404,
+                },
+                body: entityName,
+              },
+            })
+          );
+        } else {
+          rollEntity(persona, body.data)
+            .then(response => {
+              utils.log('Add successful', 'extension');
+              utils.log(response, 'extension');
+              document.dispatchEvent(
+                new CustomEvent(head.id, {
+                  detail: {
+                    head: {
+                      id: head.id,
+                      type: body,
+                      code: 200,
+                    },
+                    body: response,
+                  },
+                })
+              );
+            })
+            .catch(error => {
+              utils.log('Error in import', 'extension');
+              utils.log(error, 'extension');
+              document.dispatchEvent(
+                new CustomEvent(head.id, {
+                  detail: {
+                    head: {
+                      id: head.id,
+                      type: body,
+                      code: error.code,
+                    },
+                    body: error.message,
+                  },
+                })
+              );
+            });
+        }
+      }
+    });
+
+    // send an initialisation helo
+    this.send('ping').then(response => utils.log(response, 'communication'));
+  }
+
+  send(type, data = null) {
+    return new Promise((resolve, reject) => {
+      let message = {
+        head: {
+          id: uuidv4(),
+          type: type,
+        },
+        body: data,
+      };
+
+      utils.log('Foundry module: Sending data', 'communication');
+      utils.log(message);
+
+      // once a response is received, dispatch it to the port again
+      let listener = event => {
+        utils.log('Foundry module: Received response', 'communication');
+        utils.log(event.detail, 'communication');
+
+        resolve(event.detail);
+        // remove the event listener for this message id
+        document.removeEventListener(message.head.id, listener);
+      };
+
+      document.addEventListener(message.head.id, listener);
+      document.dispatchEvent(
+        new CustomEvent('vtta-dndbeyond:extension:message', {
+          detail: message,
+        })
+      );
+    });
+  }
+}
+
+export default EventPort;

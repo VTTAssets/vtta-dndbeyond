@@ -1,0 +1,56 @@
+<div>
+  <div>
+    <div class="form-section">
+      <div class="form-description">
+        <h3>Save a reference to your character for easy access</h3>
+        <p>
+          The following shortcuts are enabled on <img class="inline-image" src="/modules/vtta-dndbeyond/img/ddb-icon.png"> button the if you are setting the URL to your charactersheet below:
+        </p>
+        <ul>
+          <li><b>SHIFT + Left-Click:</b >Opens the D&amp;D Beyond character sheet in a new window</li>
+          <li><b>ALT + Left-Click:</b> Opens the JSON of your character in a new window</li>
+        </ul>
+        <p>
+          The URL should look like this:
+          <b>https://www.dndbeyond.com/profile/<i>[Username]</i>>/characters/<i>[CharacterID]</i></b>
+        </p>
+      </div>
+      <div class="form-caption">
+        URL
+        <span class="dndbeyond-url-status"
+          >{{#if actor.data.flags.vtta.dndbeyond.url}}<i class="fas fa-check-circle" style="color: green"></i>{{else}}<i></i>{{/if}}</span
+        >
+      </div>
+      <div class="form-content">
+        <input
+          type="text"
+          name="dndbeyond-url"
+          value="{{#if actor.data.flags.vtta.dndbeyond.url}}{{actor.data.flags.vtta.dndbeyond.url}}{{/if}}"
+        />
+      </div>
+    </div>
+    <div><hr></div>
+    <div class="form-section">
+      <div class="form-description">
+        <h3>Import your character</h3>
+        <ol>
+          <li>Open your character's sheet in D&amp;D Beyond</li>
+          <li>Add <b>/json</b> to the URL in the address bar of your browser, then press <strong>Enter</strong></li>
+          <li>
+            <strong>Be patient!</strong> Wait for the whole page to load. This can take a couple of seconds, wait for
+            the spinning loading icon to stop.
+          </li>
+          <li><b>On Chrome</b> press CTRL-A to select everything and then CTRL-C to copy it into the clipboard</li>
+          <li><b>On Firefox</b> press the Button "Copy" to copy the contents into the clipboard</li>
+          <li>Select the textarea below and paste the data with CTRL-V</li>
+        </ol>
+      </div>
+      <div class="form-caption">JSON</div>
+      <div class="form-content"><textarea id="json"></textarea></div>
+    </div>
+  </div>
+  <div></div>
+  <div>
+    <h2 class="task-name">Status</h2>
+  </div>
+</div>

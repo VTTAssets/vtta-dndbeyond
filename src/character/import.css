@@ -1,0 +1,53 @@
+.vtta.window-app .window-content {
+  background: url(../../../../systems/dnd5e/ui/parchment.jpg) repeat !important;
+}
+
+div.ddbCharacterName {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#ddbImportButton {
+  width: 32px;
+  height: 32px;
+
+  max-width: 32px;
+  max-height: 32px;
+
+  background-image: url('/modules/vtta-dndbeyond/img/ddb-icon.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(0, 0, 0, 0);
+  border: none;
+}
+
+#ddbImportButton.inactive {
+  background-image: url('/modules/vtta-dndbeyond/img/ddb-icon-inactive.png');
+}
+
+.vtta div.form-section {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.vtta div.form-caption {
+  flex: 0 1 15%;
+  font-family: 'Roboto Condensed';
+}
+.vtta div.form-content {
+  flex: 0 1 85%;
+}
+.vtta div.form-description {
+  flex: 0 1 100%;
+  font-size: 0.9rem;
+}
+
+.vtta .inline-image {
+  height: 16pt;
+  border: none;
+  position: relative;
+  top: 5px;
+}
