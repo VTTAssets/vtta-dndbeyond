@@ -418,11 +418,40 @@ export default function parseSpells(ddb, character) {
           classInfo.subclassDefinition.spellPrepareType === 1);
 
       playerClass.spells.forEach(spell => {
+        // add some data for the parsing of the spells into the data structure
+        spell.flags = {
+          vtta: {
+            dndbeyond: {
+              class: classInfo.definition.name,
+              level: classInfo.level,
+              ability: spellCastingAbility,
+              mod: abilityModifier,
+              dc: 8 + proficiencyModifier + abilityModifier
+            }
+          }
+        };
+
+        // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
+        // data, but only a different spell ID
         if (
-          spell.definition.level === 0 ||
-          (preparesSpells && (spell.prepared || spell.alwaysPrepared)) ||
-          !preparesSpells
+          items.find(
+            existingSpell => existingSpell.name === spell.definition.name
+          ) === undefined
         ) {
+          items.push(parseSpell(spell));
+        }
+      });
+    } else {
+      // special cases: No spellcaster, but can cast spells like totem barbarian
+      spellCastingAbility = "wis";
+      let proficiencyModifier = Math.ceil(1 + 0.25 * classInfo.level);
+      let abilityModifier = utils.calculateModifier(
+        character.data.abilities[spellCastingAbility].value
+      );
+
+      [ddb.character.spells.race, ddb.character.spells.class]
+        .flat()
+        .forEach(spell => {
           // add some data for the parsing of the spells into the data structure
           spell.flags = {
             vtta: {
@@ -444,53 +473,6 @@ export default function parseSpells(ddb, character) {
             ) === undefined
           ) {
             items.push(parseSpell(spell));
-          }
-        }
-      });
-    } else {
-      // special cases: No spellcaster, but can cast spells like totem barbarian
-      spellCastingAbility = "wis";
-      let proficiencyModifier = Math.ceil(1 + 0.25 * classInfo.level);
-      let abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
-      );
-
-      // does this class needs to prepare spells?
-      let preparesSpells =
-        classInfo.definition.spellPrepareType === 1 ||
-        (classInfo.subclassDefinition &&
-          classInfo.subclassDefinition.spellPrepareType === 1);
-
-      [ddb.character.spells.race, ddb.character.spells.class]
-        .flat()
-        .forEach(spell => {
-          if (
-            spell.definition.level === 0 ||
-            (preparesSpells && (spell.prepared || spell.alwaysPrepared)) ||
-            !preparesSpells
-          ) {
-            // add some data for the parsing of the spells into the data structure
-            spell.flags = {
-              vtta: {
-                dndbeyond: {
-                  class: classInfo.definition.name,
-                  level: classInfo.level,
-                  ability: spellCastingAbility,
-                  mod: abilityModifier,
-                  dc: 8 + proficiencyModifier + abilityModifier
-                }
-              }
-            };
-
-            // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-            // data, but only a different spell ID
-            if (
-              items.find(
-                existingSpell => existingSpell.name === spell.definition.name
-              ) === undefined
-            ) {
-              items.push(parseSpell(spell));
-            }
           }
         });
     }
