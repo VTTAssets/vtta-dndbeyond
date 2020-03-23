@@ -197,6 +197,10 @@ let getActionType = data => {
     return "heal";
   }
 
+  if (data.definition.tags.includes("Buff")) {
+    return "util";
+  }
+
   return "other";
 };
 
