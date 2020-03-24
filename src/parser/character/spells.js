@@ -415,12 +415,6 @@ export default function parseSpells(ddb, character) {
         character.data.abilities[spellCastingAbility].value
       );
 
-      // does this class needs to prepare spells?
-      let preparesSpells =
-        classInfo.definition.spellPrepareType === 1 ||
-        (classInfo.subclassDefinition &&
-          classInfo.subclassDefinition.spellPrepareType === 1);
-
       playerClass.spells.forEach(spell => {
         // add some data for the parsing of the spells into the data structure
         spell.flags = {
