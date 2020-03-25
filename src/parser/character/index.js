@@ -314,26 +314,46 @@ let getSpeed = (data, character) => {
   };
 };
 
+// is there a spell casting ability?
+let hasSpellCastingAbility = spellCastingAbilityId => {
+  return DICTIONARY.character.abilities.find(
+    ability => ability.id === spellCastingAbilityId
+  ) !== undefined;
+};
+
+// convert spellcasting ability id to string used by vtta
+let convertSpellCastingAbilityId = spellCastingAbilityId => {
+  return DICTIONARY.character.abilities.find(
+    ability => ability.id === spellCastingAbilityId
+  ).value;
+};
+
 let getSpellCasting = (data, character) => {
   let result = [];
   data.character.classSpells.forEach(playerClass => {
     let classInfo = data.character.classes.find(
       cls => cls.id === playerClass.characterClassId
     );
-    let hasSpellCastingAbility =
-      DICTIONARY.character.abilities.find(
-        ability => ability.id === classInfo.definition.spellCastingAbilityId
-      ) !== undefined;
     let spellCastingAbility = undefined;
-    if (hasSpellCastingAbility) {
-      spellCastingAbility = DICTIONARY.character.abilities.find(
-        ability => ability.id === classInfo.definition.spellCastingAbilityId
-      ).value;
+    if (hasSpellCastingAbility(classInfo.definition.spellCastingAbilityId)) {
+      // check to see if class has a spell casting ability
+      spellCastingAbility = convertSpellCastingAbilityId(
+        classInfo.definition.spellCastingAbilityId
+      );
+    } else if (hasSpellCastingAbility(
+        classInfo.subclassDefinition.spellCastingAbilityId
+      )) {
+      //some subclasses attach a spellcasting ability, e.g. Arcane Trickster
+      spellCastingAbility = convertSpellCastingAbilityId(
+        classInfo.subclassDefinition.spellCastingAbilityId
+      );
+    };
+    if (spellCastingAbility !== undefined) {
       let abilityModifier = utils.calculateModifier(
         character.data.abilities[spellCastingAbility].value
       );
-      result.push({ label: spellCastingAbility, value: abilityModifier });
-    }
+      result.push({ label: spellCastingAbility, value: abilityModifier })
+    };
   });
   // we need to decide on one spellcasting ability, so we take the one with the highest modifier
   if (result.length === 0) {
