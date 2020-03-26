@@ -330,6 +330,43 @@ let getFormula = data => {
   }
 };
 
+// is there a spell casting ability?
+let hasSpellCastingAbility = spellCastingAbilityId => {
+  return (
+    DICTIONARY.character.abilities.find(
+      ability => ability.id === spellCastingAbilityId
+    ) !== undefined
+  );
+};
+
+// convert spellcasting ability id to string used by vtta
+let convertSpellCastingAbilityId = spellCastingAbilityId => {
+  return DICTIONARY.character.abilities.find(
+    ability => ability.id === spellCastingAbilityId
+  ).value;
+};
+
+// search through classinfo and determine spellcasting ability
+let getSpellCastingAbility = classInfo => {
+  let spellCastingAbility = undefined;
+  if (hasSpellCastingAbility(classInfo.definition.spellCastingAbilityId)) {
+    spellCastingAbility = convertSpellCastingAbilityId(
+      classInfo.definition.spellCastingAbilityId
+    );
+  } else if (
+    hasSpellCastingAbility(classInfo.subclassDefinition.spellCastingAbilityId)
+  ) {
+    // Arcane Trickster has spellcasting ID granted here
+    spellCastingAbility = convertSpellCastingAbilityId(
+      classInfo.subclassDefinition.spellCastingAbilityId
+    );
+  } else {
+    // special cases: No spellcaster, but can cast spells like totem barbarian, default to wis
+    spellCastingAbility = "wis";
+  }
+  return spellCastingAbility;
+};
+
 let parseSpell = (data, character) => {
   /**
    * MAIN parseSpell
@@ -391,94 +428,134 @@ let parseSpell = (data, character) => {
 
   spell.data.formula = getFormula(data);
 
+  // attach the spell ability id to the spell data so VTT always uses the
+  // correct one, useful if multi-classing and spells have different
+  // casting abilities
+  if (
+    character.data.attributes.spellcasting !== data.flags.vtta.dndbeyond.ability
+  ) {
+    spell.data.ability = data.flags.vtta.dndbeyond.ability;
+  }
+
   return spell;
 };
 
 export default function parseSpells(ddb, character) {
   let items = [];
+  let proficiencyModifier = character.data.attributes.prof;
 
+  // each class has an entry here, each entry has spells
+  // we loop through each class and process
   ddb.character.classSpells.forEach(playerClass => {
     let classInfo = ddb.character.classes.find(
       cls => cls.id === playerClass.characterClassId
     );
-    let hasSpellCastingAbility =
-      DICTIONARY.character.abilities.find(
-        ability => ability.id === classInfo.definition.spellCastingAbilityId
-      ) !== undefined;
-    let spellCastingAbility = undefined;
-    if (hasSpellCastingAbility) {
-      spellCastingAbility = DICTIONARY.character.abilities.find(
-        ability => ability.id === classInfo.definition.spellCastingAbilityId
-      ).value;
-      let proficiencyModifier = Math.ceil(1 + 0.25 * classInfo.level);
-      let abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
-      );
+    console.log(JSON.stringify(classInfo));
+    let spellCastingAbility = getSpellCastingAbility(classInfo);
+    let abilityModifier = utils.calculateModifier(
+      character.data.abilities[spellCastingAbility].value
+    );
 
-      // does this class needs to prepare spells?
-      let preparesSpells =
-        classInfo.definition.spellPrepareType === 1 ||
-        (classInfo.subclassDefinition &&
-          classInfo.subclassDefinition.spellPrepareType === 1);
-
-      playerClass.spells.forEach(spell => {
-        // add some data for the parsing of the spells into the data structure
-        spell.flags = {
-          vtta: {
-            dndbeyond: {
-              class: classInfo.definition.name,
-              level: classInfo.level,
-              ability: spellCastingAbility,
-              mod: abilityModifier,
-              dc: 8 + proficiencyModifier + abilityModifier
-            }
+    // parse spells chosen as spellcasting (playerClass.spells)
+    playerClass.spells.forEach(spell => {
+      // add some data for the parsing of the spells into the data structure
+      spell.flags = {
+        vtta: {
+          dndbeyond: {
+            class: classInfo.definition.name,
+            level: classInfo.level,
+            ability: spellCastingAbility,
+            mod: abilityModifier,
+            dc: 8 + proficiencyModifier + abilityModifier
           }
-        };
-
-        // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-        // data, but only a different spell ID
-        if (
-          items.find(
-            existingSpell => existingSpell.name === spell.definition.name
-          ) === undefined
-        ) {
-          items.push(parseSpell(spell));
         }
-      });
-    } else {
-      // special cases: No spellcaster, but can cast spells like totem barbarian
-      spellCastingAbility = "wis";
-      let proficiencyModifier = Math.ceil(1 + 0.25 * classInfo.level);
-      let abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
+      };
+
+      // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
+      // data, but only a different spell ID
+      if (
+        items.find(
+          existingSpell => existingSpell.name === spell.definition.name
+        ) === undefined
+      ) {
+        items.push(parseSpell(spell, character));
+      }
+    });
+  });
+
+  // Parse any spells granted by class features, such as Barbarian Totem
+  ddb.character.spells.class.forEach(spell => {
+    let spellCastingAbility = undefined;
+    // If the spell has an ability attached, use that
+    if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
+      spellCastingAbility = convertSpellCastingAbilityId(
+        spell.spellCastingAbilityId
       );
+    } else {
+      // if there is no ability on spell, we default to wis
+      spellCastingAbility = "wis";
+    }
 
-      [ddb.character.spells.race, ddb.character.spells.class]
-        .flat()
-        .forEach(spell => {
-          // add some data for the parsing of the spells into the data structure
-          spell.flags = {
-            vtta: {
-              dndbeyond: {
-                class: classInfo.definition.name,
-                level: classInfo.level,
-                ability: spellCastingAbility,
-                mod: abilityModifier,
-                dc: 8 + proficiencyModifier + abilityModifier
-              }
-            }
-          };
+    let abilityModifier = utils.calculateModifier(
+      character.data.abilities[spellCastingAbility].value
+    );
 
-          // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-          // data, but only a different spell ID
-          if (
-            items.find(
-              existingSpell => existingSpell.name === spell.definition.name
-            ) === undefined
-          ) {
-            items.push(parseSpell(spell));
-          }
-        });
+    // add some data for the parsing of the spells into the data structure
+    spell.flags = {
+      vtta: {
+        dndbeyond: {
+          class: "Class Ability", // it's impossible to know which class granted these
+          level: character.data.details.level.value,
+          ability: spellCastingAbility,
+          mod: abilityModifier,
+          dc: 8 + proficiencyModifier + abilityModifier
+        }
+      }
+    };
+
+    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
+    // data, but only a different spell ID
+    if (
+      items.find(
+        existingSpell => existingSpell.name === spell.definition.name
+      ) === undefined
+    ) {
+      items.push(parseSpell(spell, character));
+    }
+  });
+
+  // Race spells are handled slightly differently
+  ddb.character.spells.race.forEach(spell => {
+    // for race spells the spell spellCastingAbilityId is on the spell
+    let spellCastingAbility = convertSpellCastingAbilityId(
+      spell.spellCastingAbilityId
+    );
+
+    let abilityModifier = utils.calculateModifier(
+      character.data.abilities[spellCastingAbility].value
+    );
+
+    // add some data for the parsing of the spells into the data structure
+    spell.flags = {
+      vtta: {
+        dndbeyond: {
+          class: ddb.character.race.fullName,
+          level: spell.castAtLevel,
+          ability: spellCastingAbility,
+          mod: abilityModifier,
+          dc: 8 + proficiencyModifier + abilityModifier
+        }
+      }
+    };
+
+    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
+    // data, but only a different spell ID
+    if (
+      items.find(
+        existingSpell => existingSpell.name === spell.definition.name
+      ) === undefined
+    ) {
+      items.push(parseSpell(spell, character));
     }
   });
 

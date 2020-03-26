@@ -377,6 +377,7 @@ const DICTIONARY = {
             /*
             { name: 'Hunter', value: 'always' },
             { name: 'Bard', value: 'always' },
+            { name: 'Rogue', value: 'always' },
             { name: 'Sorcerer', value: 'always' },
             { name: 'Artificer', value: 'always' },
             { name: 'Cleric', value: 'prepared' },
@@ -388,6 +389,7 @@ const DICTIONARY = {
             // this table works for the current Foundry UI
             { name: 'Hunter', value: 'prepared' },
             { name: 'Bard', value: 'prepared' },
+            { name: 'Rogue', value: 'prepared' },
             { name: 'Sorcerer', value: 'prepared' },
             { name: 'Artificer', value: 'prepared' },
             { name: 'Cleric', value: 'prepared' },
