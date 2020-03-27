@@ -82,11 +82,37 @@ let getSpellPreparationMode = data => {
       };
     }
   } else { // TODO add feat, race and class features
+    let prepMode = "prepared"
+    if (!data.usesSpellSlot && data.definition.level !== 0) {
+      prepMode = "always";
+    };
+    
+    //return prepMode = innate for some?
     return {
-      mode: "prepared",
+      mode: prepMode,
       prepared: data.alwaysPrepared || data.prepared
     };
   };
+};
+
+/**
+ * Get the reset condition of the spell, if uses restricted
+ * @param {*} data Spell data
+ */
+let getUses = data => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null){
+    let resetType = DICTIONARY.resets.find(
+      source => source.id === data.definition.sourceId
+    );
+    return {
+      value: data.limitedUse.maxUses - data.limitedUse.numberUsed,
+      max: data.limitedUse.maxUses,
+      per: resetType,
+    };
+  } else {
+    return {};
+  };
+  
 };
 
 /**
@@ -140,13 +166,16 @@ let getDuration = data => {
   ) {
     return {
       value: data.definition.duration.durationInterval,
-      units: data.definition.duration.durationUnit
+      units: data.definition.duration.durationUnit.toLowerCase()
     };
   }
 };
 
-/** Spell targets */
+/** Spell targets 
+ * 
+*/
 let getTarget = data => {
+  // if spell is an AOE effect get some details
   if (data.definition.range.aoeType && data.definition.range.aoeValue) {
     return {
       value: data.definition.range.aoeValue,
@@ -155,18 +184,46 @@ let getTarget = data => {
     };
   }
 
-  if (data.definition.range.origin === "Touch") {
-    return {
-      value: null,
-      type: "touch",
-      units: ""
-    };
-  }
+  // else lets try and fill in some target details
+  let type = "";
+  let units = "";
+
+  switch (data.definition.range.origin) {
+    case "Touch":
+      type = "touch";
+      break;
+    case "Self":
+      type = "self";
+      break;
+    case "None":
+      type = "none";
+      break;
+    case "Ranged":
+      type = "feet";
+      break;
+    case "Feet":
+      type = "feet";
+      units = "ft";
+      break;
+    case "Miles":
+      type = "miles";
+      units = "ml";
+      break;
+    case "Special":
+      type = "special";
+      break;
+    case "Any":
+      type = "any";
+      break;
+    case undefined:
+      type = null;
+      break;
+  };
 
   return {
-    value: null,
-    units: "",
-    type: ""
+    value: null, // dd beyond doesn't let us know how many folk a spell can target
+    units: units, 
+    type: type,
   };
 };
 
@@ -483,6 +540,8 @@ let parseSpell = (data, character) => {
   spell.data.scaling = getSpellScaling(data);
 
   spell.data.formula = getFormula(data);
+
+  spell.data.uses = getUses(data);
 
   // attach the spell ability id to the spell data so VTT always uses the
   // correct one, useful if multi-classing and spells have different
