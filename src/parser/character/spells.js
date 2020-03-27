@@ -61,22 +61,32 @@ let getMaterials = data => {
  * Retrieves the spell preparation mode, depending on the class this spell came from
  */
 let getSpellPreparationMode = data => {
-  let prepMode = utils.findByProperty(
-    DICTIONARY.spell.preparationModes,
-    "name",
-    data.flags.vtta.dndbeyond.class
-  );
-  if (prepMode) {
-    return {
-      mode: prepMode.value,
-      prepared: data.prepared
-    };
-  } else {
+  console.log(JSON.stringify(data));
+  if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
+    let prepMode = utils.findByProperty(
+      DICTIONARY.spell.preparationModes,
+      "name",
+      data.flags.vtta.dndbeyond.class
+    );
+    //console.log("PrepMode: " + prepMode);
+    if (prepMode) {
+      return {
+        //TODO warlock sets spell slots on normal spells, not pact spells.
+        mode: prepMode.value,
+        prepared: data.prepared
+      };
+    } else {
+      return {
+        mode: "prepared",
+        prepared: data.prepared
+      };
+    }
+  } else { // TODO add race and class features
     return {
       mode: "prepared",
       prepared: data.prepared
     };
-  }
+  };
 };
 
 /**
@@ -367,6 +377,52 @@ let getSpellCastingAbility = classInfo => {
   return spellCastingAbility;
 };
 
+
+let getLookups = (character) => {
+  // racialTraits
+  let lookups = {
+    race: [],
+    feat: [],
+    class: [],
+    classFeature: [],
+  };
+  character.race.racialTraits.forEach( trait => {
+    lookups.race.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+    })
+  })
+
+  character.classes.forEach( playerClass => {
+    [playerClass.definition, playerClass.subclassDefinition]
+    .flat()
+    .forEach( trait => {
+      lookups.class.push({
+        id: trait.id,
+        name: trait.name,
+      })
+    });
+  });
+
+  character.options.class.forEach( trait => {
+    lookups.classFeature.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+      componentId: trait.componentId,
+    })
+  });
+
+  character.feats.forEach( trait => {
+    lookups.feat.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+      componentId: trait.componentId,
+    })
+  });
+
+  return lookups;
+};
+
 let parseSpell = (data, character) => {
   /**
    * MAIN parseSpell
@@ -443,6 +499,7 @@ let parseSpell = (data, character) => {
 export default function parseSpells(ddb, character) {
   let items = [];
   let proficiencyModifier = character.data.attributes.prof;
+  let lookups = getLookups(ddb.character);
 
   // each class has an entry here, each entry has spells
   // we loop through each class and process
@@ -462,6 +519,7 @@ export default function parseSpells(ddb, character) {
       spell.flags = {
         vtta: {
           dndbeyond: {
+            lookup: "classSpell",
             class: classInfo.definition.name,
             level: classInfo.level,
             ability: spellCastingAbility,
@@ -471,6 +529,7 @@ export default function parseSpells(ddb, character) {
         }
       };
 
+      items.push(parseSpell(spell, character));
       // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
       // data, but only a different spell ID
       if (
@@ -500,11 +559,22 @@ export default function parseSpells(ddb, character) {
       character.data.abilities[spellCastingAbility].value
     );
 
+    let classInfo = lookups.classFeature.find(
+      cls => cls.id === spell.componentId
+    );
+
+    // console.log("spellInfo:" + JSON.stringify(spell))
+    // console.log("id: " + spell.componentId)
+    // console.log("lookups: " + JSON.stringify(lookups))
+    // console.log("classINfo: " + JSON.stringify(classInfo))
+
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
       vtta: {
         dndbeyond: {
-          class: "Class Ability", // it's impossible to know which class granted these
+          lookup: "classFeature",
+          lookupName: classInfo.name,
+          lookupId: classInfo.id,
           level: character.data.details.level.value,
           ability: spellCastingAbility,
           mod: abilityModifier,
@@ -513,15 +583,7 @@ export default function parseSpells(ddb, character) {
       }
     };
 
-    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-    // data, but only a different spell ID
-    if (
-      items.find(
-        existingSpell => existingSpell.name === spell.definition.name
-      ) === undefined
-    ) {
-      items.push(parseSpell(spell, character));
-    }
+    items.push(parseSpell(spell, character));
   });
 
   // Race spells are handled slightly differently
@@ -535,11 +597,18 @@ export default function parseSpells(ddb, character) {
       character.data.abilities[spellCastingAbility].value
     );
 
+    let raceInfo = lookups.race.find(
+      rc => rc.id === spell.componentId
+    );
+
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
       vtta: {
         dndbeyond: {
-          class: ddb.character.race.fullName,
+          lookup: "race",
+          lookupName: raceInfo.name,
+          lookupId: raceInfo.id,
+          race: ddb.character.race.fullName,
           level: spell.castAtLevel,
           ability: spellCastingAbility,
           mod: abilityModifier,
@@ -548,16 +617,41 @@ export default function parseSpells(ddb, character) {
       }
     };
 
-    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-    // data, but only a different spell ID
-    if (
-      items.find(
-        existingSpell => existingSpell.name === spell.definition.name
-      ) === undefined
-    ) {
-      items.push(parseSpell(spell, character));
-    }
+    items.push(parseSpell(spell, character));
   });
+
+    // feat spells are handled slightly differently
+    ddb.character.spells.feat.forEach(spell => {
+      // for feat spells the spell spellCastingAbilityId is on the spell
+      let spellCastingAbility = convertSpellCastingAbilityId(
+        spell.spellCastingAbilityId
+      );
+  
+      let abilityModifier = utils.calculateModifier(
+        character.data.abilities[spellCastingAbility].value
+      );
+  
+      let featInfo = lookups.feat.find(
+        ft => ft.id === spell.componentId
+      );
+  
+      // add some data for the parsing of the spells into the data structure
+      spell.flags = {
+        vtta: {
+          dndbeyond: {
+            lookup: "feat",
+            lookupName: featInfo.name,
+            lookupId: featInfo.id,
+            level: spell.castAtLevel,
+            ability: spellCastingAbility,
+            mod: abilityModifier,
+            dc: 8 + proficiencyModifier + abilityModifier
+          }
+        }
+      };
+  
+      items.push(parseSpell(spell, character));
+    });
 
   return items;
 }
