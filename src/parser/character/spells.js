@@ -73,18 +73,18 @@ let getSpellPreparationMode = data => {
       return {
         //TODO warlock sets spell slots on normal spells, not pact spells.
         mode: prepMode.value,
-        prepared: data.prepared
+        prepared: data.alwaysPrepared || data.prepared
       };
     } else {
       return {
         mode: "prepared",
-        prepared: data.prepared
+        prepared: data.alwaysPrepared || data.prepared
       };
     }
-  } else { // TODO add race and class features
+  } else { // TODO add feat, race and class features
     return {
       mode: "prepared",
-      prepared: data.prepared
+      prepared: data.alwaysPrepared || data.prepared
     };
   };
 };
