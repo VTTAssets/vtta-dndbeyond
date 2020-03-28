@@ -340,8 +340,9 @@ let getSpellCasting = (data, character) => {
       spellCastingAbility = convertSpellCastingAbilityId(
         classInfo.definition.spellCastingAbilityId
       );
-    } else if (hasSpellCastingAbility(
-        classInfo.subclassDefinition.spellCastingAbilityId
+    } else if (classInfo.subclassDefinition &&
+        hasSpellCastingAbility(
+          classInfo.subclassDefinition.spellCastingAbilityId
       )) {
       //some subclasses attach a spellcasting ability, e.g. Arcane Trickster
       spellCastingAbility = convertSpellCastingAbilityId(

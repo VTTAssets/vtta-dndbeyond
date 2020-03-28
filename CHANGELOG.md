@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.1]
+
+Notable improvements in terms of Character imports regarding spells was provided by major contributions of fellow user/developer MrPrimate. Thanks a bunch, that's pretty awesome!
+
+### Fixed
+
+- Many more specific spell sources are now parsing correctly and adding the spells to the character within Foundry. This includes especially Warlocks, but goes to innate spellcasting behaviour by classes that are normally no spellcasters at at. This was brought to you by @MrPrimate (see above)
+- The total weight of bundled items was calculated wrongly, now showing up the total weight correctly. Thanks @ohporter for reporting the issue
+- Hitting enter with a focused text-field no longer opens the character import window. Thanks @mtvjr for suggesting this enhancement
+- Character and monsters are still importing even if the image upload fails. You will see a yellow warning notification on the screen if that happens, suggesting to check the settings for setting a correct, existing path that is writable. The import does not fail silently anymore because of that. Thanks @dpro for this suggestion
+- Reworked the way vtta-dndbeyond queries vtta-iconizer for suitable icons, making it compatible for Foundry 0.5.2 and prior
+
 ## [2.0]
 
 Celebrating the 100th Patreon supporter, the modules from Virtual Tabletop Assets will be released on public repositories, and the Chrome extension will be made available on the Chrome Web Store - along with delayed release cycles and manually timed releases between the Chrome extension and the campanion module vtta-dndbeyond, let's see how that works out.
