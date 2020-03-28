@@ -469,22 +469,27 @@ let getLookups = (character) => {
   })
 
   character.classes.forEach( playerClass => {
-    [playerClass.definition, playerClass.subclassDefinition]
-    .flat()
-    .forEach( trait => {
-      lookups.class.push({
-        id: trait.id,
-        name: trait.name,
-      })
+    lookups.class.push({
+      id: playerClass.definition.id,
+      name: playerClass.definition.name,
     });
 
-    playerClass.classFeatures.forEach( trait => {
-      lookups.classFeature.push({
-        id: trait.definition.id,
-        name: trait.definition.name,
-        componentId: trait.definition.componentId,
+    if (playerClass.subclassDefinition) {
+      lookups.class.push({
+        id: playerClass.subclassDefinition.id,
+        name: playerClass.subclassDefinition.name,
+      })
+    };
+
+    if (playerClass.classFeatures) {
+      playerClass.classFeatures.forEach( trait => {
+        lookups.classFeature.push({
+          id: trait.definition.id,
+          name: trait.definition.name,
+          componentId: trait.definition.componentId,
+        });
       });
-    });
+    };
   });
 
   character.options.class.forEach( trait => {
