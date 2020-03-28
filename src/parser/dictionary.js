@@ -6,6 +6,7 @@ const DICTIONARY = {
         { id: 'LongRest', value: 'lr' },
         { id: 'Dawn', value: 'day' },
         { id: 'Consumable', value: 'charges' },
+        { id: 'Other', value: 'charges' },
     ],
     character: {
         abilities: [

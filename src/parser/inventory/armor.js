@@ -111,7 +111,28 @@ let getEquipped = data => {
     return data.equipped;
 };
 
-export default function parseEquipment(data, character) {
+/**
+ * Gets Limited uses information, if any
+ * uses: { value: 0, max: 0, per: null }
+ */
+let getUses = data => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null){
+    let resetType = DICTIONARY.resets.find(
+      reset => reset.id == data.limitedUse.resetType
+    );
+    return {
+      max: data.limitedUse.maxUses,
+      value: data.limitedUse.numberUsed
+        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+        : data.limitedUse.maxUses,
+      per: resetType.value,
+    };
+  } else {
+    return { value: 0, max: 0, per: null };
+  };
+};
+
+export default function parseArmor(data, character) {
   /**
    * MAIN parseEquipment
    */
@@ -186,6 +207,8 @@ export default function parseEquipment(data, character) {
 
   /* identified: true, */
   armor.data.identified = true;
+
+  armor.data.uses = getUses(data);
 
   return armor;
 }
