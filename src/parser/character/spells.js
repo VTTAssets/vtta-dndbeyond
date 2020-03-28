@@ -439,6 +439,7 @@ let getSpellCastingAbility = classInfo => {
       classInfo.definition.spellCastingAbilityId
     );
   } else if (
+    classInfo.subclassDefinition &&
     hasSpellCastingAbility(classInfo.subclassDefinition.spellCastingAbilityId)
   ) {
     // Arcane Trickster has spellcasting ID granted here
