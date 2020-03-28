@@ -58,40 +58,58 @@ let getMaterials = data => {
 };
 
 /**
- * Retrieves the spell preparation mode, depending on the class this spell came from
+ * Retrieves the spell preparation mode, depending on the location this spell came from
+ * 
  */
 let getSpellPreparationMode = data => {
-  console.log(JSON.stringify(data));
+  //default values 
+  let prepMode = "prepared";
+  // If always prepared mark as such, if not then check to see if prepared
+  let prepared = data.alwaysPrepared || data.prepared;
+
+  // handle classSpells
   if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
-    let prepMode = utils.findByProperty(
+    let classPrepMode = utils.findByProperty(
       DICTIONARY.spell.preparationModes,
       "name",
       data.flags.vtta.dndbeyond.class
     );
-    //console.log("PrepMode: " + prepMode);
     if (prepMode) {
-      return {
-        //TODO warlock sets spell slots on normal spells, not pact spells.
-        mode: prepMode.value,
-        prepared: data.alwaysPrepared || data.prepared
-      };
-    } else {
-      return {
-        mode: "prepared",
-        prepared: data.alwaysPrepared || data.prepared
-      };
-    }
-  } else { // TODO add feat, race and class features
-    let prepMode = "prepared"
-    if (!data.usesSpellSlot && data.definition.level !== 0) {
+      prepMode = classPrepMode;
+    };
+    // Warlocks should use Pact spells, but these are not yet handled well
+    // in VTTA (no slots are showed). Instead we mark as prepared, and 
+    // pretend they are regular spells.
+    if (data.flags.vtta.dndbeyond.class === "Warlock") {
+      prepMode = "prepared";
+      prepared = true;
+    };
+  } else if (data.flags.vtta.dndbeyond.lookup === "race" && data.definition.level !== 0) {
+    // set race spells as innate
+    prepMode = "innate";
+  } else if ( // Warlock Mystic Arcanum are passed in as Features
+      data.flags.vtta.dndbeyond.lookupName.startsWith("Mystic Arcanum")
+  ) {
+    // these have limited uses (set with getUses())
+    prepMode = "pact";
+    prepared = false;
+  } else {
+    // If spell doesn't use a spell slot and is not a cantrip, mark as always preped
+    let alwaysPrepared = (!data.usesSpellSlot && data.definition.level !== 0);
+    let ritaulOnly = (data.ritualCastingType !== null|| data.castOnlyAsRitual); // e.g. Book of ancient secrets & totem barb
+    if (alwaysPrepared && ritaulOnly) {
+      // in this case we want the spell to appear in the spell list unprepared
+      prepared = false;
+    } else if (alwaysPrepared) {
+      // these spells are always prepared, and have a limited use that's
+      // picked up by getUses() later
       prepMode = "always";
     };
-    
-    //return prepMode = innate for some?
-    return {
-      mode: prepMode,
-      prepared: data.alwaysPrepared || data.prepared
-    };
+  };
+
+  return {
+    mode: prepMode,
+    prepared: prepared,
   };
 };
 
@@ -102,12 +120,12 @@ let getSpellPreparationMode = data => {
 let getUses = data => {
   if (data.limitedUse !== undefined && data.limitedUse !== null){
     let resetType = DICTIONARY.resets.find(
-      source => source.id === data.definition.sourceId
+      reset => reset.id == data.limitedUse.resetType
     );
     return {
       value: data.limitedUse.maxUses - data.limitedUse.numberUsed,
       max: data.limitedUse.maxUses,
-      per: resetType,
+      per: resetType.value,
     };
   } else {
     return {};
@@ -374,7 +392,7 @@ let getSpellScaling = (data, character) => {
       };
     case "spellscale":
       return {
-        mode: "spellscale",
+        mode: "level",
         formula: scaleDamage
       };
     default:
@@ -458,6 +476,14 @@ let getLookups = (character) => {
         id: trait.id,
         name: trait.name,
       })
+    });
+
+    playerClass.classFeatures.forEach( trait => {
+      lookups.classFeature.push({
+        id: trait.definition.id,
+        name: trait.definition.name,
+        componentId: trait.definition.componentId,
+      });
     });
   });
 
@@ -566,7 +592,6 @@ export default function parseSpells(ddb, character) {
     let classInfo = ddb.character.classes.find(
       cls => cls.id === playerClass.characterClassId
     );
-    console.log(JSON.stringify(classInfo));
     let spellCastingAbility = getSpellCastingAbility(classInfo);
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
@@ -581,6 +606,8 @@ export default function parseSpells(ddb, character) {
             lookup: "classSpell",
             class: classInfo.definition.name,
             level: classInfo.level,
+            spellLevel: spell.definition.level,
+            spellSlots: character.data.spells,
             ability: spellCastingAbility,
             mod: abilityModifier,
             dc: 8 + proficiencyModifier + abilityModifier
@@ -621,11 +648,6 @@ export default function parseSpells(ddb, character) {
     let classInfo = lookups.classFeature.find(
       cls => cls.id === spell.componentId
     );
-
-    // console.log("spellInfo:" + JSON.stringify(spell))
-    // console.log("id: " + spell.componentId)
-    // console.log("lookups: " + JSON.stringify(lookups))
-    // console.log("classINfo: " + JSON.stringify(classInfo))
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -679,38 +701,38 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
-    // feat spells are handled slightly differently
-    ddb.character.spells.feat.forEach(spell => {
-      // for feat spells the spell spellCastingAbilityId is on the spell
-      let spellCastingAbility = convertSpellCastingAbilityId(
-        spell.spellCastingAbilityId
-      );
-  
-      let abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
-      );
-  
-      let featInfo = lookups.feat.find(
-        ft => ft.id === spell.componentId
-      );
-  
-      // add some data for the parsing of the spells into the data structure
-      spell.flags = {
-        vtta: {
-          dndbeyond: {
-            lookup: "feat",
-            lookupName: featInfo.name,
-            lookupId: featInfo.id,
-            level: spell.castAtLevel,
-            ability: spellCastingAbility,
-            mod: abilityModifier,
-            dc: 8 + proficiencyModifier + abilityModifier
-          }
+  // feat spells are handled slightly differently
+  ddb.character.spells.feat.forEach(spell => {
+    // for feat spells the spell spellCastingAbilityId is on the spell
+    let spellCastingAbility = convertSpellCastingAbilityId(
+      spell.spellCastingAbilityId
+    );
+
+    let abilityModifier = utils.calculateModifier(
+      character.data.abilities[spellCastingAbility].value
+    );
+
+    let featInfo = lookups.feat.find(
+      ft => ft.id === spell.componentId
+    );
+
+    // add some data for the parsing of the spells into the data structure
+    spell.flags = {
+      vtta: {
+        dndbeyond: {
+          lookup: "feat",
+          lookupName: featInfo.name,
+          lookupId: featInfo.id,
+          level: spell.castAtLevel,
+          ability: spellCastingAbility,
+          mod: abilityModifier,
+          dc: 8 + proficiencyModifier + abilityModifier
         }
-      };
-  
-      items.push(parseSpell(spell, character));
-    });
+      }
+    };
+
+    items.push(parseSpell(spell, character));
+  });
 
   return items;
 }
