@@ -178,13 +178,17 @@ let getActivation = data => {
  */
 let getDuration = data => {
   if (
-    data.definition.duration &&
-    data.definition.duration.durationInterval &&
-    data.definition.duration.durationUnit
+    data.definition.duration
   ) {
+    let units = "";
+    if (data.definition.duration.durationUnit !== null) {
+      units = data.definition.duration.durationUnit.toLowerCase()
+    } else {
+      units = data.definition.duration.durationType.toLowerCase().substring(0, 4)
+    };
     return {
-      value: data.definition.duration.durationInterval,
-      units: data.definition.duration.durationUnit.toLowerCase()
+      value: data.definition.duration.durationInterval || "",
+      units: units,
     };
   }
 };
