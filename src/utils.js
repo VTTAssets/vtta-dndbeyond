@@ -329,13 +329,20 @@ let utils = {
       .split(/\#|\?/)[0];
 
     // uploading the character avatar and token
-    let result = await process(
-      "https://proxy.iungimus.de/get/" + url,
-      targetDirectory,
-      filename + "." + ext
-    );
-
-    return result;
+    try {
+      let result = await process(
+        "https://proxy.iungimus.de/get/" + url,
+        targetDirectory,
+        filename + "." + ext
+      );
+      return result;
+    } catch (error) {
+      console.log(error);
+      ui.notifications.warn(
+        "Image upload failed. Please check your vtta-dndbeyond upload folder setting"
+      );
+      return null;
+    }
   },
   getFolder: async (kind, type = "", race = "") => {
     let getOrCreateFolder = async (root, entityType, folderName) => {

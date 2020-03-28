@@ -14,7 +14,9 @@ export default function() {
       // only for GMs or the owner of this character
       if (!data.owner || !data.actor) return;
 
-      let button = $('<button id="ddbImportButton" class="inactive"></button>');
+      let button = $(
+        '<button type="button" id="ddbImportButton" class="inactive"></button>'
+      );
       if (
         app.entity.data.flags.vtta &&
         app.entity.data.flags.vtta.dndbeyond &&
