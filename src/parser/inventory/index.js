@@ -5,7 +5,10 @@ import parseAmmunition from './ammunition.js';
 import parseStaff from './staves.js';
 
 // type: armor
-import parseEquipment from './equipment.js';
+import parseArmor from './armor.js';
+
+// tyoe: wonderous item
+import parseWonderous from './wonderous.js';
 
 // type: consumables
 import parsePotion from './potion.js';
@@ -29,15 +32,18 @@ let parseItem = (data, character) => {
           return parseWeapon(data, character);
         }
         break;
-
       case 'Armor':
-        return parseEquipment(data, character);
+        return parseArmor(data, character);
         break;
-
+      case 'Wondrous item':
+      case 'Ring':
+      case 'Wand':
+      case 'Rod':
+        return parseWonderous(data,character);
+        break
       case 'Staff':
         return parseStaff(data, character);
         break;
-
       case 'Potion':
         return parsePotion(data, character);
         break;

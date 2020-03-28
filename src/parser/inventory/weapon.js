@@ -114,31 +114,23 @@ let getRange = data => {
 
 /**
  * Gets Limited uses information, if any
+ * uses: { value: 0, max: 0, per: null }
  */
 let getUses = data => {
-  // uses: { value: 0, max: 0, per: null }
-  if (data.limitedUse) {
-    if (data.limitedUse.resetType === "Consumable") {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges"
-      };
-    } else {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges"
-      };
-    }
+  if (data.limitedUse !== undefined && data.limitedUse !== null){
+    let resetType = DICTIONARY.resets.find(
+      reset => reset.id == data.limitedUse.resetType
+    );
+    return {
+      max: data.limitedUse.maxUses,
+      value: data.limitedUse.numberUsed
+        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+        : data.limitedUse.maxUses,
+      per: resetType.value,
+    };
   } else {
-    // default
     return { value: 0, max: 0, per: null };
-  }
+  };
 };
 
 /**

@@ -2,19 +2,6 @@ import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
 /**
- * Checks the proficiency of the character with this specific weapon
- * @param {obj} data Item data
- * @param {array} proficiencies The character's proficiencies as an array of `{ name: 'PROFICIENCYNAME' }` objects
- */
-let getProficient = (data, proficiencies) => {
-  return (
-    proficiencies.find(
-      proficiency => proficiency.name === data.definition.name
-    ) !== undefined
-  );
-};
-
-/**
  * Gets the sourcebook for a subset of dndbeyond sources
  * @param {obj} data Item data
  */
@@ -75,14 +62,14 @@ let getUses = data => {
   };
 };
 
-export default function parseTool(data, character) {
+export default function parseWonderous(data, character) {
   /**
-   * MAIN parseTool
+   * MAIN parseEquipment
    */
-  let tool = {
+  let item = {
     name: data.definition.name,
-    type: "tool",
-    data: JSON.parse(utils.getTemplate("tool")),
+    type: "equipment",
+    data: JSON.parse(utils.getTemplate("equipment")),
     flags: {
       vtta: {
         dndbeyond: {
@@ -92,58 +79,77 @@ export default function parseTool(data, character) {
     }
   };
 
-  /* "ability": "int", */
-  // well. How should I know how YOU are using those tools. By pure intellect? Or with your hands?
-  tool.data.ability = "dex";
+  /* 
+    "armor": {
+    "type": "trinket",
+    "value": 10,
+    "dex": null
+  } */
+  item.data.armor = {
+    "type": "trinket",
+    "value": 10,
+    "dex": null
+  };
+
+  /* "strength": 0 */
+  item.data.strength = 0;
+
+  /* "stealth": false,*/
+  item.data.stealth = false;
+
+  /* proficient: true, */
+  item.data.proficient = true;
 
   /* description: { 
-       value: '', 
-       chat: '', 
-       unidentified: '' 
-   }, */
-  tool.data.description = {
+            value: '', 
+            chat: '', 
+            unidentified: '' 
+        }, */
+  item.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
     unidentified: data.definition.type
   };
 
-  /* proficient: true, */
-  tool.data.proficient = getProficient(
-    data,
-    character.flags.vtta.dndbeyond.proficiencies
-  )
-    ? 1
-    : 0; // note: here, proficiency is not a bool, but a number (0, 0.5, 1, 2) based on not/jack of all trades/proficient/expert.
-
   /* source: '', */
-  tool.data.source = getSource(data);
+  item.data.source = getSource(data);
 
   /* quantity: 1, */
-  tool.data.quantity = data.quantity ? data.quantity : 1;
+  item.data.quantity = data.quantity ? data.quantity : 1;
 
   /* weight */
-  //tool.data.weight = data.definition.weight ? data.definition.weight : 0;
+  //item.data.weight = data.definition.weight ? data.definition.weight : 0;
   let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  tool.data.weight =
-    (totalWeight / bundleSize) * (tool.data.quantity / bundleSize);
+  item.data.weight =
+    (totalWeight / bundleSize) * (item.data.quantity / bundleSize);
 
   /* price */
-  tool.data.price = data.definition.cost ? data.definition.cost : 0;
+  item.data.price = data.definition.cost ? data.definition.cost : 0;
 
   /* attuned: false, */
-  tool.data.attuned = getAttuned(data);
+  item.data.attuned = getAttuned(data);
 
   /* equipped: false, */
-  tool.data.equipped = getEquipped(data);
+  item.data.equipped = getEquipped(data);
 
   /* rarity: '', */
-  tool.data.rarity = data.definition.rarity;
+  item.data.rarity = data.definition.rarity;
 
   /* identified: true, */
-  tool.data.identified = true;
+  item.data.identified = true;
 
-  tool.data.uses = getUses(data);
+  item.data.uses = getUses(data);
 
-  return tool;
+  // if using dynamic items https://gitlab.com/tposney/dynamicitems/tree/master
+  // or magic items, https://gitlab.com/riccisi/foundryvtt-magic-items/ lets add some useful flags
+  // initial place holder - turn on magic item
+  item.flags.magicitems = {
+    enabled: data.definition.magic,
+  };
+  if (data.limitedUse) {
+    item.flags.magicitems.charges = data.limitedUse.maxUses;
+  };
+
+  return item;
 }

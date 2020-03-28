@@ -89,10 +89,13 @@ let getSpellPreparationMode = data => {
     prepMode = "innate";
   } else if ( // Warlock Mystic Arcanum are passed in as Features
       data.flags.vtta.dndbeyond.lookupName.startsWith("Mystic Arcanum")
-  ) {
+    ) {
     // these have limited uses (set with getUses())
     prepMode = "pact";
     prepared = false;
+  } else if (data.flags.vtta.dndbeyond.look === "item " && data.definition.level !== 0) {
+    prepared = false;
+    prepMode = "prepared";
   } else {
     // If spell doesn't use a spell slot and is not a cantrip, mark as always preped
     let alwaysPrepared = (!data.usesSpellSlot && data.definition.level !== 0);
@@ -118,19 +121,35 @@ let getSpellPreparationMode = data => {
  * @param {*} data Spell data
  */
 let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
-    let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
+  let resetType = null;
+  let limitedUse = null;
+  // we check this, as things like items have useage attached to the item, not spell
+  if (data.flags.vtta.dndbeyond.limitedUse !== undefined && 
+      data.flags.vtta.dndbeyond.limitedUse !== null
+  ){
+    limitedUse = data.flags.vtta.dndbeyond.limitedUse
+    resetType = DICTIONARY.resets.find(
+      reset => reset.id == limitedUse.resetType
     );
+
+  } else if (data.limitedUse !== undefined && data.limitedUse !== null){
+    limitedUse = data.limitedUse
+    resetType = DICTIONARY.resets.find(
+      reset => reset.id == limitedUse.resetType
+    );
+  };
+  
+  if (resetType !== null) {
     return {
-      value: data.limitedUse.maxUses - data.limitedUse.numberUsed,
-      max: data.limitedUse.maxUses,
+      value: limitedUse.numberUsed
+        ? limitedUse.maxUses - limitedUse.numberUsed
+        : limitedUse.maxUses,
+      max: limitedUse.maxUses,
       per: resetType.value,
     };
   } else {
     return {};
   };
-  
 };
 
 /**
@@ -465,6 +484,7 @@ let getLookups = (character) => {
     feat: [],
     class: [],
     classFeature: [],
+    item: [],
   };
   character.race.racialTraits.forEach( trait => {
     lookups.race.push({
@@ -510,6 +530,18 @@ let getLookups = (character) => {
       id: trait.definition.id,
       name: trait.definition.name,
       componentId: trait.componentId,
+    })
+  });
+
+  character.inventory.forEach( trait => {
+    lookups.item.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+      limitedUse: trait.limitedUse,
+      equipped: trait.equipped,
+      isAttuned: trait.isAttuned,
+      canAttune: trait.definition.canAttune,
+      canEquip: trait.definition.canEquip,
     })
   });
 
@@ -756,5 +788,50 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
+  // feat spells are handled slightly differently
+  ddb.character.spells.item.forEach(spell => {
+    let itemInfo = lookups.item.find(
+      it => it.id === spell.componentId
+    );
+
+    //lets see if we have the item equipped/attuned to actually grant anythings
+    if (
+      (!itemInfo.canEquip && !itemInfo.canAttune) || // if item just gives a thing
+      (itemInfo.isAttuned) || // if it is attuned (assume equipped)
+      (!itemInfo.canAttune && itemInfo.equipped) // can't attune but is equipped
+    ) {
+      // for item spells the spell dc is often on the item spell
+      let spellDC = 8;
+      if (spell.overrideSaveDc) {
+        spellDC = spell.overrideSaveDc;
+      } else if (spell.spellCastingAbilityId) {
+        let spellCastingAbility = convertSpellCastingAbilityId(
+          spell.spellCastingAbilityId
+        );
+    
+        let abilityModifier = utils.calculateModifier(
+          character.data.abilities[spellCastingAbility].value
+        );
+        spellDC = 8 + proficiencyModifier + abilityModifier;
+      } else {
+        spellDC = null;
+      }; 
+
+      // add some data for the parsing of the spells into the data structure
+      spell.flags = {
+        vtta: {
+          dndbeyond: {
+            lookup: "item",
+            lookupName: itemInfo.name,
+            lookupId: itemInfo.id,
+            level: spell.castAtLevel,
+            dc: spellDC,
+            limitedUse: itemInfo.limitedUse,
+          }
+        }
+      };
+      items.push(parseSpell(spell, character));
+    };
+  });
   return items;
 }
