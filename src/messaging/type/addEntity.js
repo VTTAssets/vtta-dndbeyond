@@ -26,25 +26,25 @@ let createNPC = async (npc, options) => {
       name: item.name
     };
   });
-  if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
-    try {
-      utils.log("Querying iconizer for icons");
-      icons = await queryIcons(icons);
-      utils.log(icons);
+  // if (game.modules.get('vtta-iconizer') !== undefined) {
+  try {
+    utils.log("Querying iconizer for icons");
+    icons = await queryIcons(icons);
+    utils.log(icons);
 
-      // replace the icons
-      for (let item of npc.items) {
-        let icon = icons.find(icon => icon.name === item.name);
-        if (icon) {
-          item.img = icon.img;
-        }
+    // replace the icons
+    for (let item of npc.items) {
+      let icon = icons.find(icon => icon.name === item.name);
+      if (icon) {
+        item.img = icon.img;
       }
-    } catch (exception) {
-      utils.log("Iconizer not responding");
     }
-  } else {
-    utils.log("Iconizer not installed");
+  } catch (exception) {
+    utils.log("Iconizer not responding");
   }
+  // } else {
+  //   utils.log("Iconizer not installed");
+  // }
 
   let result = await Actor.create(npc, options);
 
@@ -129,31 +129,31 @@ let addNPC = body => {
       );
     }
 
-    if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
-      // replace icons by iconizer, if available
-      let icons = body.data.items.map(item => {
-        return {
-          name: item.name
-        };
-      });
-      try {
-        utils.log("Querying iconizer for icons");
-        icons = await queryIcons(icons);
-        utils.log(icons);
+    //if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
+    // replace icons by iconizer, if available
+    let icons = body.data.items.map(item => {
+      return {
+        name: item.name
+      };
+    });
+    try {
+      utils.log("Querying iconizer for icons");
+      icons = await queryIcons(icons);
+      utils.log(icons);
 
-        // replace the icons
-        for (let item of body.data.items) {
-          let icon = icons.find(icon => icon.name === item.name);
-          if (icon) {
-            item.img = icon.img;
-          }
+      // replace the icons
+      for (let item of body.data.items) {
+        let icon = icons.find(icon => icon.name === item.name);
+        if (icon) {
+          item.img = icon.img;
         }
-      } catch (exception) {
-        utils.log("Iconizer not responding");
       }
-    } else {
-      utils.log("Iconizer not installed");
+    } catch (exception) {
+      utils.log("Iconizer not responding");
     }
+    // } else {
+    //   utils.log("Iconizer not installed");
+    // }
 
     // check if there is an NPC with that name in that folder already
     let npc = folder.content
