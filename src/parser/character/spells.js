@@ -58,25 +58,79 @@ let getMaterials = data => {
 };
 
 /**
- * Retrieves the spell preparation mode, depending on the class this spell came from
+ * Retrieves the spell preparation mode, depending on the location this spell came from
+ * 
  */
 let getSpellPreparationMode = data => {
-  let prepMode = utils.findByProperty(
-    DICTIONARY.spell.preparationModes,
-    "name",
-    data.flags.vtta.dndbeyond.class
-  );
-  if (prepMode) {
+  //default values 
+  let prepMode = "prepared";
+  // If always prepared mark as such, if not then check to see if prepared
+  let prepared = data.alwaysPrepared || data.prepared;
+
+  // handle classSpells
+  if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
+    let classPrepMode = utils.findByProperty(
+      DICTIONARY.spell.preparationModes,
+      "name",
+      data.flags.vtta.dndbeyond.class
+    );
+    if (prepMode) {
+      prepMode = classPrepMode;
+    };
+    // Warlocks should use Pact spells, but these are not yet handled well
+    // in VTTA (no slots are showed). Instead we mark as prepared, and 
+    // pretend they are regular spells.
+    if (data.flags.vtta.dndbeyond.class === "Warlock") {
+      prepMode = "prepared";
+      prepared = true;
+    };
+  } else if (data.flags.vtta.dndbeyond.lookup === "race" && data.definition.level !== 0) {
+    // set race spells as innate
+    prepMode = "innate";
+  } else if ( // Warlock Mystic Arcanum are passed in as Features
+      data.flags.vtta.dndbeyond.lookupName.startsWith("Mystic Arcanum")
+  ) {
+    // these have limited uses (set with getUses())
+    prepMode = "pact";
+    prepared = false;
+  } else {
+    // If spell doesn't use a spell slot and is not a cantrip, mark as always preped
+    let alwaysPrepared = (!data.usesSpellSlot && data.definition.level !== 0);
+    let ritaulOnly = (data.ritualCastingType !== null|| data.castOnlyAsRitual); // e.g. Book of ancient secrets & totem barb
+    if (alwaysPrepared && ritaulOnly) {
+      // in this case we want the spell to appear in the spell list unprepared
+      prepared = false;
+    } else if (alwaysPrepared) {
+      // these spells are always prepared, and have a limited use that's
+      // picked up by getUses() later
+      prepMode = "always";
+    };
+  };
+
+  return {
+    mode: prepMode,
+    prepared: prepared,
+  };
+};
+
+/**
+ * Get the reset condition of the spell, if uses restricted
+ * @param {*} data Spell data
+ */
+let getUses = data => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null){
+    let resetType = DICTIONARY.resets.find(
+      reset => reset.id == data.limitedUse.resetType
+    );
     return {
-      mode: prepMode.value,
-      prepared: data.prepared
+      value: data.limitedUse.maxUses - data.limitedUse.numberUsed,
+      max: data.limitedUse.maxUses,
+      per: resetType.value,
     };
   } else {
-    return {
-      mode: "prepared",
-      prepared: data.prepared
-    };
-  }
+    return {};
+  };
+  
 };
 
 /**
@@ -130,13 +184,16 @@ let getDuration = data => {
   ) {
     return {
       value: data.definition.duration.durationInterval,
-      units: data.definition.duration.durationUnit
+      units: data.definition.duration.durationUnit.toLowerCase()
     };
   }
 };
 
-/** Spell targets */
+/** Spell targets 
+ * 
+*/
 let getTarget = data => {
+  // if spell is an AOE effect get some details
   if (data.definition.range.aoeType && data.definition.range.aoeValue) {
     return {
       value: data.definition.range.aoeValue,
@@ -145,18 +202,46 @@ let getTarget = data => {
     };
   }
 
-  if (data.definition.range.origin === "Touch") {
-    return {
-      value: null,
-      type: "touch",
-      units: ""
-    };
-  }
+  // else lets try and fill in some target details
+  let type = "";
+  let units = "";
+
+  switch (data.definition.range.origin) {
+    case "Touch":
+      type = "touch";
+      break;
+    case "Self":
+      type = "self";
+      break;
+    case "None":
+      type = "none";
+      break;
+    case "Ranged":
+      type = "feet";
+      break;
+    case "Feet":
+      type = "feet";
+      units = "ft";
+      break;
+    case "Miles":
+      type = "miles";
+      units = "ml";
+      break;
+    case "Special":
+      type = "special";
+      break;
+    case "Any":
+      type = "any";
+      break;
+    case undefined:
+      type = null;
+      break;
+  };
 
   return {
-    value: null,
-    units: "",
-    type: ""
+    value: null, // dd beyond doesn't let us know how many folk a spell can target
+    units: units, 
+    type: type,
   };
 };
 
@@ -307,7 +392,7 @@ let getSpellScaling = (data, character) => {
       };
     case "spellscale":
       return {
-        mode: "spellscale",
+        mode: "level",
         formula: scaleDamage
       };
     default:
@@ -365,6 +450,65 @@ let getSpellCastingAbility = classInfo => {
     spellCastingAbility = "wis";
   }
   return spellCastingAbility;
+};
+
+
+let getLookups = (character) => {
+  // racialTraits
+  let lookups = {
+    race: [],
+    feat: [],
+    class: [],
+    classFeature: [],
+  };
+  character.race.racialTraits.forEach( trait => {
+    lookups.race.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+    })
+  })
+
+  character.classes.forEach( playerClass => {
+    lookups.class.push({
+      id: playerClass.definition.id,
+      name: playerClass.definition.name,
+    });
+
+    if (playerClass.subclassDefinition) {
+      lookups.class.push({
+        id: playerClass.subclassDefinition.id,
+        name: playerClass.subclassDefinition.name,
+      })
+    };
+
+    if (playerClass.classFeatures) {
+      playerClass.classFeatures.forEach( trait => {
+        lookups.classFeature.push({
+          id: trait.definition.id,
+          name: trait.definition.name,
+          componentId: trait.definition.componentId,
+        });
+      });
+    };
+  });
+
+  character.options.class.forEach( trait => {
+    lookups.classFeature.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+      componentId: trait.componentId,
+    })
+  });
+
+  character.feats.forEach( trait => {
+    lookups.feat.push({
+      id: trait.definition.id,
+      name: trait.definition.name,
+      componentId: trait.componentId,
+    })
+  });
+
+  return lookups;
 };
 
 let parseSpell = (data, character) => {
@@ -428,6 +572,8 @@ let parseSpell = (data, character) => {
 
   spell.data.formula = getFormula(data);
 
+  spell.data.uses = getUses(data);
+
   // attach the spell ability id to the spell data so VTT always uses the
   // correct one, useful if multi-classing and spells have different
   // casting abilities
@@ -443,6 +589,7 @@ let parseSpell = (data, character) => {
 export default function parseSpells(ddb, character) {
   let items = [];
   let proficiencyModifier = character.data.attributes.prof;
+  let lookups = getLookups(ddb.character);
 
   // each class has an entry here, each entry has spells
   // we loop through each class and process
@@ -450,7 +597,6 @@ export default function parseSpells(ddb, character) {
     let classInfo = ddb.character.classes.find(
       cls => cls.id === playerClass.characterClassId
     );
-    console.log(JSON.stringify(classInfo));
     let spellCastingAbility = getSpellCastingAbility(classInfo);
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
@@ -462,8 +608,11 @@ export default function parseSpells(ddb, character) {
       spell.flags = {
         vtta: {
           dndbeyond: {
+            lookup: "classSpell",
             class: classInfo.definition.name,
             level: classInfo.level,
+            spellLevel: spell.definition.level,
+            spellSlots: character.data.spells,
             ability: spellCastingAbility,
             mod: abilityModifier,
             dc: 8 + proficiencyModifier + abilityModifier
@@ -471,6 +620,7 @@ export default function parseSpells(ddb, character) {
         }
       };
 
+      items.push(parseSpell(spell, character));
       // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
       // data, but only a different spell ID
       if (
@@ -500,11 +650,17 @@ export default function parseSpells(ddb, character) {
       character.data.abilities[spellCastingAbility].value
     );
 
+    let classInfo = lookups.classFeature.find(
+      cls => cls.id === spell.componentId
+    );
+
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
       vtta: {
         dndbeyond: {
-          class: "Class Ability", // it's impossible to know which class granted these
+          lookup: "classFeature",
+          lookupName: classInfo.name,
+          lookupId: classInfo.id,
           level: character.data.details.level.value,
           ability: spellCastingAbility,
           mod: abilityModifier,
@@ -513,15 +669,7 @@ export default function parseSpells(ddb, character) {
       }
     };
 
-    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-    // data, but only a different spell ID
-    if (
-      items.find(
-        existingSpell => existingSpell.name === spell.definition.name
-      ) === undefined
-    ) {
-      items.push(parseSpell(spell, character));
-    }
+    items.push(parseSpell(spell, character));
   });
 
   // Race spells are handled slightly differently
@@ -535,11 +683,18 @@ export default function parseSpells(ddb, character) {
       character.data.abilities[spellCastingAbility].value
     );
 
+    let raceInfo = lookups.race.find(
+      rc => rc.id === spell.componentId
+    );
+
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
       vtta: {
         dndbeyond: {
-          class: ddb.character.race.fullName,
+          lookup: "race",
+          lookupName: raceInfo.name,
+          lookupId: raceInfo.id,
+          race: ddb.character.race.fullName,
           level: spell.castAtLevel,
           ability: spellCastingAbility,
           mod: abilityModifier,
@@ -548,15 +703,40 @@ export default function parseSpells(ddb, character) {
       }
     };
 
-    // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-    // data, but only a different spell ID
-    if (
-      items.find(
-        existingSpell => existingSpell.name === spell.definition.name
-      ) === undefined
-    ) {
-      items.push(parseSpell(spell, character));
-    }
+    items.push(parseSpell(spell, character));
+  });
+
+  // feat spells are handled slightly differently
+  ddb.character.spells.feat.forEach(spell => {
+    // for feat spells the spell spellCastingAbilityId is on the spell
+    let spellCastingAbility = convertSpellCastingAbilityId(
+      spell.spellCastingAbilityId
+    );
+
+    let abilityModifier = utils.calculateModifier(
+      character.data.abilities[spellCastingAbility].value
+    );
+
+    let featInfo = lookups.feat.find(
+      ft => ft.id === spell.componentId
+    );
+
+    // add some data for the parsing of the spells into the data structure
+    spell.flags = {
+      vtta: {
+        dndbeyond: {
+          lookup: "feat",
+          lookupName: featInfo.name,
+          lookupId: featInfo.id,
+          level: spell.castAtLevel,
+          ability: spellCastingAbility,
+          mod: abilityModifier,
+          dc: 8 + proficiencyModifier + abilityModifier
+        }
+      }
+    };
+
+    items.push(parseSpell(spell, character));
   });
 
   return items;

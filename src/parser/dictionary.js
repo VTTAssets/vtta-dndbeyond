@@ -1,4 +1,12 @@
 const DICTIONARY = {
+    resets: [
+        { id: 1, value: 'sr' },
+        { id: 'ShortRest', value: 'sr' },
+        { id: 2, value: 'lr' },
+        { id: 'LongRest', value: 'lr' },
+        { id: 'Dawn', value: 'day' },
+        { id: 'Consumable', value: 'charges' },
+    ],
     character: {
         abilities: [
             { id: 1, value: 'str', long: 'strength' },
