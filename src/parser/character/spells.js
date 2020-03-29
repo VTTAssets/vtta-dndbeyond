@@ -672,8 +672,8 @@ export default function parseSpells(ddb, character) {
 
   // Parse any spells granted by class features, such as Barbarian Totem
   ddb.character.spells.class.forEach(spell => {
-    let spellCastingAbility = undefined;
     // If the spell has an ability attached, use that
+    let spellCastingAbility = undefined;
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
       spellCastingAbility = convertSpellCastingAbilityId(
         spell.spellCastingAbilityId
@@ -712,15 +712,14 @@ export default function parseSpells(ddb, character) {
   // Race spells are handled slightly differently
   ddb.character.spells.race.forEach(spell => {
     let spellCastingAbility = undefined;
-    // If the spell has an ability attached, use that
+    // for race spells the spell spellCastingAbilityId is on the spell
+    // if there is no ability on spell, we default to wis
+    let spellCastingAbility = "wis";
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
       spellCastingAbility = convertSpellCastingAbilityId(
         spell.spellCastingAbilityId
       );
-    } else {
-      // if there is no ability on spell, we default to wis
-      spellCastingAbility = "wis";
-    }
+    };
 
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
@@ -751,16 +750,14 @@ export default function parseSpells(ddb, character) {
 
   // feat spells are handled slightly differently
   ddb.character.spells.feat.forEach(spell => {
-    let spellCastingAbility = undefined;
     // If the spell has an ability attached, use that
+    // if there is no ability on spell, we default to wis
+    let spellCastingAbility = "wis";
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
       spellCastingAbility = convertSpellCastingAbilityId(
         spell.spellCastingAbilityId
       );
-    } else {
-      // if there is no ability on spell, we default to wis
-      spellCastingAbility = "wis";
-    }
+    };
 
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
@@ -805,9 +802,14 @@ export default function parseSpells(ddb, character) {
       if (spell.overrideSaveDc) {
         spellDC = spell.overrideSaveDc;
       } else if (spell.spellCastingAbilityId) {
-        let spellCastingAbility = convertSpellCastingAbilityId(
-          spell.spellCastingAbilityId
-        );
+        // If the spell has an ability attached, use that
+        // if there is no ability on spell, we default to wis
+        let spellCastingAbility = "wis";
+        if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
+          spellCastingAbility = convertSpellCastingAbilityId(
+            spell.spellCastingAbilityId
+          );
+        };
     
         let abilityModifier = utils.calculateModifier(
           character.data.abilities[spellCastingAbility].value
