@@ -679,10 +679,16 @@ export default function parseSpells(ddb, character) {
 
   // Race spells are handled slightly differently
   ddb.character.spells.race.forEach(spell => {
-    // for race spells the spell spellCastingAbilityId is on the spell
-    let spellCastingAbility = convertSpellCastingAbilityId(
-      spell.spellCastingAbilityId
-    );
+    let spellCastingAbility = undefined;
+    // If the spell has an ability attached, use that
+    if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
+      spellCastingAbility = convertSpellCastingAbilityId(
+        spell.spellCastingAbilityId
+      );
+    } else {
+      // if there is no ability on spell, we default to wis
+      spellCastingAbility = "wis";
+    }
 
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
@@ -713,10 +719,16 @@ export default function parseSpells(ddb, character) {
 
   // feat spells are handled slightly differently
   ddb.character.spells.feat.forEach(spell => {
-    // for feat spells the spell spellCastingAbilityId is on the spell
-    let spellCastingAbility = convertSpellCastingAbilityId(
-      spell.spellCastingAbilityId
-    );
+    let spellCastingAbility = undefined;
+    // If the spell has an ability attached, use that
+    if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
+      spellCastingAbility = convertSpellCastingAbilityId(
+        spell.spellCastingAbilityId
+      );
+    } else {
+      // if there is no ability on spell, we default to wis
+      spellCastingAbility = "wis";
+    }
 
     let abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
