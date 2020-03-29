@@ -711,7 +711,6 @@ export default function parseSpells(ddb, character) {
 
   // Race spells are handled slightly differently
   ddb.character.spells.race.forEach(spell => {
-    let spellCastingAbility = undefined;
     // for race spells the spell spellCastingAbilityId is on the spell
     // if there is no ability on spell, we default to wis
     let spellCastingAbility = "wis";
