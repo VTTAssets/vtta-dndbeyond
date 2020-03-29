@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.0.2] Hotfix
+
+Small update to fix a spellparsing issue
+
 ## [2.0.1]
 
 Notable improvements in terms of Character imports regarding spells was provided by major contributions of fellow user/developer MrPrimate. Thanks a bunch, that's pretty awesome!
