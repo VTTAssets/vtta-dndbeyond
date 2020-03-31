@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.3] Foundry 0.5.3 compatability release
+
+### Changed
+
+- Set compatibleCoreVersion to 0.5.3
+
+### Fixed
+
+- Imports into compendiums are working again
+
 ## [2.0.2] Hotfix
 
 Small update to fix a spellparsing issue

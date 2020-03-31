@@ -26,7 +26,6 @@ let createNPC = async (npc, options) => {
       name: item.name
     };
   });
-  // if (game.modules.get('vtta-iconizer') !== undefined) {
   try {
     utils.log("Querying iconizer for icons");
     icons = await queryIcons(icons);
@@ -42,9 +41,6 @@ let createNPC = async (npc, options) => {
   } catch (exception) {
     utils.log("Iconizer not responding");
   }
-  // } else {
-  //   utils.log("Iconizer not installed");
-  // }
 
   let result = await Actor.create(npc, options);
 
@@ -62,7 +58,6 @@ let createNPC = async (npc, options) => {
     let compendium = game.packs.find(
       pack => pack.collection === compendiumName
     );
-    //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
 
     // if we have valid spells in here, they must have been coming through lookups in the compendium, so we take the existance for granted
     for (let spell of npc.flags.vtta.dndbeyond.spells) {

@@ -20,30 +20,25 @@ let queryIcons = names => {
 };
 
 let createNPC = async npc => {
-  if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
-    // find suitable icons using Tokenizer, if installed
-    let icons = npc.items.map(item => {
-      return {
-        name: item.name
-      };
-    });
-    try {
-      utils.log("Querying iconizer for icons");
-      icons = await queryIcons(icons);
-      utils.log(icons);
+  let icons = npc.items.map(item => {
+    return {
+      name: item.name
+    };
+  });
+  try {
+    utils.log("Querying iconizer for icons");
+    icons = await queryIcons(icons);
+    utils.log(icons);
 
-      // replace the icons
-      for (let item of npc.items) {
-        let icon = icons.find(icon => icon.name === item.name);
-        if (icon) {
-          item.img = icon.img;
-        }
+    // replace the icons
+    for (let item of npc.items) {
+      let icon = icons.find(icon => icon.name === item.name);
+      if (icon) {
+        item.img = icon.img;
       }
-    } catch (exception) {
-      utils.log("Iconizer not responding");
     }
-  } else {
-    utils.log("Iconizer not installed");
+  } catch (exception) {
+    utils.log("Iconizer not responding");
   }
 
   // import spells, if any
@@ -57,9 +52,7 @@ let createNPC = async npc => {
       "vtta-dndbeyond",
       "entity-spell-compendium"
     );
-    /*let compendium = game.packs.find(
-      compendium => compendium.metadata.label === compendiumName
-    );*/
+
     let compendium = game.packs.find(
       pack => pack.collection === compendiumName
     );
