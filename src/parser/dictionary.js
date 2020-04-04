@@ -1,4 +1,26 @@
 const DICTIONARY = {
+    magicitems: {
+        rechargeUnits: [
+            { id: 1, value: 'r4' },
+            { id: 'ShortRest', value: 'r4' },
+            { id: 2, value: 'r5' },
+            { id: 'LongRest', value: 'r5' },
+            { id: 'Dawn', value: 'r2' },
+            { id: 'Consumable', value: '' },
+            { id: 'Other', value: '' },
+            { id: 'Daily', value: 'r1' },
+            { id: 'sr', value: 'r4' },
+            { id: 'lr', value: 'r5' },
+        ],
+        nums: [
+            { id: 'once', value: 1 },
+            { id: 'twice', value: 2 },
+            { id: 'thrice', value: 3 },
+            { id: 'one', value: 1 },
+            { id: 'two', value: 2 },
+            { id: 'thee', value: 3 },
+        ]
+    },
     resets: [
         { id: 1, value: 'sr' },
         { id: 'ShortRest', value: 'sr' },
