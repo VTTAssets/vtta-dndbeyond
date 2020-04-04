@@ -139,7 +139,7 @@ let getUses = data => {
     );
   };
   
-  if (resetType !== null) {
+  if (resetType !== null && resetType !== undefined) {
     return {
       value: limitedUse.numberUsed
         ? limitedUse.maxUses - limitedUse.numberUsed
@@ -553,17 +553,24 @@ let parseSpell = (data, character) => {
    * MAIN parseSpell
    */
   let spell = {
-    name: data.definition.name,
     type: "spell",
     data: JSON.parse(utils.getTemplate("spell")),
     flags: {
       vtta: {
-        dndbeyond: {
-          tags: data.definition.tags
-        }
+        dndbeyond: data.flags.vtta.dndbeyond
       }
     }
   };
+
+  // spell name
+  if (data.flags.vtta.dndbeyond.nameOverride !== undefined) {
+    spell.name = data.flags.vtta.dndbeyond.nameOverride;
+  } else {
+    spell.name = data.definition.name;
+  };
+
+  // add tags
+  spell.flags.vtta.dndbeyond.tags = data.definition.tags;
 
   // spell level
   spell.data.level = data.definition.level;
@@ -802,6 +809,14 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
+  return items;
+}
+
+export function parseItemSpells(ddb, character) {
+  let items = [];
+  let proficiencyModifier = character.data.attributes.prof;
+  let lookups = getLookups(ddb.character);
+
   // feat spells are handled slightly differently
   ddb.character.spells.item.forEach(spell => {
     let itemInfo = lookups.item.find(
@@ -846,6 +861,7 @@ export default function parseSpells(ddb, character) {
             level: spell.castAtLevel,
             dc: spellDC,
             limitedUse: itemInfo.limitedUse,
+            nameOverride: `${spell.definition.name} (${itemInfo.name})`,
           }
         }
       };
