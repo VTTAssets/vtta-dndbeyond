@@ -21,6 +21,9 @@ import parseTool from './tool.js';
 import parseLoot from './loot.js';
 import utils from '../../utils.js';
 
+// magicitems support
+import parseMagicItem from './magicify.js';
+
 let parseItem = (data, character) => {
   // is it a weapon?
   if (data.definition.filterType) {
@@ -71,7 +74,7 @@ let parseItem = (data, character) => {
   return {};
 };
 
-export default function getInventory(ddb, character) {
+export default function getInventory(ddb, character, itemSpells) {
   let items = [];
   // first, check custom name, price or weight
   ddb.character.characterValues.forEach(cv => {
@@ -89,9 +92,11 @@ export default function getInventory(ddb, character) {
   for (let entry of ddb.character.inventory) {
     var item = Object.assign({}, parseItem(entry, character));
     if (item) {
+      let magicItem = parseMagicItem(entry, character, item, itemSpells);
+      item.flags.magicitems = magicItem;
       items.push(item);
     }
-  }
+  };
 
   // character.customItems missing
 

@@ -126,6 +126,7 @@ let getUses = data => {
         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
         : data.limitedUse.maxUses,
       per: resetType.value,
+      description: data.limitedUse.resetTypeDescription,
     };
   } else {
     return { value: 0, max: 0, per: null };
@@ -208,7 +209,7 @@ export default function parseArmor(data, character) {
   /* identified: true, */
   armor.data.identified = true;
 
-  armor.data.uses = getUses(data);
+  //armor.data.uses = getUses(data);
 
   return armor;
 }

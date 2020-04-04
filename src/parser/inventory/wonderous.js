@@ -56,6 +56,7 @@ let getUses = data => {
         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
         : data.limitedUse.maxUses,
       per: resetType.value,
+      description: data.limitedUse.resetTypeDescription,
     };
   } else {
     return { value: 0, max: 0, per: null };
@@ -140,16 +141,6 @@ export default function parseWonderous(data, character) {
   item.data.identified = true;
 
   item.data.uses = getUses(data);
-
-  // if using dynamic items https://gitlab.com/tposney/dynamicitems/tree/master
-  // or magic items, https://gitlab.com/riccisi/foundryvtt-magic-items/ lets add some useful flags
-  // initial place holder - turn on magic item
-  item.flags.magicitems = {
-    enabled: data.definition.magic,
-  };
-  if (data.limitedUse) {
-    item.flags.magicitems.charges = data.limitedUse.maxUses;
-  };
 
   return item;
 }

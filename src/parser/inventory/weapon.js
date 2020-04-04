@@ -127,6 +127,7 @@ let getUses = data => {
         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
         : data.limitedUse.maxUses,
       per: resetType.value,
+      description: data.limitedUse.resetTypeDescription,
     };
   } else {
     return { value: 0, max: 0, per: null };
@@ -336,7 +337,7 @@ export default function parseWeapon(data, character) {
   weapon.data.range = getRange(data);
 
   /* uses: { value: 0, max: 0, per: null }, */
-  weapon.data.uses = getUses(data);
+  //weapon.data.uses = getUses(data);
 
   /* ability: null, */
   weapon.data.ability = getAbility(
