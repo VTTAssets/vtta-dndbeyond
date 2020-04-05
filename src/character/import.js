@@ -1,9 +1,6 @@
 import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
-// Expected location of magicitems module
-const magicItemsPath = '../../../magicitems/magicitem.js';
-
 // a mapping of compendiums with content type
 const compendiumLookup = [
   {
@@ -24,7 +21,6 @@ export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
     this.actor = game.actors.entities.find(a => a.id === actor._id);
-    this.magicItems = utils.serverFileExists(magicItemsPath);
     this.result = {};
   }
   /**
@@ -140,6 +136,9 @@ export default class CharacterImport extends Application {
         utils.log("Parsing finished");
         utils.log(this.result);
 
+        // get list of loaded game modules
+        const gameModules = game.settings.get("core","moduleConfiguration");
+
         // updating the image?
         let imagePath = this.actor.img;
         if (
@@ -185,7 +184,7 @@ export default class CharacterImport extends Application {
         // the current item flags
         const compendiumSpells = await this.updateCompendium('itemSpells');
 
-        if (this.magicItems) {
+        if (gameModules["magicitems"]) {
           this.result.inventory.forEach( item => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
@@ -213,7 +212,7 @@ export default class CharacterImport extends Application {
 
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
-        if (!this.magicItems) {
+        if (!gameModules["magicitems"]) {
           items.push(this.result.itemSpells);
           items = items.flat();
         }

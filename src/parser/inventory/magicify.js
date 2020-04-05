@@ -35,10 +35,6 @@ https://gitlab.com/riccisi/foundryvtt-magic-items/
  * 
  **/
 import DICTIONARY from "../dictionary.js";
-import utils from "../../utils.js";
-
-// Expected location of magicitems module
-const magicItemsPath = '../../../../magicitems/magicitem.js';
 
 const MAGICITEMS = {};
 MAGICITEMS.DAILY = 'r1';
@@ -162,11 +158,10 @@ function createDefaultItem() {
 };
 
 export default function parseMagicItem(data, character, item, itemSpells) {
-  // this checks to see if the magicitems module is present
+  // this builds metadata for the magicitems module to use
   // https://gitlab.com/riccisi/foundryvtt-magic-items/
-  // if so it loads and attempts to get as much data as possible for it
 
-  if (data.definition.magic && utils.serverFileExists(magicItemsPath)) {
+  if (data.definition.magic) {
     // default magicitem data
     let magicItem = createDefaultItem();
 
