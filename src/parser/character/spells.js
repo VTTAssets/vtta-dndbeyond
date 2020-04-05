@@ -698,6 +698,15 @@ export default function parseSpells(ddb, character) {
       rc => rc.id === spell.componentId
     );
 
+    if (!raceInfo) {
+      // for some reason we haven't matched the race option id with the spell
+      // this happens with at least the SCAG optional spells casting half elf
+      raceInfo = {
+        name: "Racial spell",
+        id: spell.componentId,
+      };
+    };
+
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
       vtta: {
@@ -737,6 +746,15 @@ export default function parseSpells(ddb, character) {
     let featInfo = lookups.feat.find(
       ft => ft.id === spell.componentId
     );
+
+    if (!featInfo) {
+      // for some reason we haven't matched the feat option id with the spell
+      // we fiddle the result
+      featInfo = {
+        name: "Feat option spell",
+        id: spell.componentId,
+      };
+    };
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
