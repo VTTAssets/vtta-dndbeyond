@@ -75,7 +75,7 @@ let getSpellPreparationMode = data => {
       data.flags.vtta.dndbeyond.class
     );
     if (prepMode) {
-      prepMode = classPrepMode;
+      prepMode = classPrepMode.value;
     };
     // Warlocks should use Pact spells, but these are not yet handled well
     // in VTTA (no slots are showed). Instead we mark as prepared, and 
