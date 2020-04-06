@@ -40,12 +40,12 @@ const MAGICITEMS = {};
 MAGICITEMS.DAILY = 'r1';
 MAGICITEMS.SHORT_REST = 'r4';
 MAGICITEMS.LONG_REST = 'r5';
-MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM = "c1";
-MAGICITEMS.CHARGE_TYPE_PER_SPELL = "c2";
+MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM = 'c1';
+MAGICITEMS.CHARGE_TYPE_PER_SPELL = 'c2';
 MAGICITEMS.NUMERIC_RECHARGE = 't1';
 MAGICITEMS.FORMULA_RECHARGE = 't2';
-MAGICITEMS.DestroyCheckAlways = "d1";
-MAGICITEMS.DestroyCheck1D20 = "d2";
+MAGICITEMS.DestroyCheckAlways = 'd1';
+MAGICITEMS.DestroyCheck1D20 = 'd2';
 
 
 function getRechargeFormula(description, maxCharges) {
@@ -53,19 +53,19 @@ function getRechargeFormula(description, maxCharges) {
     return maxCharges;
   };
 
-  let chargeMatchFormula = /regains (?<formula>\dd\d* \+ \d) expended charges/i;
-  let chargeMatchFixed = /regains (?<formula>\d*) /i;
-  let chargeMatchLastDitch = /(?<formula>\dd\d* \+ \d)/i;
+  let chargeMatchFormula = /regains (\dd\d* \+ \d) expended charges/i;
+  let chargeMatchFixed = /regains (\d*) /i;
+  let chargeMatchLastDitch = /(\dd\d* \+ \d)/i;
   let chargeNextDawn = /can't be used this way again until the next/i;
 
   let match = chargeMatchFormula.exec(description);
 
-  if (match && match.groups.formula) {
-    match = match.groups.formula;
+  if (match && match[1]) {
+    match = match[1];
   } else if (match = chargeMatchFixed.exec(description)) {
-    match = match.groups.formula;
+    match = match[1];
   } else if (match = chargeMatchLastDitch.exec(description)) {
-    match = match.groups.formula;
+    match = match[1];
   } else if (description.search(chargeNextDawn) !== -1) {
     match = maxCharges;
   };
@@ -73,28 +73,32 @@ function getRechargeFormula(description, maxCharges) {
   return match;
 };
 
-function getPerSpells(description) {
-  if (description === "") {
+function getPerSpell(useDescription, itemDescription) {
+  if (useDescription === "") {
+    // some times 1 use per day items, like circlet of blasting have nothing in
+    // the limited use description, fall back to this
+    let limitedUse = /can't be used this way again until the next/i;
+    if (itemDescription.search(limitedUse) !== -1) {
+      return 1;
+    }
     return false;
   };
 
-  let perSpell = /each (?<num>[A-z]*|\n*) per/i;
-  let match = perSpell.exec(description);
-
-  if (match && match.groups.num) {
+  let perSpell = /each ([A-z]*|\n*) per/i;
+  let match = perSpell.exec(useDescription);
+  if (match) {
     match = DICTIONARY.magicitems.nums.find(
-      num => num.id == match.groups.num
+      num => num.id == match[1]
     ).value;
   } else {
-    match = null;
+    match = false;
   };
   return match;
 };
 
 function checkDestroy(description) {
-  let destroy = /expend the (?<item>.*) last charge/i;
-  let match = destroy.exec(description);
-  if (match && match.groups.item) {
+  let destroy = /expend the .* last charge/i;
+  if (description.search(destroy) !== -1) {
     return true;
   } else {
     return false;
@@ -102,9 +106,8 @@ function checkDestroy(description) {
 };
 
 function checkD20Destroy(description) {
-  let destroy = /roll a (?<d20>d20).*destroyed/i;
-  let match = destroy.exec(description);
-  if (match && match.groups.d20) {
+  let destroy = /roll a d20.*destroyed/i;
+  if (description.search(destroy) !== -1) {
     return MAGICITEMS.DestroyCheck1D20;
   } else {
     return MAGICITEMS.DestroyCheckAlways;
@@ -113,7 +116,7 @@ function checkD20Destroy(description) {
 
 // returns the default magicitem flags
 function buildMagicItemSpell(chargeType,itemSpell) {
-  let consumption = (chargeType == MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM) ? 1 : itemSpell.data.level;
+  let consumption = (chargeType == MAGICITEMS.CHARGE_TYPE_PER_SPELL) ? 1 : itemSpell.data.level;
   return {
     id: "",
     name: itemSpell.name,
@@ -167,18 +170,16 @@ export default function parseMagicItem(data, character, item, itemSpells) {
 
     if (data.limitedUse) {
       // if the item is x per spell
-      let perSpells = getPerSpells(data.limitedUse.resetTypeDescription);
-      if (perSpells) {
-        magicItem.charges = perSpells;
-        magicItem.chargeType = MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM;
-        magicItem.recharge = perSpells;
+      let perSpell = getPerSpell(data.limitedUse.resetTypeDescription, data.definition.description);
+      if (perSpell) {
+        magicItem.charges = perSpell;
+        magicItem.recharge = perSpell;
         magicItem.rechargeUnit = MAGICITEMS.DAILY;
         magicItem.rechargeable = true;
         magicItem.rechargeType = MAGICITEMS.NUMERIC_RECHARGE;
+        magicItem.chargeType = MAGICITEMS.CHARGE_TYPE_PER_SPELL;
       } else {
         magicItem.charges = data.limitedUse.maxUses;
-        magicItem.chargeType = MAGICITEMS.CHARGE_TYPE_PER_SPELL;
-
         magicItem.recharge = getRechargeFormula(
           data.limitedUse.resetTypeDescription, magicItem.charges
         );
