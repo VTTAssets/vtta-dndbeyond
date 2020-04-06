@@ -136,8 +136,8 @@ export default class CharacterImport extends Application {
         utils.log("Parsing finished");
         utils.log(this.result);
 
-        // get list of loaded game modules
-        const gameModules = game.settings.get("core","moduleConfiguration");
+        // is magicitems installed
+        const magicItemsInstalled = game.modules.get('magicitems') !== undefined;
 
         // updating the image?
         let imagePath = this.actor.img;
@@ -184,7 +184,7 @@ export default class CharacterImport extends Application {
         // the current item flags
         const compendiumSpells = await this.updateCompendium('itemSpells');
 
-        if (gameModules["magicitems"]) {
+        if (magicItemsInstalled) {
           this.result.inventory.forEach( item => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
@@ -212,7 +212,7 @@ export default class CharacterImport extends Application {
 
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
-        if (!gameModules["magicitems"]) {
+        if (!magicItemsInstalled) {
           items.push(this.result.itemSpells);
           items = items.flat();
         }
