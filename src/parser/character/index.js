@@ -200,6 +200,30 @@ let getUnarmoredAC = (modifiers, character) => {
     return unarmoredACValues;
 };
 
+// returns an array of ac values from provided array of modifiers
+let getArmoredACBonuses = (modifiers, character) => {
+  let armoredACBonuses = [];
+  const armoredBonuses = modifiers.filter(
+    modifier =>
+      modifier.subType === "armored-armor-class" &&
+      modifier.isGranted
+  );
+
+  armoredBonuses.forEach( armoredBonus => {
+    let armoredACBonus = 0;
+    if (armoredBonus.statId !== null) {
+      let ability = DICTIONARY.character.abilities.find(
+        ability => ability.id === armoredBonus.statId
+      );
+      armoredACBonus += character.data.abilities[ability.value].mod;
+    } else {
+      armoredACBonus += armoredBonus.value;
+    }
+    armoredACBonuses.push(armoredACBonus);
+  });
+    return armoredACBonuses;
+};
+
 let getArmorClass = (data, character) => {
   // array to assemble possible AC values
   let armorClassValues = [];
@@ -212,23 +236,35 @@ let getArmorClass = (data, character) => {
     item.equipped && item.definition.filterType === "Armor"
   );
   let baseAC = 10;
+  // for things like fighters fighting style
+  let miscACBonus = 0;
 
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
     // unarmored abilities from Class/Race?
-    let unarmoredSources = [
+    const unarmoredSources = [
       data.character.modifiers.class,
       data.character.modifiers.race
     ]
     unarmoredSources.forEach( modifiers => {
-      let unarmoredAC =  Math.max(getUnarmoredAC(modifiers, character));
+      const unarmoredAC =  Math.max(getUnarmoredAC(modifiers, character));
       if (unarmoredAC) {
         // we add this as an armored type so we can get magical item bonuses
         // e.g. ring of protection
         equippedArmor.push(getBaseArmor(unarmoredAC, "Unarmored Defense"));
       }
     });
-  }
+  } else {
+    // check for things like fighters fighting style defense
+    const armorBonusSources = [
+      data.character.modifiers.class,
+      data.character.modifiers.race
+    ]
+    armorBonusSources.forEach( modifiers => {
+      const armoredACBonuses = getArmoredACBonuses(modifiers, character)
+      miscACBonus += armoredACBonuses.reduce((a,b) => a +b, 0);
+    });
+  };
 
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
@@ -248,12 +284,12 @@ let getArmorClass = (data, character) => {
   equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
 
   // lets get the AC for all our non-armored gear, we'll add this later
-  let gearAC = getEquippedAC(equippedGear);
+  const gearAC = getEquippedAC(equippedGear);
 
-  let shields = equippedArmor.filter(shield =>
+  const shields = equippedArmor.filter(shield =>
     shield.definition.type === 'Shield' || shield.definition.armorTypeId === 4
   );
-  let armors = equippedArmor.filter(shield =>
+  const armors = equippedArmor.filter(shield =>
     shield.definition.type !== 'Shield' || shield.definition.armorTypeId !== 4
   );
 
@@ -284,32 +320,32 @@ let getArmorClass = (data, character) => {
       case 'Unarmored Defense':
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value: armorAC + gearAC
+          value: armorAC + gearAC + miscACBonus
         });
         break;
       case 'Medium Armor':
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value: armorAC + Math.min(2, character.data.abilities.dex.mod) + gearAC
+          value: armorAC + Math.min(2, character.data.abilities.dex.mod) + gearAC + miscACBonus
         });
         break;
       case 'Light Armor':
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value: armorAC + character.data.abilities.dex.mod + gearAC
+          value: armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus
         });
         break;
       default:
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value: armorAC + character.data.abilities.dex.mod + gearAC
+          value: armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus
         });
         break;
     }
   }
 
   // get the max AC we can use from our various computed values
-  let max = Math.max.apply(
+  const max = Math.max.apply(
     Math,
     armorClassValues.map(function(type) {
       return type.value;
