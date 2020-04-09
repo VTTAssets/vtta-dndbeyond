@@ -108,38 +108,33 @@ let isArmored = data => {
   );
 };
 
-let getBaseArmor = modifiers => {
+let getMinimumBaseAC = modifiers => {
   let hasBaseArmor = modifiers.filter(
     modifier =>
       modifier.type === "set" &&
       modifier.subType === "minimum-base-armor" &&
       modifier.isGranted
   );
-  let baseArmor = [];
+  let baseAC = [];
   hasBaseArmor.forEach( base => {
-    baseArmor.push({
-      definition: {
-        name: "Base Armor - Racial",
-        type: "Heavy Armor", // we treat it as heavy armor as dex not added
-        armorClass: base.value,
-        grantedModifiers: [],
-        canAttune: false,
-      },
-      isAttuned: false,
-    });
+    baseAC.push(base.value);
   });
-  return baseArmor;
+  return baseAC;
 };
 
-// This gets the equipment types - currently just for those with AC
-let getEquipmentTypes = equippedGear => {
-  let armorTypes = [];
-  equippedGear.forEach(item => {
-    if (item.definition.armorClass) {
-      armorTypes.push(item.definition.type);
-    };
-  });
-  return armorTypes;
+let getBaseArmor = (ac, armorType) => {
+  return {
+    definition: {
+      name: "Base Armor - Racial",
+      type: armorType,
+      armorClass: ac,
+      armorTypeId: DICTIONARY.equipment.armorTypeID.find(id => id.name === armorType).id,
+      grantedModifiers: [],
+      canAttune: false,
+      filterType: "Armor",
+    },
+    isAttuned: false,
+  };
 };
 
 let getEquippedAC = equippedGear => {
@@ -167,11 +162,6 @@ let getEquippedAC = equippedGear => {
           if (modifier.type === "bonus" && modifier.subType === "armor-class") {
             // add this to armor AC
             ac += modifier.value;
-            // add this to the unarmored defense etc., too
-            armorClassValues.forEach(
-              (cur, index, arr) =>
-                (arr[index].value = cur.value + modifier.value)
-            );
           }
         });
       }
@@ -180,84 +170,141 @@ let getEquippedAC = equippedGear => {
   }, 0);
 };
 
-let getUnarmoredAC = (data, character) => {
-  // unarmored class?
-  let isUnarmoredClass = data.character.modifiers.class.filter(
+// returns an array of ac values from provided array of modifiers
+let getUnarmoredAC = (modifiers, character) => {
+  let unarmoredACValues = [];
+  let isUnarmored = modifiers.filter(
     modifier =>
-      modifier.type === "set" && modifier.subType === "unarmored-armor-class"
+      modifier.type === "set" && 
+      modifier.subType === "unarmored-armor-class" &&
+      modifier.isGranted
   );
-  if (isUnarmoredClass.length !== 0 && isArmored(data) === false) {
-    let unarmedACValue = 10;
-    // +DEX
-    unarmedACValue += character.data.abilities.dex.mod;
-    // +WIS or +CON, if monk or barbarian, draconic resilience === null
-    if (isUnarmoredClass[0].statId !== null) {
-      let ability = DICTIONARY.character.abilities.find(
-        ability => ability.id === isUnarmoredClass[0].statId
-      );
-      unarmedACValue += character.data.abilities[ability.value].mod;
-      //unarmedACValue += DDBUtils.modifier(this.getAbility(DDBUtils.statIdToAbilityAbbrev(isUnarmoredClass[0].statId)).value);
-    } else {
-      // draconic resilience = 13 + dex
-      unarmedACValue += 3;
-    }
 
-    return {
-      name: "Unarmored Defense",
-      value: unarmedACValue
-    };
-  } else {
-    return null;
-  }
+  isUnarmored.forEach( unarmored => {
+    let unarmoredACValue = 10;
+    // +DEX
+    unarmoredACValue += character.data.abilities.dex.mod;
+    // +WIS or +CON, if monk or barbarian, draconic resilience === null
+    
+    if (unarmored.statId !== null) {
+      let ability = DICTIONARY.character.abilities.find(
+        ability => ability.id === unarmored.statId
+      );
+      unarmoredACValue += character.data.abilities[ability.value].mod;
+    } else {
+      // others are picked up here e.g. Draconic Resilience
+      unarmoredACValue += unarmored.value;
+    }
+    unarmoredACValues.push(unarmoredACValue);
+  });
+    return unarmoredACValues;
 };
 
 let getArmorClass = (data, character) => {
   // array to assemble possible AC values
   let armorClassValues = [];
+  // get a list of equipped gear and armor
+  // we make a distinction so we can loop over armor
+  let equippedGear = data.character.inventory.filter(item => 
+    item.equipped && item.definition.filterType !== "Armor"
+  );
+  let equippedArmor = data.character.inventory.filter(item =>
+    item.equipped && item.definition.filterType === "Armor"
+  );
+  let baseAC = 10;
 
-  // unarmored class?
-  let unarmoredClass = getUnarmoredAC(data, character);
-  if (unarmoredClass) {
-    armorClassValues.push(unarmoredClass);
-  }
-
-  // Just not wearing armor?
+  // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
-    armorClassValues.push({
-      name: "Unarmored",
-      value: 10 + character.data.abilities.dex.mod
+    // unarmored abilities from Class/Race?
+    let unarmoredSources = [
+      data.character.modifiers.class,
+      data.character.modifiers.race
+    ]
+    unarmoredSources.forEach( modifiers => {
+      let unarmoredAC =  Math.max(getUnarmoredAC(modifiers, character));
+      if (unarmoredAC) {
+        // we add this as an armored type so we can get magical item bonuses
+        // e.g. ring of protection
+        equippedArmor.push(getBaseArmor(unarmoredAC, "Unarmored Defense"));
+      }
     });
   }
 
-  // get a list of equipped gear
-  let equippedGear = data.character.inventory.filter(item => item.equipped);
-  // base racial armor e.g. Tortle, we treat as equipped gear
-  equippedGear = [...equippedGear, ...getBaseArmor(data.character.modifiers.race)];
-  // find out what type of equipped armor, if any, we are wearing
-  let armorTypes = getEquipmentTypes(equippedGear);
-  // get our AC from equipped gear
-  let ac = getEquippedAC(equippedGear);
+  // Each racial armor appears to be slightly different!
+  // We care about Tortles and Lizardfolk here as they can use shields, but their
+  // modifier is set differently
+  switch (data.character.race.fullName) {
+    case "Lizardfolk":
+      baseAC = Math.max(getUnarmoredAC(data.character.modifiers.race, character));
+      equippedArmor.push(getBaseArmor(baseAC, "Light Armor"));
+      break;
+    case "Tortle":
+      baseAC = Math.max(getMinimumBaseAC(data.character.modifiers.race, character));
+      equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
+      break;
+  }
 
-  // Determine final AC values based on AC Type
-  // Light Armor: AC + DEX
-  // Medium ARmor: AC + DEX (max 2)
-  // Heavy Armor: AC only
-  if (armorTypes.includes("Heavy Armor")) {
-    armorClassValues.push({
-      name: "Armored",
-      value: ac
-    });
-  } else {
-    if (armorTypes.includes("Medium Armor")) {
-      armorClassValues.push({
-        name: "Armored",
-        value: ac + Math.min(2, character.data.abilities.dex.mod)
-      });
+  // include a base unarmored value, just in case.
+  equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
+
+  // lets get the AC for all our non-armored gear, we'll add this later
+  let gearAC = getEquippedAC(equippedGear);
+
+  let shields = equippedArmor.filter(shield =>
+    shield.definition.type === 'Shield' || shield.definition.armorTypeId === 4
+  );
+  let armors = equippedArmor.filter(shield =>
+    shield.definition.type !== 'Shield' || shield.definition.armorTypeId !== 4
+  );
+
+  // the presumption here is that you can only wear a shield and a single
+  // additional 'armor' piece. in DDB it's possible to equip multiple armor
+  // types and it works out the best AC for you
+  // we also want to handle unarmored for monks etc. 
+  // we might have multiple shields "equipped" by accident, so work out
+  // the best one
+  for(var armor = 0; armor < armors.length; armor++) {
+    let armorAC = null;
+    if (shields.length === 0) {
+      armorAC = getEquippedAC([armors[armor]])
     } else {
-      armorClassValues.push({
-        name: "Armored",
-        value: ac + character.data.abilities.dex.mod
-      });
+      for(var shield = 0; shield < shields.length; shield++) {
+        armorAC = getEquippedAC([armors[armor], shields[shield]])
+      };
+    };
+
+    // Determine final AC values based on AC Type
+    // Light Armor: AC + DEX
+    // Medium ARmor: AC + DEX (max 2)
+    // Heavy Armor: AC only
+    // Unarmored Defense: Dex mod already included in calculation
+
+    switch (armors[armor].definition.type) {
+      case 'Heavy Armor':
+      case 'Unarmored Defense':
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + gearAC
+        });
+        break;
+      case 'Medium Armor':
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + Math.min(2, character.data.abilities.dex.mod) + gearAC
+        });
+        break;
+      case 'Light Armor':
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + character.data.abilities.dex.mod + gearAC
+        });
+        break;
+      default:
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + character.data.abilities.dex.mod + gearAC
+        });
+        break;
     }
   }
 
@@ -268,6 +315,7 @@ let getArmorClass = (data, character) => {
       return type.value;
     })
   );
+
   return {
     type: "Number",
     label: "Armor Class",

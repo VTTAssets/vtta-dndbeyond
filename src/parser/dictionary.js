@@ -350,6 +350,14 @@ const DICTIONARY = {
             { name: 'Magical Bonus', value: 'bonus' },
             { name: 'Natural Armor', value: 'natural' },
             { name: 'Shield', value: 'shield' }
+        ],
+        armorTypeID: [
+            { name: 'Light Armor', id: 1 },
+            { name: 'Medium Armor', id: 2 },
+            { name: 'Heavy Armor', id: 3 },
+            { name: 'Shield', id: 4 },
+            { name: 'Unarmored', id: 0 },
+            { name: 'Unarmored Defense', id: -1 },
         ]
     },
     weapon: {
