@@ -841,128 +841,80 @@ let getLanguages = data => {
   };
 };
 
-let getDamageImmunities = data => {
-  let damageTypes = DICTIONARY.character.damageTypes
-    .filter(type => type.kind === "immunity" && type.type === 2)
+let getGenericConditionAffect = (data, condition, typeId) => {
+  const damageTypes = DICTIONARY.character.damageTypes
+    .filter(type => type.kind === condition && type.type === typeId)
     .map(type => type.value);
 
-  let result = data.character.modifiers.race
-    .filter(
-      modifier =>
-        modifier.type === "immunity" && damageTypes.includes(modifier.subType)
+  let result = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.item,
+    data.character.modifiers.feat,
+  ]
+    .flat()
+    .filter(modifier =>
+      modifier.type === condition &&
+      modifier.isGranted &&
+      damageTypes.includes(modifier.subType)
     )
-    .map(immunity => immunity.subType);
+    .map(modifier => {
+      const entry = DICTIONARY.character.damageTypes.find(
+        type => (
+          type.type === typeId &&
+          type.kind === modifier.type &&
+          type.value === modifier.subType
+        )
+      );
+      return entry ? entry.vttaValue || entry.value : undefined;
+    });
 
   result = result.concat(
     data.character.customDefenseAdjustments
-      .filter(adjustment => adjustment.type === 2)
+      .filter(adjustment => adjustment.type === typeId)
       .map(adjustment => {
-        let entry = DICTIONARY.character.damageTypes.find(
-          type =>
-            (type.id =
-              adjustment.id &&
-              type.type === adjustment.type &&
-              type.kind === "immunity")
+        const entry = DICTIONARY.character.damageTypes.find(
+          type => (
+            type.id === adjustment.id &&
+            type.type === adjustment.type &&
+            type.kind === condition
+          )
         );
-        return entry ? entry.value : undefined;
+        return entry ? entry.vttaValue || entry.value : undefined;
       })
       .filter(adjustment => adjustment !== undefined)
   );
 
+  return result;
+};
+
+let getDamageImmunities = data => {
   return {
     custom: "",
-    value: result
+    value: getGenericConditionAffect(data, "immunity", 2)
   };
 };
 
 let getDamageResistances = data => {
-  let damageTypes = DICTIONARY.character.damageTypes
-    .filter(type => type.kind === "resistance" && type.type === 2)
-    .map(type => type.value);
-
-  let result = data.character.modifiers.race
-    .filter(
-      modifier =>
-        modifier.type === "resistance" && damageTypes.includes(modifier.subType)
-    )
-    .map(immunity => immunity.subType);
-
-  result = result.concat(
-    data.character.customDefenseAdjustments
-      .filter(adjustment => adjustment.type === 2)
-      .map(adjustment => {
-        let entry = DICTIONARY.character.damageTypes.find(
-          type =>
-            (type.id =
-              adjustment.id &&
-              type.type === adjustment.type &&
-              type.kind === "resistance")
-        );
-        return entry ? entry.value : undefined;
-      })
-      .filter(adjustment => adjustment !== undefined)
-  );
-
   return {
     custom: "",
-    value: result
+    value: getGenericConditionAffect(data, "resistance", 2)
   };
 };
 
 let getDamageVulnerabilities = data => {
-  let damageTypes = DICTIONARY.character.damageTypes
-    .filter(type => type.kind === "vulnerability" && type.type === 2)
-    .map(type => type.value);
-
-  let result = data.character.modifiers.race
-    .filter(
-      modifier =>
-        modifier.type === "vulnerability" &&
-        damageTypes.includes(modifier.subType)
-    )
-    .map(immunity => immunity.subType);
-
-  result = result.concat(
-    data.character.customDefenseAdjustments
-      .filter(adjustment => adjustment.type === 2)
-      .map(adjustment => {
-        let entry = DICTIONARY.character.damageTypes.find(
-          type =>
-            (type.id =
-              adjustment.id &&
-              type.type === adjustment.type &&
-              type.kind === "vulnerability")
-        );
-        return entry ? entry.value : undefined;
-      })
-      .filter(adjustment => adjustment !== undefined)
-  );
-
   return {
     custom: "",
-    value: result
+    value: getGenericConditionAffect(data, "vulnerability", 2)
   };
 };
 
 let getConditionImmunities = data => {
-  // get Custom Damage Vulnerability
-  let custom = data.character.customDefenseAdjustments
-    .filter(adjustment => adjustment.type === 1)
-    .map(adjustment => {
-      let entry = DICTIONARY.character.damageTypes.find(
-        type =>
-          (type.id =
-            adjustment.id &&
-            type.type === adjustment.type &&
-            type.kind === "immunity")
-      );
-      return entry ? entry.value : undefined;
-    })
-    .filter(adjustment => adjustment !== undefined);
-
+  // get Condition Immunities
   return {
     custom: "",
-    value: custom
+    value: getGenericConditionAffect(data, "immunity", 1)
   };
 };
 

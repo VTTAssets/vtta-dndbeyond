@@ -133,7 +133,7 @@ const DICTIONARY = {
             { name: 'Shield', value: 'shield' }
         ],
         damageTypes: [
-            { id: 1, type: 2, type: 2, kind: 'resistance', name: 'Bludgeoning', value: 'bludgeoning' },
+            { id: 1, type: 2, kind: 'resistance', name: 'Bludgeoning', value: 'bludgeoning' },
             { id: 2, type: 2, kind: 'resistance', name: 'Piercing', value: 'piercing' },
             { id: 3, type: 2, kind: 'resistance', name: 'Slashing', value: 'slashing' },
             { id: 4, type: 2, kind: 'resistance', name: 'Lightning', value: 'lightning' },
@@ -180,7 +180,7 @@ const DICTIONARY = {
             { id: 2, type: 1, kind: 'immunity', name: 'Charmed', value: 'charmed' },
             { id: 3, type: 1, kind: 'immunity', name: 'Deafened', value: 'deafened' },
             { id: 4, type: 1, kind: 'immunity', name: 'Exhaustion', value: 'exhaustion' },
-            { id: 5, type: 1, kind: 'immunity', name: 'Frightened', value: 'Frightened' },
+            { id: 5, type: 1, kind: 'immunity', name: 'Frightened', value: 'frightened' },
             { id: 6, type: 1, kind: 'immunity', name: 'Grappled', value: 'grappled' },
             { id: 7, type: 1, kind: 'immunity', name: 'Incapacitated', value: 'incapacitated' },
             { id: 8, type: 1, kind: 'immunity', name: 'Invisible', value: 'invisible' },
@@ -190,7 +190,9 @@ const DICTIONARY = {
             { id: 12, type: 1, kind: 'immunity', name: 'Prone', value: 'prone' },
             { id: 13, type: 1, kind: 'immunity', name: 'Restrained', value: 'restrained' },
             { id: 14, type: 1, kind: 'immunity', name: 'Stunned', value: 'stunned' },
-            { id: 15, type: 1, kind: 'immunity', name: 'Unconscious', value: 'unconscious' }
+            { id: 15, type: 1, kind: 'immunity', name: 'Unconscious', value: 'unconscious' },
+            // In DDB it is disease, but in FVTT ut is diseased
+            { id: 16, type: 1, kind: 'immunity', name: 'Diseased', value: 'disease', vttaValue: 'diseased' },
         ],
         proficiencies: [
             // Armor
