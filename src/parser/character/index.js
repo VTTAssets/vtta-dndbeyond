@@ -738,8 +738,14 @@ let getToolProficiencies = (data, character) => {
     }
   });
 
+  data.character.customProficiencies.forEach(proficiency => {
+    if (proficiency.type === 2) { //type 2 is TOOL, 1 is SKILL, 3 is LANGUAGE
+      custom.push(proficiency.name);
+    }
+  });
+
   return {
-    value: [...new Set(values)],
+    value: [...new Set(values),],
     custom: [...new Set(custom)].join(";")
   };
 };
