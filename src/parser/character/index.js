@@ -841,6 +841,12 @@ let getLanguages = data => {
     }
   });
 
+  data.character.customProficiencies.forEach(proficiency => {
+    if (proficiency.type === 3) { //type 3 is LANGUAGE, 1 is SKILL, 2 is TOOL
+      custom.push(proficiency.name);
+    }
+  });
+
   return {
     value: languages,
     custom: custom.map(entry => utils.capitalize(entry)).join(", ")
