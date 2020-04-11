@@ -3,35 +3,26 @@ import utils from "../../utils.js";
 
 /**
  * Gets Limited uses information, if any
+ * uses: { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
  */
 let getUses = data => {
-  // uses: { value: 0, max: 0, per: null }
-  if (data.limitedUse) {
-    if (data.limitedUse.resetType === "Consumable") {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges",
-        autoUse: false,
-        autoDestroy: true
-      };
-    } else {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges",
-        autoUse: false,
-        autoDestroy: true
-      };
-    }
+  if (data.limitedUse !== undefined && data.limitedUse !== null){
+    let resetType = DICTIONARY.resets.find(
+      reset => reset.id == data.limitedUse.resetType
+    );
+    return {
+      max: data.limitedUse.maxUses,
+      value: data.limitedUse.numberUsed
+        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+        : data.limitedUse.maxUses,
+      per: resetType.value,
+      autoUse: false,
+      autoDestroy: true,
+    };
   } else {
-    // default
     return { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
-  }
+  };
+  
 };
 
 /**
@@ -198,6 +189,8 @@ export default function parsePotion(data, character) {
   consumable.data.actionType = getActionType(data);
 
   consumable.data.damage = getDamage(data, getActionType(data));
+
+  consumable.data.uses = getUses(data);
 
   return consumable;
 }

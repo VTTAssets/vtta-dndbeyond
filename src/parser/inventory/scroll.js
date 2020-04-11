@@ -7,27 +7,15 @@ import utils from "../../utils.js";
 let getUses = data => {
   // uses: { value: 0, max: 0, per: null }
   if (data.limitedUse) {
-    if (data.limitedUse.resetType === "Consumable") {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges",
-        autoUse: false,
-        autoDestroy: false
-      };
-    } else {
-      return {
-        max: data.limitedUse.maxUses,
-        value: data.limitedUse.numberUsed
-          ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-          : data.limitedUse.maxUses,
-        per: "charges",
-        autoUse: false,
-        autoDestroy: false
-      };
-    }
+    return {
+      max: data.limitedUse.maxUses,
+      value: data.limitedUse.numberUsed
+        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+        : data.limitedUse.maxUses,
+      per: "charges",
+      autoUse: false,
+      autoDestroy: true,
+    };
   } else {
     // default
     return { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
