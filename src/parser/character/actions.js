@@ -91,8 +91,12 @@ export default function parseActions(ddb, character) {
               feature.levelScale.dice.diceString
             ) {
               return feature.levelScale.dice.diceString;
-            } else {
-              return "1d4 + @mod";
+            } else if (action.dice !== null) {
+              // On some races bite is considered a martial art, damage
+              // is different and on the action itself
+              return action.dice.diceString;
+            }else {
+              return "1d4";
             }
           });
 
@@ -101,7 +105,15 @@ export default function parseActions(ddb, character) {
             parts: [[die + "+ @mod", "bludgeoning"]],
             versatile: ""
           };
+        } else if (action.dice !== null) {
+          // The Lizardfolk jaws have a different base damage, its' detailed in
+          // dice so lets capture that for actions if it exists
+          weapon.data.damage = {
+            parts: [[action.dice.diceString + " + @mod", "bludgeoning"]],
+            versatile: ""
+          };
         } else {
+          // default to basics
           weapon.data.damage = {
             parts: [["1d4 + @mod", "bludgeoning"]],
             versatile: ""
@@ -116,7 +128,7 @@ export default function parseActions(ddb, character) {
     }
   });
 
-  // check if we do have an unarmed strike item now
+  // check if we don't have an unarmed strike item now
   if (items.find(item => item.name === "Unarmed Strike") === undefined) {
     let weapon = {
       name: "Unarmed Strike",
@@ -165,7 +177,7 @@ export default function parseActions(ddb, character) {
 
     //set the weapon damage
     weapon.data.damage = {
-      parts: [["4", "bludgeoning"]],
+      parts: [["1 + @mod", "bludgeoning"]],
       versatile: ""
     };
 
