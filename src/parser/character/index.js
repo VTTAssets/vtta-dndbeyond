@@ -780,6 +780,84 @@ let getSkills = (data, character) => {
   return result;
 };
 
+/**
+ * Checks the list of modifiers provided for a matching bonus type
+ * and returns a sum of it's value. May include a dice string.
+ * @param {*} modifiers 
+ * @param {*} character 
+ * @param {*} bonusSubType 
+ */
+let getGlobalBonus = (modifiers, character, bonusSubType) => {
+  const bonusMods = modifiers
+    .flat()
+    .filter(modifier =>
+      modifier.type === "bonus" &&
+      modifier.isGranted &&
+      modifier.subType === bonusSubType
+    );
+
+  let sum = 0;
+  let diceString = ""
+  bonusMods.forEach(bonus => {
+    if (bonus.statId !== null) {
+      const ability = DICTIONARY.character.abilities.find(
+        ability => ability.id === bonus.statId
+      );
+      sum += character.data.abilities[ability.value].mod;
+    } else if (bonus.dice) {
+      const mod = bonus.dice.diceString;
+      diceString += (diceString === "") ? mod : " + " + mod;
+    } else {
+      sum += bonus.value;
+    };
+  });
+  if (diceString !== "") {
+    sum = sum + " + " + diceString;
+  };
+
+  return sum;
+}
+
+/**
+ * Gets global bonuses to ability checks, saves and skills
+ * These can come from Paladin auras or items etc
+  "abilities": {
+    "check": "",
+    "save": "",
+    "skill": ""
+  },
+ * @param {*} data 
+ * @param {*} character 
+ */
+let getBonusAbilities = (data, character) => {
+  let result = {};
+  const bonusLookup = [
+    { fvttType: "check", ddbSubType: "ability-checks" },
+    { fvttType: "save", ddbSubType: "saving-throws" },
+    // the foundry global ability check doesn't do skills (but should, probs)
+    // we add in global ability check boosts here
+    { fvttType: "skill", ddbSubType: "ability-checks" }, 
+  ];
+
+  const modifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.item,
+    data.character.modifiers.feat,
+  ]
+    .flat()
+    .filter(modifier =>
+      modifier.type === "bonus" &&
+      modifier.isGranted
+    );
+
+  bonusLookup.forEach(b => {
+    result[b.fvttType] = getGlobalBonus(modifiers, character, b.ddbSubType);
+  });
+  return result;
+};
+
 let getArmorProficiencies = (data, character) => {
   let values = [];
   let custom = [];
@@ -1422,6 +1500,9 @@ export default function getCharacter(ddb) {
   character.data.currency = getCurrency(ddb);
   character.data.skills = getSkills(ddb, character);
   character.data.spells = getSpellSlots(ddb);
+
+  // Extra bonuses
+  character.data.bonuses.abilities = getBonusAbilities(ddb, character);
 
   return character;
 }
