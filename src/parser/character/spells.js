@@ -400,7 +400,7 @@ let getSpellScaling = (data, character) => {
                   ? definition.dice.fixedValue // use fixed value
                   : definition.value; // else use value
               
-             // some spells have multiple scaling damage (e.g. Wall of Ice, 
+              // some spells have multiple scaling damage (e.g. Wall of Ice, 
               // Glyph of warding, Acid Arrow, Arcane Hand, Dragon's Breath,
               // Chromatic Orb, Absorb Elements, Storm Sphere, Spirit Guardians)
               // it's hard to model most of these in FVTT, and for some it makes
@@ -408,9 +408,9 @@ let getSpellScaling = (data, character) => {
               // lets optimistically use the highest
               // assumptions: these are going to be dice strings, and we don't care
               // about dice value, just number of dice
-              const diceForumula = /(\d*)d\d*/;
-              const existingMatch = diceForumula.exec(scaleDamage);
-              const modMatch = diceForumula.exec(modScaleDamage);
+              const diceFormula = /(\d*)d\d*/;
+              const existingMatch = diceFormula.exec(scaleDamage);
+              const modMatch = diceFormula.exec(modScaleDamage);
 
               if (!existingMatch || modMatch[1] > existingMatch[1]) {
                 scaleDamage = modScaleDamage;
