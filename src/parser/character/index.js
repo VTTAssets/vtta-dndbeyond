@@ -783,6 +783,7 @@ let getSkills = (data, character) => {
 /**
  * Checks the list of modifiers provided for a matching bonus type
  * and returns a sum of it's value. May include a dice string.
+ * This only gets modifiers with out a restriction.
  * @param {*} modifiers 
  * @param {*} character 
  * @param {*} bonusSubType 
@@ -791,8 +792,9 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   const bonusMods = modifiers
     .flat()
     .filter(modifier =>
+      // isGranted could be used here, but doesn't seem to be consistently applied
       modifier.type === "bonus" &&
-      modifier.isGranted &&
+      (modifier.restriction === "" || modifier.restriction === null) &&
       modifier.subType === bonusSubType
     );
 
@@ -819,6 +821,35 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
 }
 
 /**
+ * Gets global bonuses to attacks
+ * Typically these come from
+  "abilities": {
+    "check": "",
+    "save": "",
+    "skill": ""
+  },
+ * @param {*} data 
+ * @param {*} character 
+ */
+let filterModifiers = (data, type, subType) => {
+  const modifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.item,
+    data.character.modifiers.feat,
+  ]
+    .flat()
+    .filter(modifier =>
+      modifier.type === type &&
+      modifier.subType === subType
+    );
+
+  return modifiers;
+};
+
+
+/**
  * Gets global bonuses to ability checks, saves and skills
  * These can come from Paladin auras or items etc
   "abilities": {
@@ -839,21 +870,12 @@ let getBonusAbilities = (data, character) => {
     { fvttType: "skill", ddbSubType: "ability-checks" }, 
   ];
 
-  const modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.item,
-    data.character.modifiers.feat,
-  ]
-    .flat()
-    .filter(modifier =>
-      modifier.type === "bonus" &&
-      modifier.isGranted
-    );
-
   bonusLookup.forEach(b => {
-    result[b.fvttType] = getGlobalBonus(modifiers, character, b.ddbSubType);
+    result[b.fvttType] = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
+    );
   });
   return result;
 };
@@ -1465,8 +1487,34 @@ export default function getCharacter(ddb) {
   character.data.skills = getSkills(ddb, character);
   character.data.spells = getSpellSlots(ddb);
 
-  // Extra bonuses
+  // Extra global bonuses
+  // some of these are currently templates
+  // abilities
   character.data.bonuses.abilities = getBonusAbilities(ddb, character);
+  // spell attacks
+  // FVTT makes a distinction between ranged and melee. DDB doesn't
+  character.data.bonuses.rsak = {
+    "attack": "",
+    "damage": ""
+  };
+  character.data.bonuses.msak = {
+    "attack": "",
+    "damage": ""
+  };
+  // spell dc
+  character.data.bonuses.spell = {
+    "dc": ""
+  };
+  // melee weapon attacks
+  character.data.bonuses.mwak = {
+    "attack": "",
+    "damage": ""
+  };
+  // ranged weapon attacks
+  character.data.bonuses.rwak = {
+    "attack": "",
+    "damage": ""
+  };
 
   return character;
 }
