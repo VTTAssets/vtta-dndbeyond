@@ -820,6 +820,27 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   return sum;
 }
 
+
+/**
+ * Item modifiers require us to make sure the item is equipped and attuned if requires
+ */
+let getActiveItemModifiers = (data) => {
+  // get items we are going to interact on
+  const targetItems = data.character.inventory
+    .filter(item => 
+      (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+      (item.isAttuned) || // if it is attuned (assume equipped)
+      (!item.definition.canAttune && item.equipped) // can't attune but is equipped
+    );
+
+  const modifiers = data.character.modifiers.item
+    .filter(mod =>
+      targetItems.filter(item => item.id === mod.componentId)
+    );
+
+  return modifiers;
+};
+
 /**
  * Gets global bonuses to attacks
  * Typically these come from
@@ -836,8 +857,8 @@ let filterModifiers = (data, type, subType) => {
     data.character.modifiers.class,
     data.character.modifiers.race,
     data.character.modifiers.background,
-    data.character.modifiers.item,
     data.character.modifiers.feat,
+    getActiveItemModifiers(data),
   ]
     .flat()
     .filter(modifier =>
@@ -847,7 +868,6 @@ let filterModifiers = (data, type, subType) => {
 
   return modifiers;
 };
-
 
 /**
  * Gets global bonuses to ability checks, saves and skills
@@ -1492,7 +1512,6 @@ export default function getCharacter(ddb) {
   // abilities
   character.data.bonuses.abilities = getBonusAbilities(ddb, character);
   // spell attacks
-  // FVTT makes a distinction between ranged and melee. DDB doesn't
   character.data.bonuses.rsak = {
     "attack": "",
     "damage": ""
