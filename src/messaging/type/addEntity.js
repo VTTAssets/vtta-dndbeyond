@@ -1,8 +1,9 @@
 import utils from "../../utils.js";
+import { Actor5e } from "../../../../../systems/dnd5e/module/actor/entity.js";
 
-let queryIcons = names => {
+let queryIcons = (names) => {
   return new Promise((resolve, reject) => {
-    let listener = event => {
+    let listener = (event) => {
       resolve(event.detail);
       // cleaning up
       document.removeEventListener("deliverIcon", listener);
@@ -21,9 +22,9 @@ let queryIcons = names => {
 
 // we are creating the NPC here not temporary
 let createNPC = async (npc, options) => {
-  let icons = npc.items.map(item => {
+  let icons = npc.items.map((item) => {
     return {
-      name: item.name
+      name: item.name,
     };
   });
   try {
@@ -33,7 +34,7 @@ let createNPC = async (npc, options) => {
 
     // replace the icons
     for (let item of npc.items) {
-      let icon = icons.find(icon => icon.name === item.name);
+      let icon = icons.find((icon) => icon.name === item.name);
       if (icon) {
         item.img = icon.img;
       }
@@ -42,11 +43,11 @@ let createNPC = async (npc, options) => {
     utils.log("Iconizer not responding");
   }
 
-  let result = await Actor.create(npc, options);
+  let result = await Actor5e.create(npc, options);
 
   // import spells, if any
   npc.flags.vtta.dndbeyond.spells = npc.flags.vtta.dndbeyond.spells.filter(
-    spell => spell.hasOwnProperty("id")
+    (spell) => spell.hasOwnProperty("id")
   );
 
   if (npc.flags.vtta.dndbeyond.spells.length !== 0) {
@@ -56,7 +57,7 @@ let createNPC = async (npc, options) => {
       "entity-spell-compendium"
     );
     let compendium = game.packs.find(
-      pack => pack.collection === compendiumName
+      (pack) => pack.collection === compendiumName
     );
 
     // if we have valid spells in here, they must have been coming through lookups in the compendium, so we take the existance for granted
@@ -69,7 +70,7 @@ let createNPC = async (npc, options) => {
       utils.log(entity, "extension");
 
       await result.createEmbeddedEntity("OwnedItem", entity.data, {
-        displaySheet: false
+        displaySheet: false,
       });
     }
   }
@@ -77,7 +78,7 @@ let createNPC = async (npc, options) => {
   return result;
 };
 
-let addSpell = body => {
+let addSpell = (body) => {
   return new Promise(async (resolve, reject) => {
     // get the folder to add this spell into
     let folder = await utils.getFolder(body.type);
@@ -88,14 +89,14 @@ let addSpell = body => {
 
     let spell = await Item.create(body.data, {
       temporary: false,
-      displaySheet: true
+      displaySheet: true,
     });
 
     resolve(spell.data);
   });
 };
 
-let addNPC = body => {
+let addNPC = (body) => {
   return new Promise(async (resolve, reject) => {
     // get the folder to add this spell into
     let folder = await utils.getFolder(
@@ -126,9 +127,9 @@ let addNPC = body => {
 
     //if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
     // replace icons by iconizer, if available
-    let icons = body.data.items.map(item => {
+    let icons = body.data.items.map((item) => {
       return {
-        name: item.name
+        name: item.name,
       };
     });
     try {
@@ -138,7 +139,7 @@ let addNPC = body => {
 
       // replace the icons
       for (let item of body.data.items) {
-        let icon = icons.find(icon => icon.name === item.name);
+        let icon = icons.find((icon) => icon.name === item.name);
         if (icon) {
           item.img = icon.img;
         }
@@ -152,7 +153,7 @@ let addNPC = body => {
 
     // check if there is an NPC with that name in that folder already
     let npc = folder.content
-      ? folder.content.find(actor => actor.name === body.data.name)
+      ? folder.content.find((actor) => actor.name === body.data.name)
       : undefined;
     if (npc) {
       body.data._id = npc.id;
@@ -162,7 +163,7 @@ let addNPC = body => {
       // create the new npc
       npc = await createNPC(body.data, {
         temporary: false,
-        displaySheet: true
+        displaySheet: true,
       });
     }
 
@@ -190,7 +191,7 @@ let addNPC = body => {
   });
 };
 
-export default function(body) {
+export default function (body) {
   switch (body.type) {
     case "spell":
       return addSpell(body);

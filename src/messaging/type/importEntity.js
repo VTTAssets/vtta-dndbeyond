@@ -1,8 +1,9 @@
 import utils from "../../utils.js";
+import { Actor5e } from "../../../../../systems/dnd5e/module/actor/entity.js";
 
-let queryIcons = names => {
+let queryIcons = (names) => {
   return new Promise((resolve, reject) => {
-    let listener = event => {
+    let listener = (event) => {
       resolve(event.detail);
       // cleaning up
       document.removeEventListener("deliverIcon", listener);
@@ -19,10 +20,10 @@ let queryIcons = names => {
   });
 };
 
-let createNPC = async npc => {
-  let icons = npc.items.map(item => {
+let createNPC = async (npc) => {
+  let icons = npc.items.map((item) => {
     return {
-      name: item.name
+      name: item.name,
     };
   });
   try {
@@ -32,7 +33,7 @@ let createNPC = async npc => {
 
     // replace the icons
     for (let item of npc.items) {
-      let icon = icons.find(icon => icon.name === item.name);
+      let icon = icons.find((icon) => icon.name === item.name);
       if (icon) {
         item.img = icon.img;
       }
@@ -43,7 +44,7 @@ let createNPC = async npc => {
 
   // import spells, if any
   npc.flags.vtta.dndbeyond.spells = npc.flags.vtta.dndbeyond.spells.filter(
-    spell => spell.hasOwnProperty("id")
+    (spell) => spell.hasOwnProperty("id")
   );
 
   if (npc.flags.vtta.dndbeyond.spells.length !== 0) {
@@ -54,7 +55,7 @@ let createNPC = async npc => {
     );
 
     let compendium = game.packs.find(
-      pack => pack.collection === compendiumName
+      (pack) => pack.collection === compendiumName
     );
 
     for (let spell of npc.flags.vtta.dndbeyond.spells) {
@@ -66,15 +67,15 @@ let createNPC = async npc => {
 
   let items = npc.items;
   npc.items = [];
-  let result = await Actor.create(npc, {
+  let result = await Actor5e.create(npc, {
     temporary: false,
-    displaySheet: false
+    displaySheet: false,
   });
   let itemImportResult = await result.createManyEmbeddedEntities(
     "OwnedItem",
     items,
     {
-      displaySheet: false
+      displaySheet: false,
     }
   );
 
@@ -82,7 +83,7 @@ let createNPC = async npc => {
 };
 
 // importing a new spell
-let importSpell = body => {
+let importSpell = (body) => {
   return new Promise(async (resolve, reject) => {
     // should be update entities according to the configuration?
     let updateEntity =
@@ -90,7 +91,7 @@ let importSpell = body => {
 
     let spell = await Item.create(body.data, {
       temporary: true,
-      displaySheet: false
+      displaySheet: false,
     });
 
     // decide wether to save it into the compendium
@@ -103,12 +104,13 @@ let importSpell = body => {
       if (compendiumName !== "") {
         //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
         let compendium = game.packs.find(
-          pack => pack.collection === compendiumName
+          (pack) => pack.collection === compendiumName
         );
         if (compendium) {
           let index = await compendium.getIndex();
           let entity = index.find(
-            entity => entity.name.toLowerCase() === body.data.name.toLowerCase()
+            (entity) =>
+              entity.name.toLowerCase() === body.data.name.toLowerCase()
           );
           if (entity) {
             if (updateEntity) {
@@ -128,7 +130,7 @@ let importSpell = body => {
   });
 };
 
-let importNPC = async body => {
+let importNPC = async (body) => {
   return new Promise(async (resolve, reject) => {
     // should be update entities according to the configuration?
     let updateEntity =
@@ -156,7 +158,7 @@ let importNPC = async body => {
     // create the npc
     let npc = await createNPC(body.data, {
       temporary: true,
-      displaySheet: false
+      displaySheet: false,
     });
 
     // decide wether to save it into the compendium
@@ -169,12 +171,13 @@ let importNPC = async body => {
       if (compendiumName !== "") {
         //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
         let compendium = game.packs.find(
-          pack => pack.collection === compendiumName
+          (pack) => pack.collection === compendiumName
         );
         if (compendium) {
           let index = await compendium.getIndex();
           let entity = index.find(
-            entity => entity.name.toLowerCase() === body.data.name.toLowerCase()
+            (entity) =>
+              entity.name.toLowerCase() === body.data.name.toLowerCase()
           );
           if (entity) {
             if (updateEntity) {
@@ -199,7 +202,7 @@ let importNPC = async body => {
   });
 };
 
-export default function(body) {
+export default function (body) {
   switch (body.type) {
     case "spell":
       return importSpell(body);

@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.1.0] Spreading the Wings
+
+This release is something special: @MrPrimate dedicated his time to work on improvements in the general spell section, and he didn't stop there. With this release, the fantastic module of @Simone, "Magic Items" is officially integrated when importing characters. That means that magical items are having now specific spells imbued into them which brings a whole lot of comfort in dealing with those in your regular game. Please check out the module at his [Gitlab Repository](https://gitlab.com/riccisi/foundryvtt-magic-items) if that sounds interesting to you.
+
+### Added
+
+- The [B]-Button makes a prominent re-appearance on NPC sheets that were imported via the Chrome extension. The buttons opens up the popup to the D&D Beyond source so you can quickly refer to that site in the heat of the battle.
+
+### Fixed
+
+- Character import: AC calculations for Tortle and Lizardfolk (thanks Mr.Primate!)
+- Compendium import is now working correctly, too
+- Chrome extension: Fixed several spells not parsing at all (Forbiddance, Guards and Wards and others)
+- Chrome extension: Parsing of spellcasting blocks enhanced
+- Chrome extension: Made several changes to the parser in order to make it more robust, thus enabling parsing of multiple homebrew monsters that failed recently
+
+*Note*: The chrome extension fixes need a Google review. The update will be installed automatically when it is available.
+
+### Changed
+
+- Creating Actor5 entities instead of Actor entities now on Monster import
+
 ## [2.0.3] Foundry 0.5.3 compatability release
 
 ### Changed
