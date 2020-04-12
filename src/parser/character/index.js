@@ -949,13 +949,38 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 let getBonusSpellAttacks = (data, character, type) => {
   // I haven't found any matching global spell damage boosting mods in ddb
   const bonusLookups = [
-    { fvttType: "attack", ddbSubType: "magic" },
+//    { fvttType: "attack", ddbSubType: "magic" }, // not sure the scope of this
     { fvttType: "attack", ddbSubType: "spell-attacks" },
     { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
   ];
 
   return getGlobalBonusAttackModifiers(bonusLookups, data, character);
 };
+
+/**
+ * Gets global bonuses to weapon attacks and damage
+ * Most likely from items such as wand of the warmage
+ * supply type as 'ranged' or 'melee' 
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} data 
+ * @param {*} character 
+ * @param {*} type
+ */
+let getBonusWeaponAttacks = (data, character, type) => {
+  // global melee damage is not a ddb type, in that it's likely to be
+  // type specific. The only class one I know of is the Paladin Improved Smite
+  // which will be handled in the weapon import later.
+  const bonusLookups = [
+    { fvttType: "attack", ddbSubType: `${type}-attacks` },
+    { fvttType: "attack", ddbSubType: `${type}-weapon-attacks` },
+  ];
+
+  return getGlobalBonusAttackModifiers(bonusLookups, data, character);
+};
+
 
 /**
  * Gets global bonuses to ability checks, saves and skills
@@ -1622,16 +1647,10 @@ export default function getCharacter(ddb) {
   // spell dc
   character.data.bonuses.spell = getBonusSpellDC(ddb, character);
   // melee weapon attacks
-  character.data.bonuses.mwak = {
-    "attack": "",
-    "damage": ""
-  };
+  character.data.bonuses.mwak = getBonusWeaponAttacks(ddb, character, 'melee');
   // ranged weapon attacks
   // e.g. ranged fighting style
-  character.data.bonuses.rwak = {
-    "attack": "",
-    "damage": ""
-  };
+  character.data.bonuses.rwak = getBonusWeaponAttacks(ddb, character, 'ranged');
 
   return character;
 }
