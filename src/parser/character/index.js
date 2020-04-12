@@ -972,6 +972,23 @@ let getBonusAbilities = (data, character) => {
   return result;
 };
 
+let getBonusSpellDC = (data, character) => {
+  let result = {};
+  const bonusLookup = [
+    { fvttType: "dc", ddbSubType: "spell-save-dc" },
+  ];
+
+  bonusLookup.forEach(b => {
+    result[b.fvttType] = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
+    );
+  });
+
+  return result;
+};
+
 let getArmorProficiencies = (data, character) => {
   let values = [];
   let custom = [];
@@ -1587,15 +1604,14 @@ export default function getCharacter(ddb) {
   character.data.bonuses.rsak = getBonusSpellAttacks(ddb, character, 'ranged');
   character.data.bonuses.msak = getBonusSpellAttacks(ddb, character, 'melee');
   // spell dc
-  character.data.bonuses.spell = {
-    "dc": ""
-  };
+  character.data.bonuses.spell = getBonusSpellDC(ddb, character);
   // melee weapon attacks
   character.data.bonuses.mwak = {
     "attack": "",
     "damage": ""
   };
   // ranged weapon attacks
+  // e.g. ranged fighting style
   character.data.bonuses.rwak = {
     "attack": "",
     "damage": ""
