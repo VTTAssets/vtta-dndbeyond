@@ -870,6 +870,78 @@ let filterModifiers = (data, type, subType) => {
 };
 
 /**
+ * Gets global bonuses to spell attacks and damage
+ * Most likely from items such as wand of the warmage
+ * supply type as 'ranged' or 'melee' 
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} data 
+ * @param {*} character 
+ * @param {*} type
+ */
+let getBonusSpellAttacks = (data, character, type) => {
+  let result = {
+    attack: "",
+    damage: ""
+  };
+
+  const diceFormula = /\d*d\d*/;
+
+  // I haven't found any matching global spell damage boosting mods in ddb
+  const bonusLookup = [
+    { fvttType: "attack", ddbSubType: "magic" },
+    { fvttType: "attack", ddbSubType: "spell-attacks" },
+    { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
+  ];
+
+  let lookupResults = {
+    attack: {
+      sum: 0,
+      diceString: ""
+    },
+    damage: {
+      sum: 0,
+      diceString: ""
+    },
+  };
+
+  bonusLookup.forEach(b => {
+    const lookupResult = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
+    );
+    const lookupMatch = diceFormula.test(lookupResult);
+
+    // if a match then a dice string
+    if (lookupMatch) {
+      lookupResults[b.fvttType].diceString += (lookupResult === "") ? 
+        lookupResult : " + " + lookupResult;
+    } else {
+      lookupResults[b.fvttType].sum += lookupResult;
+    }
+  });
+
+  // loop through outputs from lookups and build a response
+  ['attack', 'damage'].forEach(fvttType => {
+    if (lookupResults[fvttType].diceString === "") {
+      if (lookupResults[fvttType].sum !== 0) {
+        result[fvttType] = lookupResults[fvttType].sum;
+      }
+    } else {
+      result[fvttType] = lookupResults[fvttType].diceString;
+      if (lookupResults[fvttType].sum !== 0)  {
+        result[fvttType] += " + " + lookupResults[fvttType].sum;
+      }
+    }
+  });
+
+  return result;
+};
+
+/**
  * Gets global bonuses to ability checks, saves and skills
  * These can come from Paladin auras or items etc
   "abilities": {
@@ -1512,14 +1584,8 @@ export default function getCharacter(ddb) {
   // abilities
   character.data.bonuses.abilities = getBonusAbilities(ddb, character);
   // spell attacks
-  character.data.bonuses.rsak = {
-    "attack": "",
-    "damage": ""
-  };
-  character.data.bonuses.msak = {
-    "attack": "",
-    "damage": ""
-  };
+  character.data.bonuses.rsak = getBonusSpellAttacks(ddb, character, 'ranged');
+  character.data.bonuses.msak = getBonusSpellAttacks(ddb, character, 'melee');
   // spell dc
   character.data.bonuses.spell = {
     "dc": ""
