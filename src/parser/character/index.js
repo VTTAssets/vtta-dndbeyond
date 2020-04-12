@@ -949,7 +949,6 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 let getBonusSpellAttacks = (data, character, type) => {
   // I haven't found any matching global spell damage boosting mods in ddb
   const bonusLookups = [
-//    { fvttType: "attack", ddbSubType: "magic" }, // not sure the scope of this
     { fvttType: "attack", ddbSubType: "spell-attacks" },
     { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
   ];
@@ -975,6 +974,7 @@ let getBonusWeaponAttacks = (data, character, type) => {
   // which will be handled in the weapon import later.
   const bonusLookups = [
     { fvttType: "attack", ddbSubType: `${type}-attacks` },
+    { fvttType: "attack", ddbSubType: "weapon-attacks" },
     { fvttType: "attack", ddbSubType: `${type}-weapon-attacks` },
   ];
 
