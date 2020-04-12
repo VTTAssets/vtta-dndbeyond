@@ -742,6 +742,8 @@ let getSkills = (data, character) => {
     let modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
+      data.character.modifiers.item,
+      data.character.modifiers.feat,
       data.character.modifiers.background
     ]
       .flat()
