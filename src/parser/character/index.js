@@ -869,32 +869,25 @@ let filterModifiers = (data, type, subType) => {
   return modifiers;
 };
 
+
 /**
- * Gets global bonuses to spell attacks and damage
- * Most likely from items such as wand of the warmage
- * supply type as 'ranged' or 'melee' 
+ * Gets global bonuses to attacks and damage
+ * Supply a list of maps that have the fvtt tyoe and ddb sub type, e,g,
+ * { fvttType: "attack", ddbSubType: "magic" }
   {
     "attack": "",
     "damage": "",
   },
+ * @param {*} lookupTable
  * @param {*} data 
  * @param {*} character 
- * @param {*} type
  */
-let getBonusSpellAttacks = (data, character, type) => {
+let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
   let result = {
     attack: "",
     damage: ""
   };
-
   const diceFormula = /\d*d\d*/;
-
-  // I haven't found any matching global spell damage boosting mods in ddb
-  const bonusLookup = [
-    { fvttType: "attack", ddbSubType: "magic" },
-    { fvttType: "attack", ddbSubType: "spell-attacks" },
-    { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
-  ];
 
   let lookupResults = {
     attack: {
@@ -907,7 +900,7 @@ let getBonusSpellAttacks = (data, character, type) => {
     },
   };
 
-  bonusLookup.forEach(b => {
+  lookupTable.forEach(b => {
     const lookupResult = getGlobalBonus(
       filterModifiers(data, "bonus", b.ddbSubType),
       character,
@@ -939,6 +932,29 @@ let getBonusSpellAttacks = (data, character, type) => {
   });
 
   return result;
+};
+
+/**
+ * Gets global bonuses to spell attacks and damage
+ * Most likely from items such as wand of the warmage
+ * supply type as 'ranged' or 'melee' 
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} data 
+ * @param {*} character 
+ * @param {*} type
+ */
+let getBonusSpellAttacks = (data, character, type) => {
+  // I haven't found any matching global spell damage boosting mods in ddb
+  const bonusLookups = [
+    { fvttType: "attack", ddbSubType: "magic" },
+    { fvttType: "attack", ddbSubType: "spell-attacks" },
+    { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
+  ];
+
+  return getGlobalBonusAttackModifiers(bonusLookups, data, character);
 };
 
 /**
