@@ -20,6 +20,74 @@ let getProficiencies = data => {
   return proficiencies;
 };
 
+let get5EBuiltIn = data => {
+  let results = {
+    "powerfulBuild": false,
+    "savageAttacks": false,
+    "elvenAccuracy": false,
+    "halflingLucky": false,
+    "initiativeAdv": false,
+    "initiativeAlert": false,
+    "initiativeHalfProf": false,
+    "weaponCriticalThreshold": 20
+  };
+
+  // powerful build/equine build
+  results.powerfulBuild = data.character.race.racialTraits.filter(trait =>
+    trait.name === "Equine Build" || trait.name === "Powerful Build"
+    ).length > 0;
+
+    // savage attacks
+  results.savageAttacks = data.character.race.racialTraits.filter(trait =>
+    trait.name === "Savage Attacks"
+    ).length > 0;
+  
+    // halfling lucky
+  results.halflingLucky = data.character.race.racialTraits.filter(trait =>
+    trait.name === "Lucky"
+    ).length > 0;
+  
+    // elven accuracy
+  results.elvenAccuracy = data.character.feats.filter(feat =>
+    feat.name === "Elven Accuracy"
+    ).length > 0;
+ 
+  // alert feat
+  // handled in initiative function
+
+  // advantage on initiative
+  results.initiativeAdv = filterModifiers(
+    data, "advantage", "initiative"
+    ).length > 0;
+
+  // initiative half prof
+  results.initiativeHalfProf = filterModifiers(
+    data, "half-proficiency-round-up", "initiative"
+    ).length > 0;
+
+  // weapon critical threshold
+  // fighter improved crit
+  data.character.classes.forEach(cls => {
+    if (cls.subclassDefinition) {
+      const improvedCritical = 
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Improved Critical"
+          ).length > 0;
+      const superiorCritical = 
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Superior Critical"
+          ).length > 0;
+      if (superiorCritical) {
+        results.weaponCriticalThreshold = 18
+      } else if (improvedCritical) {
+        results.weaponCriticalThreshold = 19
+      }
+    }
+  });
+
+  return results;
+};
+
 let getLevel = data => {
   return data.character.classes.reduce((prev, cur) => prev + cur.level, 0);
 };
@@ -395,6 +463,20 @@ let getHitpoints = (data, character) => {
     max: constitutionHP + baseHitPoints + bonusHitPoints,
     temp: temporaryHitPoints,
     tempmax: temporaryHitPoints
+  };
+};
+
+let getInitiative = (data, character) => {
+  const initiativeBonus = getGlobalBonus(
+    filterModifiers(data, "bonus", "initiative"),
+    character,
+    "initiative"
+  );
+
+  return {
+    "value": character.data.abilities.dex.mod + initiativeBonus,
+    "bonus": initiativeBonus,
+    "mod": character.data.abilities.dex.mod
   };
 };
 
@@ -1581,7 +1663,7 @@ export default function getCharacter(ddb) {
   character.data.attributes.hp = getHitpoints(ddb, character);
 
   // initiative
-  character.data.attributes.init.mod = character.data.abilities.dex.mod;
+  character.data.attributes.init = getInitiative(ddb, character);
 
   // proficiency
   character.data.attributes.prof = Math.ceil(
@@ -1637,9 +1719,11 @@ export default function getCharacter(ddb) {
   character.data.skills = getSkills(ddb, character);
   character.data.spells = getSpellSlots(ddb);
 
+  // Get supported 5e feats and abilities
+  character.flags.dnd5e = get5EBuiltIn(ddb);
+
   // Extra global bonuses
-  // some of these are currently templates
-  // abilities
+  // Extra bonuses
   character.data.bonuses.abilities = getBonusAbilities(ddb, character);
   // spell attacks
   character.data.bonuses.rsak = getBonusSpellAttacks(ddb, character, 'ranged');
