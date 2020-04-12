@@ -748,25 +748,40 @@ let getSkills = (data, character) => {
       .filter(modifier => modifier.friendlySubtypeName === skill.label)
       .map(mod => mod.type);
 
-    // Jack of All trades or expertise?
-    let defaultProficiency =
+    const longAbility = DICTIONARY.character.abilities.filter(ability =>
+      skill.ability === ability.value
+      ).map(ability => ability.long)[0];
+
+    // e.g. champion for specific ability checks
+    const halfProficiencyRoundedUp =
+     data.character.modifiers.class.find(
+      modifier =>
+        modifier.type === 	"half-proficiency-round-up" &&
+        modifier.subType === `${longAbility}-ability-checks` 
+    ) !== undefined ? true : false;
+
+    // Jack of All trades/half-rounded down
+    const halfProficiency =
       data.character.modifiers.class.find(
         modifier =>
-          modifier.type === "half-proficiency" &&
-          modifier.subType === "ability-checks"
+          (modifier.type === "half-proficiency" &&
+          modifier.subType === "ability-checks") ||
+          halfProficiencyRoundedUp
       ) !== undefined
         ? 0.5
         : 0;
 
-    let proficient = modifiers.includes("expertise")
+    const proficient = modifiers.includes("expertise")
       ? 2
       : modifiers.includes("proficiency")
       ? 1
-      : defaultProficiency;
+      : halfProficiency;
 
-    let value =
-      character.data.abilities[skill.ability].value +
-      2 * character.data.attributes.prof * proficient;
+    const proficiencyBonus = halfProficiencyRoundedUp ?
+      Math.ceil(2 * character.data.attributes.prof * proficient) :
+      Math.floor(2 * character.data.attributes.prof * proficient);
+
+    const value = character.data.abilities[skill.ability].value + proficiencyBonus;
 
     result[skill.name] = {
       type: "Number",
