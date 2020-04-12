@@ -562,6 +562,36 @@ let getSpellCastingAbility = classInfo => {
   return spellCastingAbility;
 };
 
+let getEldritchInvocations = (data, character) => {
+  let damage = 0;
+  let range = 0;
+
+  const eldritchBlastMods = data.character.modifiers.class.filter(
+    modifier => modifier.type === "eldritch-blast" && modifier.isGranted
+  );
+
+  eldritchBlastMods.forEach(mod =>{
+    switch(mod.subType) {
+      case "bonus-damage":
+        // almost certainly CHA :D
+        const ability = DICTIONARY.character.abilities.find(
+          ability => ability.id === mod.statId
+        );
+        damage = character.data.abilities[ability.value].mod;
+        break;
+      case "bonus-range":
+        range = mod.value;
+        break;
+      default:
+        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`)
+    }   
+  });
+
+  return {
+    damage: damage,
+    range: range
+  };
+};
 
 let getLookups = (character) => {
   // racialTraits
@@ -893,6 +923,17 @@ export default function parseSpells(ddb, character) {
     };
 
     items.push(parseSpell(spell, character));
+  });
+
+  // Eldritch Blast is a special little kitten and has some fun Eldritch 
+  // Invocations which can adjust it.
+  items.filter(
+    spell => spell.name === "Eldritch Blast"
+  ).map(eb => {
+    const eldritchBlastMods = getEldritchInvocations(ddb, character);
+    eb.data.damage.parts[0][0] += " + " + eldritchBlastMods['damage'];
+    eb.data.range.value += eldritchBlastMods['range'];
+    eb.data.range.long += eldritchBlastMods['range'];
   });
 
   return items;
