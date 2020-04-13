@@ -473,11 +473,13 @@ let getInitiative = (data, character) => {
     "initiative"
   );
 
-  return {
-    "value": character.data.abilities.dex.mod + initiativeBonus,
-    "bonus": initiativeBonus,
-    "mod": character.data.abilities.dex.mod
+  const initiative = {
+    "value": initiativeBonus,
+    "bonus": 0, //used by FVTT I think
+    "mod": character.data.abilities.dex.mod,
   };
+
+  return initiative;
 };
 
 let getSpeed = (data, character) => {
