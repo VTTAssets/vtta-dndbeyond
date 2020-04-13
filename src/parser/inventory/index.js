@@ -24,7 +24,7 @@ import utils from '../../utils.js';
 // magicitems support
 import parseMagicItem from './magicify.js';
 
-let parseItem = (data, character) => {
+let parseItem = (ddb, data, character) => {
   // is it a weapon?
   if (data.definition.filterType) {
     switch (data.definition.filterType) {
@@ -32,7 +32,14 @@ let parseItem = (data, character) => {
         if (data.definition.type === 'Ammunition') {
           return parseAmmunition(data, character);
         } else {
-          return parseWeapon(data, character);
+          let flags = {
+            damage: {}
+          };
+          // get improved divine smite etc for melee attacks
+          if (data.definition.attackType === 1) {
+            flags.damage.parts = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
+          }
+          return parseWeapon(data, character, flags);
         }
         break;
       case 'Armor':
@@ -74,6 +81,26 @@ let parseItem = (data, character) => {
   return {};
 };
 
+/**
+ * We get extra damage to a weapon attack here, for example Improved
+ * Divine Smite
+ * @param {*} data
+ * @param {*} restrictions (array)
+ */
+let getExtraDamage = (ddb, restrictions) => {
+  return utils.filterBaseModifiers(ddb, "damage", null, restrictions)
+  .map(mod => {
+    console.log("mod " + JSON.stringify(mod));
+    if (mod.dice) {
+      return [mod.dice.diceString, mod.subType];
+    } else {
+      if (mod.value) {
+        return [mod.value, mod.subType];
+      }
+    }
+  });
+};
+
 export default function getInventory(ddb, character, itemSpells) {
   let items = [];
   // first, check custom name, price or weight
@@ -90,10 +117,9 @@ export default function getInventory(ddb, character, itemSpells) {
 
   // now parse all items
   for (let entry of ddb.character.inventory) {
-    var item = Object.assign({}, parseItem(entry, character));
+    var item = Object.assign({}, parseItem(ddb, entry, character));
     if (item) {
-      let magicItem = parseMagicItem(entry, character, item, itemSpells);
-      item.flags.magicitems = magicItem;
+      item.flags.magicitems = parseMagicItem(entry, character, item, itemSpells);
       items.push(item);
     }
   };

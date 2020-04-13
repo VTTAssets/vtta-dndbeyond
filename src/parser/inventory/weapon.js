@@ -187,7 +187,8 @@ let getMagicalBonus = data => {
  * @param {obj} weaponProperties weapon properties
  * /* damage: { parts: [], versatile: '' }, * /
  */
-let getDamage = (data, magicalDamageBonus) => {
+let getDamage = (data) => {
+  const magicalDamageBonus = getMagicalBonus(data);
   let versatile = data.definition.properties.find(
     property => property.name === "Versatile"
   );
@@ -219,7 +220,7 @@ let getDamage = (data, magicalDamageBonus) => {
 
   // additional damage parts
   // Note: For the time being, restricted additional bonus parts are not included in the damage
-  //       The Saving Throw Freature within Foundry is not fully implemented yet, to this will/might change
+  //       The Saving Throw Feature within Foundry is not fully implemented yet, to this will/might change
   data.definition.grantedModifiers
     .filter(
       mod =>
@@ -235,7 +236,7 @@ let getDamage = (data, magicalDamageBonus) => {
       }
     });
 
-  let result = {
+  const result = {
     parts: parts,
     versatile: versatile
   };
@@ -243,7 +244,7 @@ let getDamage = (data, magicalDamageBonus) => {
   return result;
 };
 
-export default function parseWeapon(data, character) {
+export default function parseWeapon(data, character, flags) {
   /**
    * MAIN parseWeapon
    */
@@ -359,9 +360,13 @@ export default function parseWeapon(data, character) {
   // we leave that as-is
 
   /* damage: { parts: [], versatile: '' }, */
-  // We are adding the magical bonus here, too.
-  // Not a friend of calculating it twice, but it's more obvious about what is happening and the calc is somewhat cheap
-  weapon.data.damage = getDamage(data, getMagicalBonus(data));
+  weapon.data.damage = getDamage(data);
+
+  if (flags.damage.parts) {
+    flags.damage.parts.forEach(part => {
+      weapon.data.damage.parts.push(part);
+    }); 
+  }
 
   /* formula: '', */
   // we leave that as-is
