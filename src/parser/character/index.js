@@ -783,6 +783,7 @@ let getSkills = (data, character) => {
 /**
  * Checks the list of modifiers provided for a matching bonus type
  * and returns a sum of it's value. May include a dice string.
+ * This only gets modifiers with out a restriction.
  * @param {*} modifiers 
  * @param {*} character 
  * @param {*} bonusSubType 
@@ -791,8 +792,9 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   const bonusMods = modifiers
     .flat()
     .filter(modifier =>
+      // isGranted could be used here, but doesn't seem to be consistently applied
       modifier.type === "bonus" &&
-      modifier.isGranted &&
+      (modifier.restriction === "" || modifier.restriction === null) &&
       modifier.subType === bonusSubType
     );
 
@@ -818,6 +820,168 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   return sum;
 }
 
+
+/**
+ * Item modifiers require us to make sure the item is equipped and attuned if requires
+ */
+let getActiveItemModifiers = (data) => {
+  // get items we are going to interact on
+  const targetItems = data.character.inventory
+    .filter(item => 
+      (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+      (item.isAttuned) || // if it is attuned (assume equipped)
+      (!item.definition.canAttune && item.equipped) // can't attune but is equipped
+    );
+
+  const modifiers = data.character.modifiers.item
+    .filter(mod =>
+      targetItems.filter(item => item.id === mod.componentId)
+    );
+
+  return modifiers;
+};
+
+/**
+ * Gets global bonuses to attacks
+ * Typically these come from
+  "abilities": {
+    "check": "",
+    "save": "",
+    "skill": ""
+  },
+ * @param {*} data 
+ * @param {*} character 
+ */
+let filterModifiers = (data, type, subType) => {
+  const modifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.feat,
+    getActiveItemModifiers(data),
+  ]
+    .flat()
+    .filter(modifier =>
+      modifier.type === type &&
+      modifier.subType === subType
+    );
+
+  return modifiers;
+};
+
+
+/**
+ * Gets global bonuses to attacks and damage
+ * Supply a list of maps that have the fvtt tyoe and ddb sub type, e,g,
+ * { fvttType: "attack", ddbSubType: "magic" }
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} lookupTable
+ * @param {*} data 
+ * @param {*} character 
+ */
+let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
+  let result = {
+    attack: "",
+    damage: ""
+  };
+  const diceFormula = /\d*d\d*/;
+
+  let lookupResults = {
+    attack: {
+      sum: 0,
+      diceString: ""
+    },
+    damage: {
+      sum: 0,
+      diceString: ""
+    },
+  };
+
+  lookupTable.forEach(b => {
+    const lookupResult = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
+    );
+    const lookupMatch = diceFormula.test(lookupResult);
+
+    // if a match then a dice string
+    if (lookupMatch) {
+      lookupResults[b.fvttType].diceString += (lookupResult === "") ? 
+        lookupResult : " + " + lookupResult;
+    } else {
+      lookupResults[b.fvttType].sum += lookupResult;
+    }
+  });
+
+  // loop through outputs from lookups and build a response
+  ['attack', 'damage'].forEach(fvttType => {
+    if (lookupResults[fvttType].diceString === "") {
+      if (lookupResults[fvttType].sum !== 0) {
+        result[fvttType] = lookupResults[fvttType].sum;
+      }
+    } else {
+      result[fvttType] = lookupResults[fvttType].diceString;
+      if (lookupResults[fvttType].sum !== 0)  {
+        result[fvttType] += " + " + lookupResults[fvttType].sum;
+      }
+    }
+  });
+
+  return result;
+};
+
+/**
+ * Gets global bonuses to spell attacks and damage
+ * Most likely from items such as wand of the warmage
+ * supply type as 'ranged' or 'melee' 
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} data 
+ * @param {*} character 
+ * @param {*} type
+ */
+let getBonusSpellAttacks = (data, character, type) => {
+  // I haven't found any matching global spell damage boosting mods in ddb
+  const bonusLookups = [
+    { fvttType: "attack", ddbSubType: "spell-attacks" },
+    { fvttType: "attack", ddbSubType: `${type}-spell-attacks` },
+  ];
+
+  return getGlobalBonusAttackModifiers(bonusLookups, data, character);
+};
+
+/**
+ * Gets global bonuses to weapon attacks and damage
+ * Most likely from items such as wand of the warmage
+ * supply type as 'ranged' or 'melee' 
+  {
+    "attack": "",
+    "damage": "",
+  },
+ * @param {*} data 
+ * @param {*} character 
+ * @param {*} type
+ */
+let getBonusWeaponAttacks = (data, character, type) => {
+  // global melee damage is not a ddb type, in that it's likely to be
+  // type specific. The only class one I know of is the Paladin Improved Smite
+  // which will be handled in the weapon import later.
+  const bonusLookups = [
+    { fvttType: "attack", ddbSubType: `${type}-attacks` },
+    { fvttType: "attack", ddbSubType: "weapon-attacks" },
+    { fvttType: "attack", ddbSubType: `${type}-weapon-attacks` },
+  ];
+
+  return getGlobalBonusAttackModifiers(bonusLookups, data, character);
+};
+
+
 /**
  * Gets global bonuses to ability checks, saves and skills
  * These can come from Paladin auras or items etc
@@ -839,22 +1003,30 @@ let getBonusAbilities = (data, character) => {
     { fvttType: "skill", ddbSubType: "ability-checks" }, 
   ];
 
-  const modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.item,
-    data.character.modifiers.feat,
-  ]
-    .flat()
-    .filter(modifier =>
-      modifier.type === "bonus" &&
-      modifier.isGranted
+  bonusLookup.forEach(b => {
+    result[b.fvttType] = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
     );
+  });
+  return result;
+};
+
+let getBonusSpellDC = (data, character) => {
+  let result = {};
+  const bonusLookup = [
+    { fvttType: "dc", ddbSubType: "spell-save-dc" },
+  ];
 
   bonusLookup.forEach(b => {
-    result[b.fvttType] = getGlobalBonus(modifiers, character, b.ddbSubType);
+    result[b.fvttType] = getGlobalBonus(
+      filterModifiers(data, "bonus", b.ddbSubType),
+      character,
+      b.ddbSubType
+    );
   });
+
   return result;
 };
 
@@ -1465,8 +1637,20 @@ export default function getCharacter(ddb) {
   character.data.skills = getSkills(ddb, character);
   character.data.spells = getSpellSlots(ddb);
 
-  // Extra bonuses
+  // Extra global bonuses
+  // some of these are currently templates
+  // abilities
   character.data.bonuses.abilities = getBonusAbilities(ddb, character);
+  // spell attacks
+  character.data.bonuses.rsak = getBonusSpellAttacks(ddb, character, 'ranged');
+  character.data.bonuses.msak = getBonusSpellAttacks(ddb, character, 'melee');
+  // spell dc
+  character.data.bonuses.spell = getBonusSpellDC(ddb, character);
+  // melee weapon attacks
+  character.data.bonuses.mwak = getBonusWeaponAttacks(ddb, character, 'melee');
+  // ranged weapon attacks
+  // e.g. ranged fighting style
+  character.data.bonuses.rwak = getBonusWeaponAttacks(ddb, character, 'ranged');
 
   return character;
 }
