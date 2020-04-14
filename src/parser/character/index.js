@@ -40,17 +40,27 @@ let getAbilities = (data, character) => {
       proficient: 0
     };
 
-    let stat =
+    const stat =
       data.character.stats.find(stat => stat.id === ability.id).value || 0;
-    let bonusStat =
+    const bonusStat =
       data.character.bonusStats.find(stat => stat.id === ability.id).value || 0;
-    let overrideStat =
+    const overrideStat =
       data.character.overrideStats.find(stat => stat.id === ability.id).value ||
       0;
 
-    let bonus = [data.character.modifiers.race, data.character.modifiers.class]
+    const bonus = [
+      data.character.modifiers.race,
+      data.character.modifiers.item,
+      data.character.modifiers.feat,
+      data.character.modifiers.background,
+      data.character.modifiers.class,
+    ]
       .flat()
-      .filter(mod => mod.type === "bonus" && mod.entityId === ability.id)
+      .filter(mod =>
+        mod.type === "bonus" &&
+        mod.entityId === ability.id &&
+        mod.subType === `${ability.long}-score`
+        )
       .reduce((prev, cur) => prev + cur.value, 0);
 
     // calculate value, mod and proficiency
@@ -371,7 +381,9 @@ let getHitpoints = (data, character) => {
   let hitPointsPerLevel = [
     data.character.modifiers.class,
     data.character.modifiers.race,
-    data.character.modifiers.background
+    data.character.modifiers.background,
+    data.character.modifiers.feat,
+    data.character.modifiers.item,
   ]
     .flat()
     .filter(
@@ -380,11 +392,6 @@ let getHitpoints = (data, character) => {
     )
     .reduce((prev, cur) => prev + cur.value, 0);
   baseHitPoints += hitPointsPerLevel * character.data.details.level.value;
-
-  let tough = data.character.feats.find(feat => feat.definition.id === 49);
-  if (tough) {
-    baseHitPoints += character.data.details.level.value * 2;
-  }
 
   return {
     value:
