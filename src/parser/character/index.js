@@ -414,6 +414,12 @@ let getSpeed = (data, character) => {
     }
   }
 
+  // some races have feats that boost speed
+  let raceBonusSpeed = data.character.modifiers.feat.filter(
+    modifier =>
+      modifier.type === "bonus" && modifier.subType === "speed"
+  ).reduce((speed, feat) => speed + feat.value, 0);
+
   for (let type in movementTypes) {
     // is there a 'inntate-speed-[type]ing' race/class modifier?
     let innateSpeeds = data.character.modifiers.race.filter(
@@ -429,7 +435,7 @@ let getSpeed = (data, character) => {
       }
     });
     // overwrite the (perhaps) changed value
-    movementTypes[type] = base;
+    movementTypes[type] = base + raceBonusSpeed;
   }
 
   // unarmored movement for barbarians and monks
