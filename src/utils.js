@@ -65,6 +65,39 @@ let utils = {
 
     return nearestHit;
   },
+  filterBaseModifiers: (data, type, subType=null, restriction=["", null]) => {
+    const modifiers = [
+      data.character.modifiers.class,
+      data.character.modifiers.race,
+      data.character.modifiers.background,
+      data.character.modifiers.feat,
+      utils.getActiveItemModifiers(data),
+    ]
+      .flat()
+      .filter(modifier =>
+        modifier.type === type &&
+        ((subType !== null) ? modifier.subType === subType : true ) &&
+        restriction.find(r => r === modifier.restriction)
+      );
+
+    return modifiers;
+  },
+  getActiveItemModifiers: (data) => {
+    // get items we are going to interact on
+    const targetItems = data.character.inventory
+      .filter(item => 
+        (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+        (item.isAttuned) || // if it is attuned (assume equipped)
+        (!item.definition.canAttune && item.equipped) // can't attune but is equipped
+      );
+
+    const modifiers = data.character.modifiers.item
+      .filter(mod =>
+        targetItems.filter(item => item.id === mod.componentId)
+      );
+
+    return modifiers;
+  },
   calculateModifier: val => {
     return Math.floor((val - 10) / 2);
   },
