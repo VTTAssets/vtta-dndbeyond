@@ -1,4 +1,4 @@
-let query = message => {
+let query = (message) => {
   return new Promise((resolve, reject) => {
     // simple query
     if (typeof message === "string") {
@@ -6,27 +6,27 @@ let query = message => {
         case "id":
           let { id, name, isGM } = game.user;
           let entities = game.actors.entities
-            .filter(actor => actor.owner)
-            .map(actor => {
+            .filter((actor) => actor.owner)
+            .map((actor) => {
               let aliases = game.scenes.active
                 ? [
                     ...new Set(
                       game.scenes.active.data.tokens
-                        .filter(token => {
+                        .filter((token) => {
                           return (
                             token.actorId === actor.id &&
                             token.name !== actor.name
                           );
                         })
-                        .map(token => token.name)
-                    )
+                        .map((token) => token.name)
+                    ),
                   ]
                 : [];
               return {
                 type: "id",
                 id: actor.id,
                 name: actor.name,
-                aliases: aliases
+                aliases: aliases,
               };
             });
 
@@ -34,9 +34,7 @@ let query = message => {
 
           // Since the 0.4.7, the GM as only player connected will not show up until another player connects
           // OR the player view is minimized/maximized once
-          $("#players")
-            .find("h3")
-            .addClass("vttaConnected");
+          $("#players").find("h3").addClass("vttaConnected");
           // let currentPlayer = $('#players').find(`li[data-user-id='${game.user.id}'] span.player-name`);
           // $(currentPlayer).addClass('vttaConnectedPlayer');
 
@@ -44,25 +42,25 @@ let query = message => {
             user: {
               id: id,
               name: name,
-              isGM: isGM
+              isGM: isGM,
             },
             entities: entities,
             img: window.location.href.replace(
               "/game",
               "/icons/svg/d20-highlight.svg"
-            )
+            ),
           });
           break;
         default:
           reject({
             code: 404,
-            message: `Error processing query "${message}"`
+            message: `Error processing query "${message}"`,
           });
       }
     } else {
       // try to discern the query
       if (typeof message === "object") {
-        let getFolderHierarchy = folder => {
+        let getFolderHierarchy = (folder) => {
           if (!folder || !folder._parent) return "/";
           return folder._parent._id !== null
             ? `${getFolderHierarchy(folder._parent)}/${folder.name}`
@@ -82,7 +80,7 @@ let query = message => {
               "entity-monster-compendium"
             );
             compendium = game.packs.find(
-              pack => pack.collection === compendiumName
+              (pack) => pack.collection === compendiumName
             );
             compendiumName =
               compendium && compendium.title ? compendium.title : null;
@@ -90,36 +88,36 @@ let query = message => {
             result = {
               user: {
                 name: game.user.name,
-                isGM: game.user.isGM
+                isGM: game.user.isGM,
               },
               world: {
                 name: game.world.name,
-                entities: []
+                entities: [],
               },
               scene: {
                 name: game.scenes.active ? game.scenes.active.data.name : null,
-                entities: []
+                entities: [],
               },
               compendium: {
                 name: compendiumName,
                 /*game.settings.get('vtta-dndbeyond', 'entity-monster-compendium').trim() !== ''
                     ? game.settings.get('vtta-dndbeyond', 'entity-monster-compendium')
-                    : null,*/ entities: []
-              }
+                    : null,*/ entities: [],
+              },
             };
 
             // check the world for this monster
             result.world.entities = game.actors.entities
               .filter(
-                entity =>
+                (entity) =>
                   entity.data.type === "npc" &&
                   entity.data.name === message.name &&
                   entity.owner === true
               )
-              .map(entity => {
+              .map((entity) => {
                 return {
                   id: entity.id,
-                  name: getFolderHierarchy(entity.folder)
+                  name: getFolderHierarchy(entity.folder),
                 };
               });
 
@@ -131,26 +129,41 @@ let query = message => {
               // are forwarded to dndbeyond
               let actors = [];
               result.scene.entities = game.scenes.active.data.tokens
-                .map(token => {
+                .map((token) => {
+                  // otherwise get the token.name directly, which is a more unique id than the actor.name
                   let actor = game.actors.entities.find(
-                    actor =>
+                    (actor) =>
                       actor.id === token.actorId &&
                       actor.name === message.name &&
                       actor.owner === true
                   );
-                  if (actor && !actors.includes(token.name)) {
-                    // remember this token's name
-                    actors.push(token.name);
+                  if (actor) {
+                    // if an actorData name is set, this takes precedence
+                    if (
+                      token.actorData &&
+                      token.actorData.name &&
+                      !actors.includes(token.actorData.name)
+                    ) {
+                      return {
+                        id: token.id,
+                        name: token.actorData.name,
+                      };
+                    }
 
-                    return {
-                      id: token.id,
-                      name: token.name
-                    };
+                    if (!actors.includes(token.name)) {
+                      // remember this token's name
+                      actors.push(token.name);
+
+                      return {
+                        id: token.id,
+                        name: token.name,
+                      };
+                    }
                   } else {
                     return undefined;
                   }
                 })
-                .filter(entity => entity !== undefined);
+                .filter((entity) => entity !== undefined);
 
               // sort the result alphabetically
               result.scene.entities.sort((a, b) => {
@@ -167,15 +180,15 @@ let query = message => {
             if (compendium) {
               compendium
                 .getIndex()
-                .then(index => {
+                .then((index) => {
                   let entity = index.find(
-                    entity => entity.name === message.name
+                    (entity) => entity.name === message.name
                   );
                   if (entity) {
                     // add the entities to the result response object
                     result.compendium.entities.push({
                       id: entity.id,
-                      name: compendium.metadata.label
+                      name: compendium.metadata.label,
                     });
                   }
 
@@ -183,7 +196,7 @@ let query = message => {
                   resolve(result);
                   //this.respond(event, result);
                 })
-                .catch(error => utils.log(error, "extension"));
+                .catch((error) => utils.log(error, "extension"));
             } else {
               result.compendium.name = null;
               resolve(result);
@@ -202,7 +215,7 @@ let query = message => {
               "entity-spell-compendium"
             );
             compendium = game.packs.find(
-              pack => pack.collection === compendiumName
+              (pack) => pack.collection === compendiumName
             );
             compendiumName =
               compendium && compendium.title ? compendium.title : null;
@@ -212,23 +225,23 @@ let query = message => {
             if (compendium) {
               compendium
                 .getIndex()
-                .then(index => {
+                .then((index) => {
                   let entity = index.find(
-                    entity =>
+                    (entity) =>
                       entity.name.toLowerCase() === message.name.toLowerCase()
                   );
                   if (entity) {
                     // get the spell and deliver it back to the query
                     compendium
                       .getEntity(entity.id)
-                      .then(spell => resolve(spell)) //this.respond(event, { code: 200, spell: spell }))
-                      .catch(error => reject(error)); //this.respond(event, { code: 500, spell: null }));
+                      .then((spell) => resolve(spell)) //this.respond(event, { code: 200, spell: spell }))
+                      .catch((error) => reject(error)); //this.respond(event, { code: 500, spell: null }));
                   } else {
                     reject({ code: 404, spell: null });
                     // this.respond(event, { code: 404, spell: null });
                   }
                 })
-                .catch(error => reject({ code: 500, spell: null })); //this.respond(event, { code: 500, spell: null }));
+                .catch((error) => reject({ code: 500, spell: null })); //this.respond(event, { code: 500, spell: null }));
             }
             // } else {
             //this.respond(event, { result: result });
@@ -245,7 +258,7 @@ let query = message => {
               "entity-spell-compendium"
             );
             compendium = game.packs.find(
-              pack => pack.collection === compendiumName
+              (pack) => pack.collection === compendiumName
             );
             compendiumName =
               compendium && compendium.title ? compendium.title : null;
@@ -253,15 +266,15 @@ let query = message => {
             result = {
               user: {
                 name: game.user.name,
-                isGM: game.user.isGM
+                isGM: game.user.isGM,
               },
               compendium: {
                 name: compendiumName,
                 // game.settings.get('vtta-dndbeyond', 'entity-spell-compendium').trim() !== ''
                 // ? game.settings.get('vtta-dndbeyond', 'entity-spell-compendium')
                 // : null,
-                entity: null
-              }
+                entity: null,
+              },
             };
             // compendiumName = game.settings.get('vtta-dndbeyond', 'entity-spell-compendium');
             // if (compendiumName !== '') {
@@ -269,9 +282,9 @@ let query = message => {
             if (compendium) {
               compendium
                 .getIndex()
-                .then(index => {
+                .then((index) => {
                   let entity = index.find(
-                    entity =>
+                    (entity) =>
                       entity.name.toLowerCase() === message.name.toLowerCase()
                   );
                   if (entity) {
@@ -279,7 +292,7 @@ let query = message => {
                   }
                   resolve(result);
                 })
-                .catch(error => {
+                .catch((error) => {
                   utils.log(
                     `Error searching throught compendium ${compendiumName}`,
                     "extension"
@@ -303,7 +316,7 @@ let query = message => {
               "entity-spell-compendium"
             );
             compendium = game.packs.find(
-              pack => pack.collection === compendiumName
+              (pack) => pack.collection === compendiumName
             );
             compendiumName =
               compendium && compendium.title ? compendium.title : null;
@@ -313,12 +326,12 @@ let query = message => {
             if (compendium) {
               compendium
                 .getIndex()
-                .then(async index => {
+                .then(async (index) => {
                   let result = {};
 
                   for (let i = 0; i < message.name.length; i++) {
                     let entity = index.find(
-                      entity =>
+                      (entity) =>
                         entity.name.toLowerCase() ===
                         message.name[i].toLowerCase()
                     );
@@ -333,7 +346,7 @@ let query = message => {
                   reject({ code: 404, spells: result });
                   //this.respond(event, { code: 404, spells: result });
                 })
-                .catch(error => {
+                .catch((error) => {
                   utils.log(
                     `Error searching through compendium ${compendiumName}`,
                     "extension"
@@ -358,7 +371,7 @@ let query = message => {
               "entity-spell-compendium"
             );
             compendium = game.packs.find(
-              pack => pack.collection === compendiumName
+              (pack) => pack.collection === compendiumName
             );
             compendiumName =
               compendium && compendium.title ? compendium.title : null;
@@ -368,12 +381,12 @@ let query = message => {
             if (compendium) {
               compendium
                 .getIndex()
-                .then(index => {
+                .then((index) => {
                   let result = {};
 
                   for (let i = 0; i < message.name.length; i++) {
                     let entity = index.find(
-                      entity =>
+                      (entity) =>
                         entity.name.toLowerCase() ===
                         message.name[i].toLowerCase()
                     );
@@ -387,7 +400,7 @@ let query = message => {
 
                   resolve({ code: 200, spell: result });
                 })
-                .catch(error => {
+                .catch((error) => {
                   utils.log(
                     `Error searching through compendium ${compendiumName}`,
                     "extension"
@@ -396,13 +409,13 @@ let query = message => {
 
                   reject({
                     code: 500,
-                    message: "Compendium inaccessible (unknown error)"
+                    message: "Compendium inaccessible (unknown error)",
                   });
                 });
             } else {
               reject({
                 code: 404,
-                message: "Compendium inaccessible (check name)"
+                message: "Compendium inaccessible (check name)",
               });
             }
             // } else {

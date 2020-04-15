@@ -32,7 +32,11 @@
   ],
   "systems": ["dnd5e"],
   "esmodules": ["src/index.js", "./src/dndbeyond/index.js"],
-  "styles": ["./css/default.css", "./src/character/import.css"],
+  "styles": [
+    "./css/module-settings.css",
+    "./css/default.css",
+    "./src/character/import.css"
+  ],
   "packs": [],
   "url": "https://www.vttassets.com/asset/vtta-dndbeyond",
   "manifest": "https://www.vttassets.com/manifest/vtta-dndbeyond/latest?5d6e51d59834bf61c4ace7ef",

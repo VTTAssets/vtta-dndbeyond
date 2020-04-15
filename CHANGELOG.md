@@ -2,25 +2,40 @@
 
 ## [2.1.0] Spreading the Wings
 
-This release is something special: @MrPrimate dedicated his time to work on improvements in the general spell section, and he didn't stop there. With this release, the fantastic module of @Simone, "Magic Items" is officially integrated when importing characters. That means that magical items are having now specific spells imbued into them which brings a whole lot of comfort in dealing with those in your regular game. Please check out the module at his [Gitlab Repository](https://gitlab.com/riccisi/foundryvtt-magic-items) if that sounds interesting to you.
+This release is something special: @MrPrimate dedicated his time to work on improvements in the general spell section, and he didn't stop there: With this release, the fantastic module of @Simone, "Magic Items" is officially integrated when importing characters.
+
+That means that magical items are having now specific spells imbued into them which brings a whole lot of comfort in dealing with those in your regular game. Please check out the module at his [Gitlab Repository](https://gitlab.com/riccisi/foundryvtt-magic-items) if that sounds interesting to you.
 
 ### Added
 
-- The [B]-Button makes a prominent re-appearance on NPC sheets that were imported via the Chrome extension. The buttons opens up the popup to the D&D Beyond source so you can quickly refer to that site in the heat of the battle.
+- The [B]-Button makes a prominent re-appearance on NPC sheets that were imported via the Chrome extension. The buttons opens up the popup to the D&D Beyond source so you can quickly refer to that site in the heat of the battle. You can even roll from there
+- So many improvements coming in from MrPrimate:
+  - Support for Divine Smite
+  - Eldritch Blast *pewpew*
+  - Spell scaling fixes
+  - Support for the built-in feats in the DND5e system like halflings luck and others 
+  - Speed boni granted by certain features
+  - AC coming in correctly for Tortles and Lizardfolk and 
+  - unarmed attacks are now using the correct die. Phew! the list goes on an on and on... 
+  
+  You are amazing, MrPrimate.
+- Added support of Monster rolls for "Named Actors". If you have several tokens based of the same actor on the currently active scene and if you have renamed those actors you will be able to choose which alias should be displayed on the chatlog message of the roll.
 
 ### Fixed
 
-- Character import: AC calculations for Tortle and Lizardfolk (thanks Mr.Primate!)
+- Several compatibility changes in preparation for Foundry v0.5.4
 - Compendium import is now working correctly, too
+- Transmutation spells are now flagged correctly
 - Chrome extension: Fixed several spells not parsing at all (Forbiddance, Guards and Wards and others)
 - Chrome extension: Parsing of spellcasting blocks enhanced
 - Chrome extension: Made several changes to the parser in order to make it more robust, thus enabling parsing of multiple homebrew monsters that failed recently
 
-*Note*: The chrome extension fixes need a Google review. The update will be installed automatically when it is available.
+_Note_: The chrome extension fixes need a Google review. The update will be installed automatically when it is available, and I am planning to incorporate at least one bigger feature I had in mind, so this will take some more time to get rolled out.
 
 ### Changed
 
 - Creating Actor5 entities instead of Actor entities now on Monster import
+- CSS changes on the module settings to align the file picker buttons to the input fields
 
 ## [2.0.3] Foundry 0.5.3 compatability release
 
