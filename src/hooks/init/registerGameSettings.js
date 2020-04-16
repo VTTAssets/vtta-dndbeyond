@@ -38,7 +38,7 @@ export default function () {
     choices: [
       "vtta-dndbeyond.entity-import-policy.0",
       "vtta-dndbeyond.entity-import-policy.1",
-      // 'vtta-dndbeyond.entity-import-policy.2',
+      "vtta-dndbeyond.entity-import-policy.2",
     ],
   });
 
@@ -51,6 +51,12 @@ export default function () {
     isSelect: true,
     choices: itemCompendiums,
   });
+
+  //   game.settings.set('vtta-dndbeyond', 'entity-item-compendium', null);
+  // Promise {<pending>}
+  // game.settings.set('vtta-dndbeyond', 'entity-spell-compendium', null);
+  // Promise {<pending>}
+  // game.settings.set('vtta-dndbeyond', 'entity-monster-compendium', null);
 
   game.settings.register("vtta-dndbeyond", "entity-spell-compendium", {
     name: "vtta-dndbeyond.entity-spell-compendium.name",
@@ -71,4 +77,23 @@ export default function () {
     isSelect: true,
     choices: actorCompendiums,
   });
+
+  // check for failed registered settings
+  let hasErrors = false;
+  for (let s of game.settings.settings.values()) {
+    try {
+      game.settings.get(s.module, s.key);
+    } catch (err) {
+      hasErrors = true;
+      ui.notifications.info(
+        `[${s.module}] Erroneous module settings found, resetting to default.`
+      );
+      game.settings.set(s.module, s.key, s.default);
+    }
+  }
+  if (hasErrors) {
+    ui.notifications.warn(
+      "Please review the module settings to re-adjust them to your desired configuration."
+    );
+  }
 }

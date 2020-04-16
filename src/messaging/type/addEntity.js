@@ -1,5 +1,8 @@
 import utils from "../../utils.js";
 import { Actor5e } from "../../../../../systems/dnd5e/module/actor/entity.js";
+const SAVE_ALL = 0;
+const SAVE_NEW = 1;
+const SAVE_NONE = 2;
 
 let queryIcons = (names) => {
   return new Promise((resolve, reject) => {
@@ -77,22 +80,75 @@ let createNPC = async (npc, options) => {
 
   return result;
 };
-
 let addSpell = (body) => {
   return new Promise(async (resolve, reject) => {
     // get the folder to add this spell into
     let folder = await utils.getFolder(body.type);
     body.data.folder = folder.id;
 
-    let updateEntity =
-      game.settings.get("vtta-dndbeyond", "entity-import-policy") === 0;
+    // check if there is an NPC with that name in that folder already
+    let spell = folder.content
+      ? folder.content.find((spell) => spell.name === body.data.name)
+      : undefined;
+    if (spell) {
+      body.data._id = spell.id;
+      // update the current npc
+      await spell.update(body.data);
+    } else {
+      // create the new spell
+      spell = await Item.create(body.data, {
+        temporary: false,
+        displaySheet: true,
+      });
+    }
 
-    let spell = await Item.create(body.data, {
-      temporary: false,
-      displaySheet: true,
-    });
-
+    // decide wether to save it into the compendium
+    if (
+      game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE
+    ) {
+      // update existing (1) or overwrite (0)
+      let compendiumName = game.settings.get(
+        "vtta-dndbeyond",
+        "entity-spell-compendium"
+      );
+      if (compendiumName && compendiumName !== "") {
+        let compendium = game.packs.find(
+          (pack) => pack.collection === compendiumName
+        );
+        if (compendium) {
+          let index = await compendium.getIndex();
+          let entity = index.find(
+            (entity) =>
+              entity.name.toLowerCase() === body.data.name.toLowerCase()
+          );
+          if (entity) {
+            if (SAVE_ALL) {
+              spell.data._id = entity.id;
+              spell = await compendium.updateEntity(spell.data);
+            }
+          } else {
+            spell = await compendium.createEntity(spell.data);
+          }
+        } else {
+          reject("Error opening compendium, check your settings");
+        }
+      }
+    }
     resolve(spell.data);
+
+    // // get the folder to add this spell into
+    // let folder = await utils.getFolder(body.type);
+    // body.data.folder = folder.id;
+
+    // let updateEntity =
+    //   game.settings.get("vtta-dndbeyond", "entity-import-policy") === 0;
+
+    // let spell = await Item.create(body.data, {
+    //   temporary: false,
+    //   displaySheet: true,
+    // });
+
+    // resolve(spell.data);
   });
 };
 
@@ -167,25 +223,40 @@ let addNPC = (body) => {
       });
     }
 
-    // import spells, if any
-    // body.data.flags.vtta.spells = body.data.flags.vtta.spells.filter(spell => spell.hasOwnProperty('id'));
+    // decide wether to save it into the compendium
 
-    // if (body.data.flags.vtta.spells.length !== 0) {
-    //   // update existing (1) or overwrite (0)
-    //   let compendiumName = game.settings.get('vtta-dndbeyond', 'entity-spell-compendium');
-    //   let compendium = game.packs.find(pack => pack.collection === compendiumName);
-    //   //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
-
-    //   // if we have valid spells in here, they must have been coming through lookups in the compendium, so we take the existance for granted
-    //   for (let spell of body.data.flags.vtta.spells) {
-    //     console.log('Searching for spell ');
-    //     console.log(spell);
-    //     let entity = await compendium.getEntity(spell.id);
-    //     console.log('Result from compendium:');
-    //     console.log(entity);
-    //     let importResult = await npc.createOwnedItem(entity.data);
-    //   }
-    // }
+    if (
+      game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE
+    ) {
+      // update existing (1) or overwrite (0)
+      let compendiumName = game.settings.get(
+        "vtta-dndbeyond",
+        "entity-monster-compendium"
+      );
+      if (compendiumName && compendiumName !== "") {
+        //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
+        let compendium = game.packs.find(
+          (pack) => pack.collection === compendiumName
+        );
+        if (compendium) {
+          let index = await compendium.getIndex();
+          let entity = index.find(
+            (entity) =>
+              entity.name.toLowerCase() === body.data.name.toLowerCase()
+          );
+          if (entity) {
+            if (SAVE_ALL) {
+              npc.data._id = entity.id;
+              npc = await compendium.updateEntity(npc.data);
+            }
+          } else {
+            npc = await compendium.createEntity(npc.data);
+          }
+        } else {
+          reject("Error opening compendium, check your settings");
+        }
+      }
+    }
 
     resolve(npc.data);
   });

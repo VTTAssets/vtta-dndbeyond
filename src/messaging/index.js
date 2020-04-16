@@ -62,43 +62,44 @@ class EventPort {
             });
         }
 
-        if (head.type === "import") {
-          importEntity(body)
-            .then((response) => {
-              utils.log("Import successful", "extension");
-              utils.log(response, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: 200,
-                    },
-                    body: response,
-                  },
-                })
-              );
-            })
-            .catch((error) => {
-              utils.log("Error in import", "extension");
-              utils.log(error, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: error.code,
-                    },
-                    body: error.message,
-                  },
-                })
-              );
-            });
-        }
+        // import === add from now on
+        // if (head.type === "import") {
+        // importEntity(body)
+        //   .then((response) => {
+        //     utils.log("Import successful", "extension");
+        //     utils.log(response, "extension");
+        //     document.dispatchEvent(
+        //       new CustomEvent(head.id, {
+        //         detail: {
+        //           head: {
+        //             id: head.id,
+        //             type: body,
+        //             code: 200,
+        //           },
+        //           body: response,
+        //         },
+        //       })
+        //     );
+        //   })
+        //   .catch((error) => {
+        //     utils.log("Error in import", "extension");
+        //     utils.log(error, "extension");
+        //     document.dispatchEvent(
+        //       new CustomEvent(head.id, {
+        //         detail: {
+        //           head: {
+        //             id: head.id,
+        //             type: body,
+        //             code: error.code,
+        //           },
+        //           body: error.message,
+        //         },
+        //       })
+        //     );
+        //   });
+        // }
 
-        if (head.type === "add") {
+        if (head.type === "import" || head.type === "add") {
           addEntity(body)
             .then((response) => {
               utils.log("Add successful: ", "extension");

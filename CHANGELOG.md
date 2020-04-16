@@ -6,6 +6,10 @@ This release is something special: @MrPrimate dedicated his time to work on impr
 
 That means that magical items are having now specific spells imbued into them which brings a whole lot of comfort in dealing with those in your regular game. Please check out the module at his [Gitlab Repository](https://gitlab.com/riccisi/foundryvtt-magic-items) if that sounds interesting to you.
 
+One change in general usage is included in this release and is up for discussion: The default import target is now always the current world, that means instead of having two buttons on e.g. a monster page, there is just one: "Import into Foundry". You can still choose to import the monsters and spells into your target compendiums, but you can now choose to just ignore the imports just keep everything at world-level. 
+
+_Note_: The chrome extension fixes need a Google review. The update will be installed automatically when it is available, and I am planning to incorporate at least one bigger feature I had in mind, so this will take some more time to get rolled out.
+
 ### Added
 
 - The [B]-Button makes a prominent re-appearance on NPC sheets that were imported via the Chrome extension. The buttons opens up the popup to the D&D Beyond source so you can quickly refer to that site in the heat of the battle. You can even roll from there
@@ -19,7 +23,8 @@ That means that magical items are having now specific spells imbued into them wh
   - unarmed attacks are now using the correct die. Phew! the list goes on an on and on... 
   
   You are amazing, MrPrimate.
-- Added support of Monster rolls for "Named Actors". If you have several tokens based of the same actor on the currently active scene and if you have renamed those actors you will be able to choose which alias should be displayed on the chatlog message of the roll.
+- Chrome Extension: Added support of Monster rolls for "Named Actors". If you have several tokens based of the same actor on the currently active scene and if you have renamed those actors you will be able to choose which alias should be displayed on the chatlog message of the roll.
+- Chrome Extension: Added user feedback on importing entities to Foundry.
 
 ### Fixed
 
@@ -29,8 +34,7 @@ That means that magical items are having now specific spells imbued into them wh
 - Chrome extension: Fixed several spells not parsing at all (Forbiddance, Guards and Wards and others)
 - Chrome extension: Parsing of spellcasting blocks enhanced
 - Chrome extension: Made several changes to the parser in order to make it more robust, thus enabling parsing of multiple homebrew monsters that failed recently
-
-_Note_: The chrome extension fixes need a Google review. The update will be installed automatically when it is available, and I am planning to incorporate at least one bigger feature I had in mind, so this will take some more time to get rolled out.
+- Chrome extension: Links back to D&D Beyond are now correctly directing to the D&D Beyond server instead to your Foundry webserver
 
 ### Changed
 
