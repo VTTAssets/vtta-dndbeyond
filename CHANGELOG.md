@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.1.2] Hotfix for Spell imports
+
 ## [2.1.1] Hotfix for pre-0.5.4
 
 ## [2.1.0] Spreading the Wings
