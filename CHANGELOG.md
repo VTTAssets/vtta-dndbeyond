@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.1.1] Hotfix for pre-0.5.4
+
 ## [2.1.0] Spreading the Wings
 
 This release is something special: @MrPrimate dedicated his time to work on improvements in the general spell section, and he didn't stop there: With this release, the fantastic module of @Simone, "Magic Items" is officially integrated when importing characters.
