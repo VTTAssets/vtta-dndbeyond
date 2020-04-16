@@ -4,6 +4,46 @@ const SAVE_ALL = 0;
 const SAVE_NEW = 1;
 const SAVE_NONE = 2;
 
+const retrieveSpells = async (spells) => {
+  let compendiumName = game.settings.get(
+    "vtta-dndbeyond",
+    "entity-spell-compendium"
+  );
+  let compendium = game.packs.find(
+    (pack) => pack.collection === compendiumName
+  );
+  let spellResult = [];
+  if (compendium) {
+    const index = await compendium.getIndex();
+    for (let i = 0; i < spells.length; i++) {
+      let spell = index.find((entry) => entry.name.toLowerCase() === spells[i]);
+      if (spell) {
+        console.log("Querying compendium for spell with ID " + spell._id);
+        spell = await compendium.getEntity(spell._id);
+        spellResult.push(spell);
+      }
+    }
+  }
+  return spellResult;
+};
+
+// // if we have valid spells in here, they must have been coming through lookups in the compendium, so we take the existance for granted
+// for (let i = 0; i < npc.flags.vtta.dndbeyond.spells.length; i++) {
+//   let spell = npc.flags.vtta.dndbeyond.spells[i];
+//   utils.log(`Searching for spell ${spell} in compendium...`, "extension");
+//   let entry = index.find((entry) => entry.name.toLowerCase() === spell);
+//   if (!entry) continue;
+//   utils.log(items, "character");
+
+//   let itemImportResult = await this.actor.createManyEmbeddedEntities(
+//     "OwnedItem",
+//     items,
+//     {
+//       displaySheet: false,
+//     }
+//   );
+// }
+
 let queryIcons = (names) => {
   return new Promise((resolve, reject) => {
     let listener = (event) => {
@@ -48,34 +88,18 @@ let createNPC = async (npc, options) => {
 
   let result = await Actor5e.create(npc, options);
 
-  // import spells, if any
-  npc.flags.vtta.dndbeyond.spells = npc.flags.vtta.dndbeyond.spells.filter(
-    (spell) => spell.hasOwnProperty("id")
-  );
+  // // import spells, if any
+  // npc.flags.vtta.dndbeyond.spells = npc.flags.vtta.dndbeyond.spells.filter(
+  //   (spell) => spell.hasOwnProperty("id")
+  // );
 
   if (npc.flags.vtta.dndbeyond.spells.length !== 0) {
     // update existing (1) or overwrite (0)
-    let compendiumName = game.settings.get(
-      "vtta-dndbeyond",
-      "entity-spell-compendium"
-    );
-    let compendium = game.packs.find(
-      (pack) => pack.collection === compendiumName
-    );
-
-    // if we have valid spells in here, they must have been coming through lookups in the compendium, so we take the existance for granted
-    for (let spell of npc.flags.vtta.dndbeyond.spells) {
-      utils.log(
-        `Searching for spell ${spell.name} in compendium...`,
-        "extension"
-      );
-      let entity = await compendium.getEntity(spell.id);
-      utils.log(entity, "extension");
-
-      await result.createEmbeddedEntity("OwnedItem", entity.data, {
-        displaySheet: false,
-      });
-    }
+    let spells = await retrieveSpells(npc.flags.vtta.dndbeyond.spells);
+    spells = spells.map((spell) => spell.data);
+    let char = await result.createManyEmbeddedEntities("OwnedItem", spells);
+    console.log(char);
+    console.log(result);
   }
 
   return result;
@@ -135,20 +159,6 @@ let addSpell = (body) => {
       }
     }
     resolve(spell.data);
-
-    // // get the folder to add this spell into
-    // let folder = await utils.getFolder(body.type);
-    // body.data.folder = folder.id;
-
-    // let updateEntity =
-    //   game.settings.get("vtta-dndbeyond", "entity-import-policy") === 0;
-
-    // let spell = await Item.create(body.data, {
-    //   temporary: false,
-    //   displaySheet: true,
-    // });
-
-    // resolve(spell.data);
   });
 };
 
@@ -181,7 +191,6 @@ let addNPC = (body) => {
       );
     }
 
-    //if (game.modules.find(mod => mod.id === "vtta-iconizer") !== undefined) {
     // replace icons by iconizer, if available
     let icons = body.data.items.map((item) => {
       return {
@@ -203,18 +212,29 @@ let addNPC = (body) => {
     } catch (exception) {
       utils.log("Iconizer not responding");
     }
-    // } else {
-    //   utils.log("Iconizer not installed");
-    // }
 
     // check if there is an NPC with that name in that folder already
     let npc = folder.content
       ? folder.content.find((actor) => actor.name === body.data.name)
       : undefined;
     if (npc) {
-      body.data._id = npc.id;
-      // update the current npc
+      // remove the inventory of said npc
+      await npc.deleteManyEmbeddedEntities(
+        "OwnedItem",
+        npc.getEmbeddedCollection("OwnedItem").map((item) => item._id)
+      );
+      // update items and basic data
       await npc.update(body.data);
+      if (
+        body.data.flags.vtta.dndbeyond.spells &&
+        body.data.flags.vtta.dndbeyond.spells.length !== 0
+      ) {
+        let spells = await retrieveSpells(
+          body.data.flags.vtta.dndbeyond.spells
+        );
+        spells = spells.map((spell) => spell.data);
+        await npc.createManyEmbeddedEntities("OwnedItem", spells);
+      }
     } else {
       // create the new npc
       npc = await createNPC(body.data, {
@@ -224,7 +244,6 @@ let addNPC = (body) => {
     }
 
     // decide wether to save it into the compendium
-
     if (
       game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE
     ) {

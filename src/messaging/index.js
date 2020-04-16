@@ -150,13 +150,15 @@ class EventPort {
               );
             });
 
-            persona = game.actors.entities.find(
-              (actor) => actor.id === token.actorId
-            );
+            if (token) {
+              persona = game.actors.entities.find(
+                (actor) => actor.id === token.actorId
+              );
 
-            // overwrite the name for the roll
-            if (token.actorData.name) {
-              persona.data.name = token.actorData.name;
+              // overwrite the name for the roll
+              if (token.actorData.name) {
+                persona.data.name = token.actorData.name;
+              }
             }
           }
           if (persona === undefined) {
