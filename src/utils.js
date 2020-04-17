@@ -65,6 +65,16 @@ let utils = {
 
     return nearestHit;
   },
+  hasChosenCharacterOption: (data, optionName) => {
+    const classOptions = [
+      data.character.options.race,
+      data.character.options.class,
+      data.character.options.feat,
+    ].flat().find(option =>
+      option.definition.name === optionName
+    );
+    return !!classOptions;
+  },
   filterBaseModifiers: (data, type, subType=null, restriction=["", null]) => {
     const modifiers = [
       data.character.modifiers.class,
@@ -101,7 +111,7 @@ let utils = {
   calculateModifier: val => {
     return Math.floor((val - 10) / 2);
   },
-  parseDiceString: str => {
+  parseDiceString: (str, mods="") => {
     // sanitizing possible inputs a bit
     str = str
       .toLowerCase()
@@ -114,15 +124,16 @@ let utils = {
     let bonuses = [];
 
     while (str.search(/[+-]*\d+d?\d*/) !== -1) {
-      let result = str.match(/([+-]*)(\d+)(d?)(\d*)/);
+      const result = str.match(/([+-]*)(\d+)(d?)(\d*)/);
       str = str.replace(result[0], "");
 
-      // sign. We only take the sign standing exactely in front of the dice string
+      // sign. We only take the sign standing exactly in front of the dice string
       // so +-1d8 => -1d8. Just as a failsave
-      let sign =
+      const sign =
         result[1] === "" ? "+" : result[1].substr(result[1].length - 1, 1);
-      let count = result[2];
-      let die = result[4];
+      const count = result[2];
+      const die = result[4];
+
       if (result[3] === "d") {
         dice.push({
           sign: sign,
@@ -169,20 +180,21 @@ let utils = {
       }
     }
 
-    let result = {
+    const diceString = dice.reduce((prev, cur) => {
+        return (
+          prev +
+          " " +
+          (cur.count >= 0 && prev !== ""
+            ? `${cur.sign}${cur.count}d${cur.die}`
+            : `${cur.count}d${cur.die}`)
+        );
+      }, "");
+    const resultBonus = (bonus === 0 ? "" : bonus > 0 ? ` + ${bonus}` : ` ${bonus}`);
+
+    const result = {
       dice: dice,
       bonus: bonus,
-      diceString: (
-        dice.reduce((prev, cur) => {
-          return (
-            prev +
-            " " +
-            (cur.count >= 0 && prev !== ""
-              ? `${cur.sign}${cur.count}d${cur.die}`
-              : `${cur.count}d${cur.die}`)
-          );
-        }, "") + (bonus === 0 ? "" : bonus > 0 ? ` +${bonus}` : ` ${bonus}`)
-      ).trim()
+      diceString: (diceString + mods + resultBonus).trim()
     };
     return result;
   },
