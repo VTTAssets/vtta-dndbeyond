@@ -631,6 +631,7 @@ const DICTIONARY = {
       { name: "Paladin", value: "prepared" },
       { name: "Druid", value: "prepared" },
       { name: "Warlock", value: "pact" },
+      { name: "Fighter", value: "prepared" },
     ],
     activationTypes: [
       { activationType: 0, value: "none" },
