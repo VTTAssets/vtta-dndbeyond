@@ -34,22 +34,22 @@ let get5EBuiltIn = data => {
 
   // powerful build/equine build
   results.powerfulBuild = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Equine Build" || trait.name === "Powerful Build"
+    trait.definition.name === "Equine Build" || trait.definition.name === "Powerful Build"
     ).length > 0;
 
-    // savage attacks
+  // savage attacks
   results.savageAttacks = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Savage Attacks"
+    trait.definition.name === "Savage Attacks"
     ).length > 0;
   
-    // halfling lucky
+  // halfling lucky
   results.halflingLucky = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Lucky"
+    trait.definition.name === "Lucky"
     ).length > 0;
-  
-    // elven accuracy
+
+  // elven accuracy
   results.elvenAccuracy = data.character.feats.filter(feat =>
-    feat.name === "Elven Accuracy"
+    feat.definition.name === "Elven Accuracy"
     ).length > 0;
  
   // alert feat
@@ -504,18 +504,20 @@ let getSpeed = (data, character) => {
       modifier.type === "bonus" && modifier.subType === "speed"
   ).reduce((speed, feat) => speed + feat.value, 0);
 
+  //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
     // is there a 'inntate-speed-[type]ing' race/class modifier?
     let innateSpeeds = data.character.modifiers.race.filter(
       modifier =>
         modifier.type === "set" &&
-        modifier.subType === `innate-speed-${type}'ing`
+        modifier.subType === `innate-speed-${type}ing`
     );
     let base = movementTypes[type];
+
     innateSpeeds.forEach(speed => {
+      // take the highest value
       if (speed.value > base) {
-        // take the highest value
-        base = max;
+        base = speed.value;
       }
     });
     // overwrite the (perhaps) changed value
