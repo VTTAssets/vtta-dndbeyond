@@ -2,9 +2,9 @@
   "name": "vtta-dndbeyond",
   "title": "Virtual Tabletop Assets - D&D Beyond Integration",
   "description": "Bringing your licensed content from D&D Beyond into Foundry VTT",
-  "version": "2.1.2",
-  "minimumCoreVersion": "0.4.4",
-  "compatibleCoreVersion": "0.5.4",
+  "version": "2.1.3",
+  "minimumCoreVersion": "0.5.5",
+  "compatibleCoreVersion": "0.5.5",
   "author": "Sebastian Will",
   "authors": [
     {

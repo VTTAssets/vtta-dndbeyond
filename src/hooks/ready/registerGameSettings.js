@@ -1,4 +1,4 @@
-import SettingsExtender from "./settingsExtender.js";
+import SettingsExtender from "./settings-extender.js";
 SettingsExtender();
 
 export default function () {
@@ -52,12 +52,6 @@ export default function () {
     choices: itemCompendiums,
   });
 
-  //   game.settings.set('vtta-dndbeyond', 'entity-item-compendium', null);
-  // Promise {<pending>}
-  // game.settings.set('vtta-dndbeyond', 'entity-spell-compendium', null);
-  // Promise {<pending>}
-  // game.settings.set('vtta-dndbeyond', 'entity-monster-compendium', null);
-
   game.settings.register("vtta-dndbeyond", "entity-spell-compendium", {
     name: "vtta-dndbeyond.entity-spell-compendium.name",
     hint: "vtta-dndbeyond.entity-spell-compendium.hint",
@@ -77,40 +71,4 @@ export default function () {
     isSelect: true,
     choices: actorCompendiums,
   });
-
-  // check for failed registered settings
-  let hasErrors = false;
-  if (game.settings.settings instanceof Map) {
-    for (let s of game.settings.settings.values()) {
-      if (s.module !== "vtta-dndbeyond") continue;
-      try {
-        game.settings.get(s.module, s.key);
-      } catch (err) {
-        hasErrors = true;
-        ui.notifications.info(
-          `[${s.module}] Erroneous module settings found, resetting to default.`
-        );
-        game.settings.set(s.module, s.key, s.default);
-      }
-    }
-  } else {
-    for (let prop in game.settings.settings) {
-      let s = game.settings.settings[prop];
-      if (s.module !== "vtta-dndbeyond") continue;
-      try {
-        game.settings.get(s.module, s.key);
-      } catch (err) {
-        hasErrors = true;
-        ui.notifications.info(
-          `[${s.module}] Erroneous module settings found, resetting to default.`
-        );
-        game.settings.set(s.module, s.key, s.default);
-      }
-    }
-  }
-  if (hasErrors) {
-    ui.notifications.warn(
-      "Please review the module settings to re-adjust them to your desired configuration."
-    );
-  }
 }

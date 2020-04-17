@@ -16,10 +16,26 @@ const retrieveSpells = async (spells) => {
   if (compendium) {
     const index = await compendium.getIndex();
     for (let i = 0; i < spells.length; i++) {
-      let spell = index.find((entry) => entry.name.toLowerCase() === spells[i]);
+      let spell = undefined;
+      switch (typeof spells[i]) {
+        case "string":
+          spell = index.find((entry) => entry.name.toLowerCase() === spells[i]);
+          break;
+        case "object":
+          const spellId = spells[i].id || spells[i]._id;
+          spell = index.find((entry) => {
+            const id = entry.id || entry._id;
+            return id === spellId;
+          });
+          break;
+        default:
+          spell = undefined;
+      }
+
       if (spell) {
-        console.log("Querying compendium for spell with ID " + spell._id);
-        spell = await compendium.getEntity(spell._id);
+        const spellId = spell.id || spell._id;
+        console.log("Querying compendium for spell with ID " + spellId);
+        spell = await compendium.getEntity(spellId);
         spellResult.push(spell);
       }
     }

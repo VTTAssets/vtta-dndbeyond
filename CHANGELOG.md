@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3] Foundry 0.5.5 compatability release
+
+**Note**: This release is available for 0.5.5 and up only.
+
+- Included the officially release settings-extender instead of my patched one
+- Added failsaves for corrupt game settings stored in the database
+
 ## [2.1.2] Hotfix for Spell imports
 
 ## [2.1.1] Hotfix for pre-0.5.4
@@ -10,7 +17,7 @@ This release is something special: @MrPrimate dedicated his time to work on impr
 
 That means that magical items are having now specific spells imbued into them which brings a whole lot of comfort in dealing with those in your regular game. Please check out the module at his [Gitlab Repository](https://gitlab.com/riccisi/foundryvtt-magic-items) if that sounds interesting to you.
 
-One change in general usage is included in this release and is up for discussion: The default import target is now always the current world, that means instead of having two buttons on e.g. a monster page, there is just one: "Import into Foundry". You can still choose to import the monsters and spells into your target compendiums, but you can now choose to just ignore the imports just keep everything at world-level. 
+One change in general usage is included in this release and is up for discussion: The default import target is now always the current world, that means instead of having two buttons on e.g. a monster page, there is just one: "Import into Foundry". You can still choose to import the monsters and spells into your target compendiums, but you can now choose to just ignore the imports just keep everything at world-level.
 
 _Note_: The chrome extension fixes need a Google review. The update will be installed automatically when it is available, and I am planning to incorporate at least one bigger feature I had in mind, so this will take some more time to get rolled out.
 
@@ -18,15 +25,17 @@ _Note_: The chrome extension fixes need a Google review. The update will be inst
 
 - The [B]-Button makes a prominent re-appearance on NPC sheets that were imported via the Chrome extension. The buttons opens up the popup to the D&D Beyond source so you can quickly refer to that site in the heat of the battle. You can even roll from there
 - So many improvements coming in from MrPrimate:
+
   - Support for Divine Smite
-  - Eldritch Blast *pewpew*
+  - Eldritch Blast _pewpew_
   - Spell scaling fixes
-  - Support for the built-in feats in the DND5e system like halflings luck and others 
+  - Support for the built-in feats in the DND5e system like halflings luck and others
   - Speed boni granted by certain features
-  - AC coming in correctly for Tortles and Lizardfolk and 
-  - unarmed attacks are now using the correct die. Phew! the list goes on an on and on... 
-  
+  - AC coming in correctly for Tortles and Lizardfolk and
+  - unarmed attacks are now using the correct die. Phew! the list goes on an on and on...
+
   You are amazing, MrPrimate.
+
 - Chrome Extension: Added support of Monster rolls for "Named Actors". If you have several tokens based of the same actor on the currently active scene and if you have renamed those actors you will be able to choose which alias should be displayed on the chatlog message of the roll.
 - Chrome Extension: Added user feedback on importing entities to Foundry.
 
