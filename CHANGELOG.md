@@ -7,6 +7,11 @@
 - Included the officially release settings-extender instead of my patched one
 - Added failsaves for corrupt game settings stored in the database
 
+### Fixed
+
+- Speed and Class Feature fixes (thanks @MrPrimate!)
+- Great Weapon Fighting & Dueling support (thanks @MrPrimate)
+
 ## [2.1.2] Hotfix for Spell imports
 
 ## [2.1.1] Hotfix for pre-0.5.4
