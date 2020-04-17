@@ -34,22 +34,22 @@ let get5EBuiltIn = data => {
 
   // powerful build/equine build
   results.powerfulBuild = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Equine Build" || trait.name === "Powerful Build"
+    trait.definition.name === "Equine Build" || trait.definition.name === "Powerful Build"
     ).length > 0;
 
-    // savage attacks
+  // savage attacks
   results.savageAttacks = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Savage Attacks"
+    trait.definition.name === "Savage Attacks"
     ).length > 0;
   
-    // halfling lucky
+  // halfling lucky
   results.halflingLucky = data.character.race.racialTraits.filter(trait =>
-    trait.name === "Lucky"
+    trait.definition.name === "Lucky"
     ).length > 0;
-  
-    // elven accuracy
+
+  // elven accuracy
   results.elvenAccuracy = data.character.feats.filter(feat =>
-    feat.name === "Elven Accuracy"
+    feat.definition.name === "Elven Accuracy"
     ).length > 0;
  
   // alert feat
