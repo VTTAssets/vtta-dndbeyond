@@ -504,18 +504,20 @@ let getSpeed = (data, character) => {
       modifier.type === "bonus" && modifier.subType === "speed"
   ).reduce((speed, feat) => speed + feat.value, 0);
 
+  //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
     // is there a 'inntate-speed-[type]ing' race/class modifier?
     let innateSpeeds = data.character.modifiers.race.filter(
       modifier =>
         modifier.type === "set" &&
-        modifier.subType === `innate-speed-${type}'ing`
+        modifier.subType === `innate-speed-${type}ing`
     );
     let base = movementTypes[type];
+
     innateSpeeds.forEach(speed => {
+      // take the highest value
       if (speed.value > base) {
-        // take the highest value
-        base = max;
+        base = speed.value;
       }
     });
     // overwrite the (perhaps) changed value
