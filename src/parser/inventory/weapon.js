@@ -184,21 +184,30 @@ let getMagicalBonus = data => {
 /**
  *
  * @param {obj} data item data
- * @param {obj} weaponProperties weapon properties
+ * @param {obj} flags 
  * /* damage: { parts: [], versatile: '' }, * /
  */
-let getDamage = (data) => {
+let getDamage = (data, flags) => {
   const magicalDamageBonus = getMagicalBonus(data);
-  let versatile = data.definition.properties.find(
+  // we can safely make these assumptions about GWF and Dueling because the
+  // flags are only added for melee attacks
+  const greatWeaponFighting = (!!flags.classFeatures.greatWeaponFighting) ? "r<=2" : ""
+  const dueling = (!!flags.classFeatures.dueling) ? " + 2" : ""
+  const versatile = data.definition.properties.filter(
     property => property.name === "Versatile"
+  ).map(versatile => {
+    if (versatile && versatile.notes) {
+      return utils.parseDiceString(
+        versatile.notes + `+ ${magicalDamageBonus}`,
+        greatWeaponFighting
+        ).diceString + " + @mod";
+    } else {
+      return "";
+    }
+  })[0];
+  const twoHanded = data.definition.properties.find(
+    property => property.name === "Two-Handed"
   );
-  if (versatile && versatile.notes) {
-    versatile =
-      utils.parseDiceString(versatile.notes + `+${magicalDamageBonus}`)
-        .diceString + " + @mod";
-  } else {
-    versatile = "";
-  }
 
   let parts = [];
 
@@ -209,10 +218,15 @@ let getDamage = (data) => {
     data.definition.damage.diceString &&
     data.definition.damageType
   ) {
+    // if we have greatweapon fighting style and this is two handed, add the roll tweak
+    // else if we have duelling we add the bonus here (assumption- if you have dueling
+    // you're going to use it! (DDB also makes this assumption))
+    const fightingStyleMod = (!!twoHanded) ? greatWeaponFighting : dueling;
     // if there is a magical damage bonus, it probably should only be included into the first damage part.
     parts.push([
       utils.parseDiceString(
-        data.definition.damage.diceString + `+${magicalDamageBonus}`
+        data.definition.damage.diceString + `+ ${magicalDamageBonus}`,
+        fightingStyleMod
       ).diceString + " + @mod",
       utils.findInConfig("damageTypes", data.definition.damageType)
     ]);
@@ -235,6 +249,13 @@ let getDamage = (data) => {
         }
       }
     });
+
+  // add damage modifiers from other sources like improved divine smite
+  if (flags.damage.parts) {
+    flags.damage.parts.forEach(part => {
+      parts.push(part);
+    }); 
+  }
 
   const result = {
     parts: parts,
@@ -360,12 +381,25 @@ export default function parseWeapon(data, character, flags) {
   // we leave that as-is
 
   /* damage: { parts: [], versatile: '' }, */
-  weapon.data.damage = getDamage(data);
+  weapon.data.damage = getDamage(data, flags);
 
-  if (flags.damage.parts) {
-    flags.damage.parts.forEach(part => {
-      weapon.data.damage.parts.push(part);
-    }); 
+  // if using better rolls lets add some useful QOL information.
+  // marks context as magical attack and makes alt click a versatile damage click
+  weapon.flags.betterRolls5e = {
+    "quickDamage": {
+        "context": {
+            "0": (getMagicalBonus(data) > 0) ? "Magical" : ""
+        },
+        "value": {
+            "0": true
+        },
+        "altValue": {
+            "0": true
+        }
+    },
+    "quickVersatile": {
+        "altValue": true
+    }
   }
 
   /* formula: '', */
