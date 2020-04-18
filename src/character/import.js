@@ -95,13 +95,18 @@ export default class CharacterImport extends Application {
             });
             result = await compendium.importEntity(searchResult);
           }
-          const itemUpdate = {
-            id: result._id,
-            pack: compendium.collection,
-            img: result.img,
-            name: item.name,
-          } 
-          items.push(itemUpdate)
+
+          result.forEach(r => {
+            const itemUpdate = {
+              _id: r._id,
+              id: r._id,
+              pack: compendium.collection,
+              img: r.img,
+              name: item.name,
+            };
+            items.push(itemUpdate);
+          })
+          
         }
       }
     }
