@@ -1,6 +1,18 @@
 # Changelog
 
-## [2.1.3] Foundry 0.5.5 compatability release
+## [2.1.5]
+
+### Fixed
+
+- Adjusted to the changed lookup id for compendium lookups
+- Characters were not able to get updated in compendiums even if the correct setting was applied
+- Improved parsing of magic items
+
+### Added 
+
+- Initial support for Bloodhunter and Eldritch Knight
+
+## [2.1.4] Foundry 0.5.5 compatability release
 
 **Note**: This release is available for 0.5.5 and up only.
 

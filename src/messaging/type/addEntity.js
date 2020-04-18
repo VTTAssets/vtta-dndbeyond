@@ -280,7 +280,10 @@ let addNPC = (body) => {
               entity.name.toLowerCase() === body.data.name.toLowerCase()
           );
           if (entity) {
-            if (SAVE_ALL) {
+            if (
+              game.settings.get("vtta-dndbeyond", "entity-import-policy") ===
+              SAVE_ALL
+            ) {
               npc.data._id = entity.id;
               npc = await compendium.updateEntity(npc.data);
             }
