@@ -55,7 +55,7 @@ let getUses = data => {
       value: data.limitedUse.numberUsed
         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
         : data.limitedUse.maxUses,
-      per: resetType.value,
+      per: (!!resetType) ? resetType.value : "",
       description: data.limitedUse.resetTypeDescription,
     };
   } else {
