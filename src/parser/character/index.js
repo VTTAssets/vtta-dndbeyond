@@ -56,12 +56,12 @@ let get5EBuiltIn = data => {
   // handled in initiative function
 
   // advantage on initiative
-  results.initiativeAdv = filterModifiers(
+  results.initiativeAdv = utils.filterBaseModifiers(
     data, "advantage", "initiative"
     ).length > 0;
 
   // initiative half prof
-  results.initiativeHalfProf = filterModifiers(
+  results.initiativeHalfProf = utils.filterBaseModifiers(
     data, "half-proficiency-round-up", "initiative"
     ).length > 0;
 
@@ -116,7 +116,7 @@ let getAbilities = (data, character) => {
       data.character.overrideStats.find(stat => stat.id === ability.id).value ||
       0;
 
-    const bonus = filterModifiers(data, "bonus", `${ability.long}-score`)
+    const bonus = utils.filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter(mod =>
         mod.entityId === ability.id
         )
@@ -437,7 +437,7 @@ let getHitpoints = (data, character) => {
   const removedHitPoints = data.character.removedHitPoints || 0;
   const temporaryHitPoints = data.character.temporaryHitPoints || 0;
 
-  const hitPointsPerLevel = filterModifiers(data, "bonus", "hit-points-per-level")
+  const hitPointsPerLevel = utils.filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
   baseHitPoints += hitPointsPerLevel * character.data.details.level.value;
 
@@ -455,7 +455,7 @@ let getHitpoints = (data, character) => {
 
 let getInitiative = (data, character) => {
   const initiativeBonus = getGlobalBonus(
-    filterModifiers(data, "bonus", "initiative"),
+    utils.filterBaseModifiers(data, "bonus", "initiative"),
     character,
     "initiative"
   );
@@ -917,35 +917,6 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
 }
 
 /**
- * Gets global bonuses to attacks
- * Typically these come from
-  "abilities": {
-    "check": "",
-    "save": "",
-    "skill": ""
-  },
- * @param {*} data 
- * @param {*} character 
- */
-let filterModifiers = (data, type, subType) => {
-  const modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.feat,
-    utils.getActiveItemModifiers(data),
-  ]
-    .flat()
-    .filter(modifier =>
-      modifier.type === type &&
-      modifier.subType === subType
-    );
-
-  return modifiers;
-};
-
-
-/**
  * Gets global bonuses to attacks and damage
  * Supply a list of maps that have the fvtt tyoe and ddb sub type, e,g,
  * { fvttType: "attack", ddbSubType: "magic" }
@@ -977,7 +948,7 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 
   lookupTable.forEach(b => {
     const lookupResult = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1080,7 +1051,7 @@ let getBonusAbilities = (data, character) => {
 
   bonusLookup.forEach(b => {
     result[b.fvttType] = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1096,7 +1067,7 @@ let getBonusSpellDC = (data, character) => {
 
   bonusLookup.forEach(b => {
     result[b.fvttType] = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1286,13 +1257,7 @@ let getLanguages = data => {
   let languages = [];
   let custom = [];
 
-  let modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background
-  ]
-    .flat()
-    .filter(modifier => modifier.type === "language");
+  const modifiers = utils.filterBaseModifiers(data, language.friendlySubtypeName);
 
   modifiers.forEach(language => {
     let result = DICTIONARY.character.languages.find(
@@ -1322,16 +1287,8 @@ let getGenericConditionAffect = (data, condition, typeId) => {
     .filter(type => type.kind === condition && type.type === typeId)
     .map(type => type.value);
 
-  let result = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    utils.getActiveItemModifiers(data),
-    data.character.modifiers.feat,
-  ]
-    .flat()
+  let result = utils.filterBaseModifiers(data, condition)
     .filter(modifier =>
-      modifier.type === condition &&
       modifier.isGranted &&
       damageTypes.includes(modifier.subType)
     )
@@ -1547,10 +1504,7 @@ let getToken = data => {
   }
 
   if (!hasDarkvision) {
-    let sense = data.character.modifiers.race.find(
-      modifier =>
-        modifier.type === "set-base" && modifier.subType === "darkvision"
-    );
+    const sense = utils.filterBaseModifiers(data, "set-base", "darkvision");
     if (sense && sense.value) {
       senses.push({ name: sense.friendlySubtypeName, value: sense.value });
     }
