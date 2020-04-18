@@ -63,10 +63,10 @@ export default class CharacterImport extends Application {
       );
 
       if (compendium) {
-        let index = await compendium.getIndex();
+        const index = await compendium.getIndex();
 
         for (let i = 0; i < this.result[type].length; i++) {
-          let item = this.result[type][i];
+          const item = this.result[type][i];
           let result;
 
           utils.log(
@@ -80,10 +80,10 @@ export default class CharacterImport extends Application {
             this.showCurrentTask(
               `Updating item ${item.name} in compendium ${compendiumLabel}`
             );
-            item._id = searchResult.id;
+            item._id = searchResult._id;
             result = await compendium.updateEntity(item);
           } else if (searchResult) {
-            result = await compendium.getEntity(searchResult.id);
+            result = await compendium.getEntity(searchResult._id);
           } else if (!searchResult) {
             // create the item first
             this.showCurrentTask(
@@ -96,13 +96,17 @@ export default class CharacterImport extends Application {
             result = await compendium.importEntity(searchResult);
           }
 
-          let itemUpdate = {
-            id: result.id,
-            pack: compendium.collection,
-            img: result.img,
-            name: item.name,
-          } 
-          items.push(itemUpdate)
+          result.forEach(r => {
+            const itemUpdate = {
+              _id: r._id,
+              id: r._id,
+              pack: compendium.collection,
+              img: r.img,
+              name: item.name,
+            };
+            items.push(itemUpdate);
+          })
+          
         }
       }
     }
