@@ -66,7 +66,6 @@ let getSpellPreparationMode = data => {
   let prepMode = "prepared";
   // If always prepared mark as such, if not then check to see if prepared
   let prepared = data.alwaysPrepared || data.prepared;
-console.log(data.flags.vtta.dndbeyond.class);
   // handle classSpells
   if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
     let classPrepMode = utils.findByProperty(
