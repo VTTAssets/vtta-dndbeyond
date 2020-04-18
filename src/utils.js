@@ -87,7 +87,7 @@ let utils = {
       .filter(modifier =>
         modifier.type === type &&
         ((subType !== null) ? modifier.subType === subType : true ) &&
-        restriction.find(r => r === modifier.restriction)
+        restriction.includes(modifier.restriction)
       );
 
     return modifiers;
