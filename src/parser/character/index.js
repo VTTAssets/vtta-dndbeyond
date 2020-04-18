@@ -1257,7 +1257,7 @@ let getLanguages = data => {
   let languages = [];
   let custom = [];
 
-  const modifiers = utils.filterBaseModifiers(data, language.friendlySubtypeName);
+  const modifiers = utils.filterBaseModifiers(data, "language");
 
   modifiers.forEach(language => {
     let result = DICTIONARY.character.languages.find(
