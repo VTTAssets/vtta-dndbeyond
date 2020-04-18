@@ -56,12 +56,12 @@ let get5EBuiltIn = data => {
   // handled in initiative function
 
   // advantage on initiative
-  results.initiativeAdv = filterModifiers(
+  results.initiativeAdv = utils.filterBaseModifiers(
     data, "advantage", "initiative"
     ).length > 0;
 
   // initiative half prof
-  results.initiativeHalfProf = filterModifiers(
+  results.initiativeHalfProf = utils.filterBaseModifiers(
     data, "half-proficiency-round-up", "initiative"
     ).length > 0;
 
@@ -116,18 +116,9 @@ let getAbilities = (data, character) => {
       data.character.overrideStats.find(stat => stat.id === ability.id).value ||
       0;
 
-    const bonus = [
-      data.character.modifiers.race,
-      data.character.modifiers.item,
-      data.character.modifiers.feat,
-      data.character.modifiers.background,
-      data.character.modifiers.class,
-    ]
-      .flat()
+    const bonus = utils.filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter(mod =>
-        mod.type === "bonus" &&
-        mod.entityId === ability.id &&
-        mod.subType === `${ability.long}-score`
+        mod.entityId === ability.id
         )
       .reduce((prev, cur) => prev + cur.value, 0);
 
@@ -438,26 +429,15 @@ let getArmorClass = (data, character) => {
 };
 
 let getHitpoints = (data, character) => {
-  let constitutionHP =
+  const constitutionHP =
     character.data.abilities.con.mod * character.data.details.level.value;
   let baseHitPoints = data.character.baseHitPoints || 0;
-  let bonusHitPoints = data.character.bonusHitPoints || 0;
-  let overrideHitPoints = data.character.overrideHitPoints || 0;
-  let removedHitPoints = data.character.removedHitPoints || 0;
-  let temporaryHitPoints = data.character.temporaryHitPoints || 0;
+  const bonusHitPoints = data.character.bonusHitPoints || 0;
+  const overrideHitPoints = data.character.overrideHitPoints || 0;
+  const removedHitPoints = data.character.removedHitPoints || 0;
+  const temporaryHitPoints = data.character.temporaryHitPoints || 0;
 
-  let hitPointsPerLevel = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.feat,
-    data.character.modifiers.item,
-  ]
-    .flat()
-    .filter(
-      modifier =>
-        modifier.type === "bonus" && modifier.subType === "hit-points-per-level"
-    )
+  const hitPointsPerLevel = utils.filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
   baseHitPoints += hitPointsPerLevel * character.data.details.level.value;
 
@@ -475,7 +455,7 @@ let getHitpoints = (data, character) => {
 
 let getInitiative = (data, character) => {
   const initiativeBonus = getGlobalBonus(
-    filterModifiers(data, "bonus", "initiative"),
+    utils.filterBaseModifiers(data, "bonus", "initiative"),
     character,
     "initiative"
   );
@@ -841,7 +821,7 @@ let getSkills = (data, character) => {
     let modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
-      data.character.modifiers.item,
+      utils.getActiveItemModifiers(data),
       data.character.modifiers.feat,
       data.character.modifiers.background
     ]
@@ -936,56 +916,6 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   return sum;
 }
 
-
-/**
- * Item modifiers require us to make sure the item is equipped and attuned if requires
- */
-let getActiveItemModifiers = (data) => {
-  // get items we are going to interact on
-  const targetItems = data.character.inventory
-    .filter(item => 
-      (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
-      (item.isAttuned) || // if it is attuned (assume equipped)
-      (!item.definition.canAttune && item.equipped) // can't attune but is equipped
-    );
-
-  const modifiers = data.character.modifiers.item
-    .filter(mod =>
-      targetItems.filter(item => item.id === mod.componentId)
-    );
-
-  return modifiers;
-};
-
-/**
- * Gets global bonuses to attacks
- * Typically these come from
-  "abilities": {
-    "check": "",
-    "save": "",
-    "skill": ""
-  },
- * @param {*} data 
- * @param {*} character 
- */
-let filterModifiers = (data, type, subType) => {
-  const modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.feat,
-    getActiveItemModifiers(data),
-  ]
-    .flat()
-    .filter(modifier =>
-      modifier.type === type &&
-      modifier.subType === subType
-    );
-
-  return modifiers;
-};
-
-
 /**
  * Gets global bonuses to attacks and damage
  * Supply a list of maps that have the fvtt tyoe and ddb sub type, e,g,
@@ -1018,7 +948,7 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 
   lookupTable.forEach(b => {
     const lookupResult = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1121,7 +1051,7 @@ let getBonusAbilities = (data, character) => {
 
   bonusLookup.forEach(b => {
     result[b.fvttType] = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1137,7 +1067,7 @@ let getBonusSpellDC = (data, character) => {
 
   bonusLookup.forEach(b => {
     result[b.fvttType] = getGlobalBonus(
-      filterModifiers(data, "bonus", b.ddbSubType),
+      utils.filterBaseModifiers(data, "bonus", b.ddbSubType),
       character,
       b.ddbSubType
     );
@@ -1327,13 +1257,7 @@ let getLanguages = data => {
   let languages = [];
   let custom = [];
 
-  let modifiers = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background
-  ]
-    .flat()
-    .filter(modifier => modifier.type === "language");
+  const modifiers = utils.filterBaseModifiers(data, "language");
 
   modifiers.forEach(language => {
     let result = DICTIONARY.character.languages.find(
@@ -1363,16 +1287,8 @@ let getGenericConditionAffect = (data, condition, typeId) => {
     .filter(type => type.kind === condition && type.type === typeId)
     .map(type => type.value);
 
-  let result = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.item,
-    data.character.modifiers.feat,
-  ]
-    .flat()
+  let result = utils.filterBaseModifiers(data, condition)
     .filter(modifier =>
-      modifier.type === condition &&
       modifier.isGranted &&
       damageTypes.includes(modifier.subType)
     )
@@ -1588,10 +1504,7 @@ let getToken = data => {
   }
 
   if (!hasDarkvision) {
-    let sense = data.character.modifiers.race.find(
-      modifier =>
-        modifier.type === "set-base" && modifier.subType === "darkvision"
-    );
+    const sense = utils.filterBaseModifiers(data, "set-base", "darkvision");
     if (sense && sense.value) {
       senses.push({ name: sense.friendlySubtypeName, value: sense.value });
     }
