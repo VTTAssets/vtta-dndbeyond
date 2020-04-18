@@ -66,7 +66,7 @@ let getSpellPreparationMode = data => {
   let prepMode = "prepared";
   // If always prepared mark as such, if not then check to see if prepared
   let prepared = data.alwaysPrepared || data.prepared;
-
+console.log(data.flags.vtta.dndbeyond.class);
   // handle classSpells
   if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
     let classPrepMode = utils.findByProperty(
@@ -80,7 +80,7 @@ let getSpellPreparationMode = data => {
     // Warlocks should use Pact spells, but these are not yet handled well
     // in VTTA (no slots are showed). Instead we mark as prepared, and 
     // pretend they are regular spells.
-    if (data.flags.vtta.dndbeyond.class === "Warlock") {
+    if (["Warlock", "Blood Hunter"].includes(data.flags.vtta.dndbeyond.class)) {
       prepMode = "prepared";
       prepared = true;
     };
