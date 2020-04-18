@@ -116,18 +116,9 @@ let getAbilities = (data, character) => {
       data.character.overrideStats.find(stat => stat.id === ability.id).value ||
       0;
 
-    const bonus = [
-      data.character.modifiers.race,
-      data.character.modifiers.item,
-      data.character.modifiers.feat,
-      data.character.modifiers.background,
-      data.character.modifiers.class,
-    ]
-      .flat()
+    const bonus = filterModifiers(data, "bonus", `${ability.long}-score`)
       .filter(mod =>
-        mod.type === "bonus" &&
-        mod.entityId === ability.id &&
-        mod.subType === `${ability.long}-score`
+        mod.entityId === ability.id
         )
       .reduce((prev, cur) => prev + cur.value, 0);
 
@@ -438,26 +429,15 @@ let getArmorClass = (data, character) => {
 };
 
 let getHitpoints = (data, character) => {
-  let constitutionHP =
+  const constitutionHP =
     character.data.abilities.con.mod * character.data.details.level.value;
   let baseHitPoints = data.character.baseHitPoints || 0;
-  let bonusHitPoints = data.character.bonusHitPoints || 0;
-  let overrideHitPoints = data.character.overrideHitPoints || 0;
-  let removedHitPoints = data.character.removedHitPoints || 0;
-  let temporaryHitPoints = data.character.temporaryHitPoints || 0;
+  const bonusHitPoints = data.character.bonusHitPoints || 0;
+  const overrideHitPoints = data.character.overrideHitPoints || 0;
+  const removedHitPoints = data.character.removedHitPoints || 0;
+  const temporaryHitPoints = data.character.temporaryHitPoints || 0;
 
-  let hitPointsPerLevel = [
-    data.character.modifiers.class,
-    data.character.modifiers.race,
-    data.character.modifiers.background,
-    data.character.modifiers.feat,
-    data.character.modifiers.item,
-  ]
-    .flat()
-    .filter(
-      modifier =>
-        modifier.type === "bonus" && modifier.subType === "hit-points-per-level"
-    )
+  const hitPointsPerLevel = filterModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
   baseHitPoints += hitPointsPerLevel * character.data.details.level.value;
 
@@ -841,7 +821,7 @@ let getSkills = (data, character) => {
     let modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
-      data.character.modifiers.item,
+      utils.getActiveItemModifiers(data),
       data.character.modifiers.feat,
       data.character.modifiers.background
     ]
@@ -936,27 +916,6 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   return sum;
 }
 
-
-/**
- * Item modifiers require us to make sure the item is equipped and attuned if requires
- */
-let getActiveItemModifiers = (data) => {
-  // get items we are going to interact on
-  const targetItems = data.character.inventory
-    .filter(item => 
-      (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
-      (item.isAttuned) || // if it is attuned (assume equipped)
-      (!item.definition.canAttune && item.equipped) // can't attune but is equipped
-    );
-
-  const modifiers = data.character.modifiers.item
-    .filter(mod =>
-      targetItems.filter(item => item.id === mod.componentId)
-    );
-
-  return modifiers;
-};
-
 /**
  * Gets global bonuses to attacks
  * Typically these come from
@@ -974,7 +933,7 @@ let filterModifiers = (data, type, subType) => {
     data.character.modifiers.race,
     data.character.modifiers.background,
     data.character.modifiers.feat,
-    getActiveItemModifiers(data),
+    utils.getActiveItemModifiers(data),
   ]
     .flat()
     .filter(modifier =>
@@ -1367,7 +1326,7 @@ let getGenericConditionAffect = (data, condition, typeId) => {
     data.character.modifiers.class,
     data.character.modifiers.race,
     data.character.modifiers.background,
-    data.character.modifiers.item,
+    utils.getActiveItemModifiers(data),
     data.character.modifiers.feat,
   ]
     .flat()
