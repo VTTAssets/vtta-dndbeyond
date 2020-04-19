@@ -50,6 +50,26 @@ export default function parseClasses(ddb, character) {
         characterClass.subclassDefinition.description;
     }
 
+    // There class object supports skills granted by the class.
+    // Lets find and add them for future compatibility.
+    const classIds =  characterClass.definition.classFeatures
+      .map(feature => feature.id)
+      .concat((!!characterClass.subclassDefinition) ?
+        characterClass.subclassDefinition.classFeatures.map(feature => feature.id) :
+        []);
+
+    const profs = DICTIONARY.character.skills.map(skill => {
+      return ddb.character.modifiers.class
+      .filter(mod =>
+        mod.friendlySubtypeName === skill.label &&
+        classIds.includes(mod.componentId))
+      .map(f => skill.name);
+    }).flat();
+
+    item.data.skills = {
+      value: profs
+    }
+
     items.push(item);
   });
 
