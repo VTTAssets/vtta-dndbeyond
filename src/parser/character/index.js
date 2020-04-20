@@ -29,7 +29,9 @@ let get5EBuiltIn = data => {
     "initiativeAdv": false,
     "initiativeAlert": false,
     "initiativeHalfProf": false,
-    "weaponCriticalThreshold": 20
+    "weaponCriticalThreshold": 20,
+    "observantFeat": false,
+    "remarkableAthlete": false,
   };
 
   // powerful build/equine build
@@ -62,11 +64,17 @@ let get5EBuiltIn = data => {
 
   // initiative half prof
   results.initiativeHalfProf = utils.filterBaseModifiers(
-    data, "half-proficiency-round-up", "initiative"
+    data, "half-proficiency", "initiative"
+    ).length > 0;
+
+  // observant
+  results.observantFeat = data.character.feats.filter(feat =>
+    feat.definition.name === "Observant"
     ).length > 0;
 
   // weapon critical threshold
   // fighter improved crit
+  // remarkable athlete
   data.character.classes.forEach(cls => {
     if (cls.subclassDefinition) {
       const improvedCritical = 
@@ -77,11 +85,17 @@ let get5EBuiltIn = data => {
         cls.subclassDefinition.classFeatures.filter(feature => 
             feature.name === "Superior Critical"
           ).length > 0;
+      const remarkableAthlete = 
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Remarkable Athlete"
+          ).length > 0;
+
       if (superiorCritical) {
         results.weaponCriticalThreshold = 18
       } else if (improvedCritical) {
         results.weaponCriticalThreshold = 19
       }
+      results.remarkableAthlete = remarkableAthlete;
     }
   });
 
