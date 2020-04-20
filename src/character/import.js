@@ -68,7 +68,6 @@ export default class CharacterImport extends Application {
         for (let i = 0; i < this.result[type].length; i++) {
           const item = this.result[type][i];
           let result;
-
           utils.log(
             `Processing item ${item.name} in compendium ${compendiumLabel}`,
             "character"
@@ -81,32 +80,32 @@ export default class CharacterImport extends Application {
               `Updating item ${item.name} in compendium ${compendiumLabel}`
             );
             item._id = searchResult._id;
-            result = await compendium.updateEntity(item);
+            // update seems to return an array, and without our img
+            await compendium.updateEntity(item);
+            // sp lets fetch afterwards!
+            result = await compendium.getEntity(searchResult._id);
           } else if (searchResult) {
             result = await compendium.getEntity(searchResult._id);
           } else if (!searchResult) {
             // create the item first
             this.showCurrentTask(
-              `Creationg item ${item.name} in compendium ${compendiumLabel}`
+              `Creating item ${item.name} in compendium ${compendiumLabel}`
             );
-            searchResult = await Item.create(item, {
+            const newItem = await Item.create(item, {
               temporary: true,
               displaySheet: false
             });
-            result = await compendium.importEntity(searchResult);
+            result = await compendium.importEntity(newItem);
           }
 
-          result.forEach(r => {
-            const itemUpdate = {
-              _id: r._id,
-              id: r._id,
-              pack: compendium.collection,
-              img: r.img,
-              name: item.name,
-            };
-            items.push(itemUpdate);
-          })
-          
+          const itemUpdate = {
+            _id: result._id,
+            id: result._id,
+            pack: compendium.collection,
+            img: result.img,
+            name: item.name,
+          };
+          items.push(itemUpdate);
         }
       }
     }
