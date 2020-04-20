@@ -50,6 +50,8 @@ export default function parseClasses(ddb, character) {
         characterClass.subclassDefinition.description;
     }
 
+    item.data.hitDice = `d${characterClass.definition.hitDice}`;
+
     items.push(item);
   });
 
