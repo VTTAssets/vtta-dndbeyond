@@ -94,17 +94,17 @@ let utils = {
   },
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
-    const targetItems = data.character.inventory
+    const targetItemIds = data.character.inventory
       .filter(item => 
         (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
-        (item.isAttuned) || // if it is attuned (assume equipped)
+        (item.isAttuned && item.equipped) || // if it is attuned and equipped
+        (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
         (!item.definition.canAttune && item.equipped) // can't attune but is equipped
-      );
+      )
+      .map(item => item.definition.id);
 
     const modifiers = data.character.modifiers.item
-      .filter(mod =>
-        targetItems.filter(item => item.id === mod.componentId)
-      );
+      .filter(mod => targetItemIds.includes(mod.componentId));
 
     return modifiers;
   },
