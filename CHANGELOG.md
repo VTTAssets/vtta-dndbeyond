@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.6] Hotfix
+
+### Fixed
+
+- Fixed a hit die issue for certain classes
+- Fixed compendium updates not working correctly
+  
+### Added
+
+- Feats: Observant, Remarkable Athlete
+- Item affects improvements and skill bonuses
+
 ## [2.1.5]
 
 ### Fixed
