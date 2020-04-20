@@ -862,14 +862,22 @@ let getSkills = (data, character) => {
       Math.ceil(2 * character.data.attributes.prof * proficient) :
       Math.floor(2 * character.data.attributes.prof * proficient);
 
-    const value = character.data.abilities[skill.ability].value + proficiencyBonus;
+    // Skill bonuses e.g. items
+    const skillBonus =  utils
+      .filterBaseModifiers(data, "bonus", skill.label.toLowerCase())
+      .map(skl => skl.value)
+      .reduce((a,b) => a + b, 0);
+
+    const value = character.data.abilities[skill.ability].value + 
+      proficiencyBonus + skillBonus;
 
     result[skill.name] = {
       type: "Number",
       label: skill.label,
       ability: skill.ability,
       value: proficient,
-      mod: utils.calculateModifier(value)
+      mod: utils.calculateModifier(value),
+      bonus: skillBonus
     };
   });
 
