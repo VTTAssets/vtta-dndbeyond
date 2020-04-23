@@ -573,10 +573,10 @@ let getEldritchInvocations = (data, character) => {
     switch(mod.subType) {
       case "bonus-damage":
         // almost certainly CHA :D
-        const ability = DICTIONARY.character.abilities.find(
+        const abilityModifier = DICTIONARY.character.abilities.find(
           ability => ability.id === mod.statId
-        );
-        damage = character.data.abilities[ability.value].mod;
+        ).value;
+        damage = `@abilities.${abilityModifier}.mod`;
         break;
       case "bonus-range":
         range = mod.value;
