@@ -72,18 +72,10 @@ export default function parseClasses(ddb, character) {
       value: profs
     }
 
-    const classSpells = ddb.character.classSpells.map(cls => {
-      if (characterClass.id === cls.characterClassId &&
-        Array.isArray(cls.spells) &&
-        cls.spells.length
-      ) {
-        return true;
-      } else {
-        return false;
-      }
-    })
+    const castSpells = (characterClass.definition.canCastSpells ||
+      (characterClass.subclassDefinition && characterClass.subclassDefinition.canCastSpells));
 
-    if (classSpells.includes(true)) {
+    if (castSpells) {
       item.data.spellcasting = DICTIONARY.spell.progression.find(
         cls => cls.name === characterClass.definition.name).value;
     } else {
