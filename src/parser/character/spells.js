@@ -820,7 +820,7 @@ export default function parseSpells(ddb, character) {
           lookup: "classFeature",
           lookupName: classInfo.name,
           lookupId: classInfo.id,
-          level: character.data.details.level.value,
+          level: character.flags.vtta.dndbeyond.totalLevels,
           ability: spellCastingAbility,
           mod: abilityModifier,
           dc: 8 + proficiencyModifier + abilityModifier
