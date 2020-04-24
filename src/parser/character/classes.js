@@ -73,7 +73,10 @@ export default function parseClasses(ddb, character) {
     }
 
     const classSpells = ddb.character.classSpells.map(cls => {
-      if (Array.isArray(cls.spells) && cls.spells.length) {
+      if (characterClass.id === cls.characterClassId &&
+        Array.isArray(cls.spells) &&
+        cls.spells.length
+      ) {
         return true;
       } else {
         return false;
