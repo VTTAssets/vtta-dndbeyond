@@ -29,13 +29,28 @@ let parseItem = (ddb, data, character) => {
   if (data.definition.filterType) {
     switch (data.definition.filterType) {
       case 'Weapon':
+        let flags = {
+          damage: {},
+          classFeatures: [],
+        };
+        // Some features, notably hexblade abilities we scrape out here
+        ddb.character.characterValues.filter(charValue => 
+          charValue.value &&
+          charValue.valueId === data.id
+        )
+        .forEach(charValue => {
+          const feature = DICTIONARY.character.characterValuesLookup.find(entry => 
+            entry.typeId === charValue.typeId &&
+            entry.valueTypeId === charValue.valueTypeId
+          );
+          if (!!feature) {
+            flags.classFeatures.push(feature.name);
+          }
+        });
+
         if (data.definition.type === 'Ammunition') {
           return parseAmmunition(data, character);
         } else {
-          let flags = {
-            damage: {},
-            classFeatures: {}
-          };
           // for melee attacks get extras
           if (data.definition.attackType === 1) {
             // get improved divine smite etc for melee attacks

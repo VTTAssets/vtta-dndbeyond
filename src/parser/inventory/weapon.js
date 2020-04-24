@@ -276,7 +276,9 @@ export default function parseWeapon(data, character, flags) {
     flags: {
       vtta: {
         dndbeyond: {
-          type: data.definition.type
+          type: data.definition.type,
+          damage: flags.damage,
+          classFeatures: flags.classFeatures,
         }
       }
     }
@@ -301,11 +303,15 @@ export default function parseWeapon(data, character, flags) {
   weapon.data.properties = getProperties(data);
 
   /* proficient: true, */
-  weapon.data.proficient = getProficient(
-    data,
-    weapon.data.weaponType,
-    character.flags.vtta.dndbeyond.proficiencies
-  );
+  if (flags.classFeatures.includes("pactWeapon")) {
+    weapon.data.proficient = true;
+  } else {
+    weapon.data.proficient = getProficient(
+      data,
+      weapon.data.weaponType,
+      character.flags.vtta.dndbeyond.proficiencies
+    );
+  }
 
   /* description: { 
             value: '', 
@@ -367,6 +373,12 @@ export default function parseWeapon(data, character, flags) {
     weapon.data.range,
     character.data.abilities
   );
+  // warlocks can use cha for their Hex weapon
+  if (flags.classFeatures.includes("hexWarrior")) {
+    if (character.data.abilities.cha.value >= character.data.abilities[weapon.data.ability].value) {
+      weapon.data.ability = "cha";
+    }
+  }
 
   /* actionType: null, */
   weapon.data.actionType = weapon.data.range.long === 5 ? "mwak" : "rwak";
