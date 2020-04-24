@@ -1384,6 +1384,7 @@ let getCurrency = data => {
 };
 
 let getSpellSlots = data => {
+  let spellSlots = {};
   // get the caster information from all classes and subclasses
   let getCasterInfo = () => {
     return data.character.classes
@@ -1397,7 +1398,7 @@ let getSpellSlots = data => {
         // the class total level
         let casterLevel = cls.level;
         // class name
-        let name = cls.definition.name;
+        const name = cls.definition.name;
 
         // get the casting level if the character is a multiclassed spellcaster
         if (
@@ -1411,20 +1412,36 @@ let getSpellSlots = data => {
           casterLevel = 0;
         }
 
-        let cantrips =
+        const cantrips =
           cls.definition.spellRules &&
           cls.definition.spellRules.levelCantripsKnownMaxes &&
           Array.isArray(cls.definition.spellRules.levelCantripsKnownMaxes)
             ? cls.definition.spellRules.levelCantripsKnownMaxes[casterLevel + 1]
             : 0;
 
-        return {
-          name: name,
-          level: cls.level,
-          casterLevel: casterLevel,
-          slots: cls.definition.spellRules.levelSpellSlots,
-          cantrips: cantrips
-        };
+        if (["Warlock", "Blood Hunter"].includes(name)) {
+          // pact casting doesn't count towards multiclass spells casting
+          // we still add an entry to get cantrip info
+          console.log("Caster level " +casterLevel);
+          const levelSpellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
+          const maxLevel = levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
+          const maxSlots = Math.max(...levelSpellSlots);
+          const currentSlots = data.character.pactMagic.find(pact => pact.level === maxLevel).used;
+          spellSlots.pact = { value: maxSlots - currentSlots, max: maxSlots };
+          return {
+            name: name,
+            casterLevel: 0,
+            slots: cls.definition.spellRules.levelSpellSlots[0],
+            cantrips: cantrips
+          }
+        } else {
+          return {
+            name: name,
+            casterLevel: casterLevel,
+            slots: cls.definition.spellRules.levelSpellSlots[cls.level],
+            cantrips: cantrips
+          };
+        }
       });
   };
 
@@ -1432,7 +1449,7 @@ let getSpellSlots = data => {
 
   let result = null;
   if (casterInfo.length !== 1) {
-    let multiClassSpellSlots = [
+    const multiClassSpellSlots = [
       [0, 0, 0, 0, 0, 0, 0, 0, 0], // 0
       [2, 0, 0, 0, 0, 0, 0, 0, 0], // 1
       [3, 0, 0, 0, 0, 0, 0, 0, 0], // 2
@@ -1455,27 +1472,26 @@ let getSpellSlots = data => {
       [4, 3, 3, 3, 3, 2, 1, 1, 1], // 19
       [4, 3, 3, 3, 3, 2, 2, 1, 1] // 20
     ];
-    let casterLevelTotal = casterInfo.reduce(
-      (prev, cur) => prev + cur.casterLevel,
-      0
+    const casterLevelTotal = casterInfo.reduce(
+      (prev, cur) => prev + cur.casterLevel, 0
     );
-    let cantripsTotal = casterInfo.reduce(
-      (prev, cur) => prev + cur.cantrips,
-      0
+    const cantripsTotal = casterInfo.reduce(
+      (prev, cur) => prev + cur.cantrips, 0
     );
     result = [cantripsTotal, ...multiClassSpellSlots[casterLevelTotal]];
   } else {
     result = [
       casterInfo[0].cantrips,
-      ...casterInfo[0].slots[casterInfo[0].level]
+      ...casterInfo[0].slots
     ];
   }
 
-  let obj = {};
   for (let i = 0; i < result.length; i++) {
-    obj["spell" + i] = { value: result[i], max: result[i] };
+    const currentSlots = data.character.spellSlots.filter(slot => slot.level === i)
+      .map(slot => slot.used) || 0;
+    spellSlots["spell" + i] = { value: result[i] - currentSlots, max: result[i] };
   }
-  return obj;
+  return spellSlots;
 };
 
 let getToken = data => {
