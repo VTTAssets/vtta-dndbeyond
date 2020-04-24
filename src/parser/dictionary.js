@@ -524,6 +524,10 @@ const DICTIONARY = {
       { name: "Calligrapher's Supplies", type: "Tool", subType: "Supplies" },
       { name: "Painter's Supplies", type: "Tool", subType: "Supplies" },
     ],
+    characterValuesLookup: {
+      pactWeapon: { typeId: 28, valueTypeId: 1439493548 },
+      hexWarrior: { typeId: 29, valueTypeId: 1439493548 },
+    },
   },
   item: {
     characterValues: [
