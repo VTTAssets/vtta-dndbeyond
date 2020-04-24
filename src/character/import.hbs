@@ -4,10 +4,12 @@
       <div class="form-description">
         <h3>Save a reference to your character for easy access</h3>
         <p>
-          The following shortcuts are enabled on <img class="inline-image" src="/modules/vtta-dndbeyond/img/ddb-icon.png"> button the if you are setting the URL to your charactersheet below:
+          The following shortcuts are enabled on <img class="inline-image"
+            src="/modules/vtta-dndbeyond/img/ddb-icon.png"> button the if you are setting the URL to your charactersheet
+          below:
         </p>
         <ul>
-          <li><b>SHIFT + Left-Click:</b >Opens the D&amp;D Beyond character sheet in a new window</li>
+          <li><b>SHIFT + Left-Click:</b>Opens the D&amp;D Beyond character sheet in a new window</li>
           <li><b>ALT + Left-Click:</b> Opens the JSON of your character in a new window</li>
         </ul>
         <p>
@@ -17,19 +19,17 @@
       </div>
       <div class="form-caption">
         URL
-        <span class="dndbeyond-url-status"
-          >{{#if actor.data.flags.vtta.dndbeyond.url}}<i class="fas fa-check-circle" style="color: green"></i>{{else}}<i></i>{{/if}}</span
-        >
+        <span class="dndbeyond-url-status">{{#if actor.data.flags.vtta.dndbeyond.url}}<i class="fas fa-check-circle"
+            style="color: green"></i>{{else}}<i></i>{{/if}}</span>
       </div>
       <div class="form-content">
-        <input
-          type="text"
-          name="dndbeyond-url"
-          value="{{#if actor.data.flags.vtta.dndbeyond.url}}{{actor.data.flags.vtta.dndbeyond.url}}{{/if}}"
-        />
+        <input type="text" name="dndbeyond-url"
+          value="{{#if actor.data.flags.vtta.dndbeyond.url}}{{actor.data.flags.vtta.dndbeyond.url}}{{/if}}" />
       </div>
     </div>
-    <div><hr></div>
+    <div>
+      <hr>
+    </div>
     <div class="form-section">
       <div class="form-description">
         <h3>Import your character</h3>
@@ -50,7 +50,7 @@
     </div>
   </div>
   <div></div>
-  <div>
-    <h2 class="task-name">Status</h2>
+  <div class="task-name">
+
   </div>
 </div>

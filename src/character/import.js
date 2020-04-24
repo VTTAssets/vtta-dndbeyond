@@ -5,22 +5,22 @@ import utils from "../utils.js";
 const compendiumLookup = [
   {
     type: "inventory",
-    compendium: "entity-item-compendium"
+    compendium: "entity-item-compendium",
   },
   {
     type: "spells",
-    compendium: "entity-spell-compendium"
+    compendium: "entity-spell-compendium",
   },
   {
     type: "itemSpells",
-    compendium: "entity-spell-compendium"
-  }
-]
+    compendium: "entity-spell-compendium",
+  },
+];
 
 export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
-    this.actor = game.actors.entities.find(a => a.id === actor._id);
+    this.actor = game.actors.entities.find((a) => a.id === actor._id);
     this.result = {};
   }
   /**
@@ -36,9 +36,19 @@ export default class CharacterImport extends Application {
     return options;
   }
 
+  showCurrentTask(html, title, message = null, isError = false) {
+    let element = $(html).find(".task-name");
+    element.html(
+      `<h2 ${isError ? " class='error'" : ""}>${title}</h2>${
+        message ? `<p>${message}</p>` : ""
+      }`
+    );
+    $(html).parent().parent().css("height", "auto");
+  }
+
   /**
    * Updates a compendium, provide the type.
-   * @param {*} type 
+   * @param {*} type
    */
   async updateCompendium(type) {
     let importPolicy = game.settings.get(
@@ -51,15 +61,11 @@ export default class CharacterImport extends Application {
       // we are updating inventory and spells only
 
       // compendiumLookup
-      let compendiumName = compendiumLookup.find(
-        c => c.type == type
-      ).compendium;
-      let compendiumLabel = game.settings.get(
-        "vtta-dndbeyond",
-        compendiumName
-      );
+      let compendiumName = compendiumLookup.find((c) => c.type == type)
+        .compendium;
+      let compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
       let compendium = await game.packs.find(
-        pack => pack.collection === compendiumLabel
+        (pack) => pack.collection === compendiumLabel
       );
 
       if (compendium) {
@@ -74,11 +80,8 @@ export default class CharacterImport extends Application {
           );
 
           // search the compendium for this item
-          let searchResult = index.find(i => i.name === item.name);
+          let searchResult = index.find((i) => i.name === item.name);
           if (searchResult && importPolicy === 0) {
-            this.showCurrentTask(
-              `Updating item ${item.name} in compendium ${compendiumLabel}`
-            );
             item._id = searchResult._id;
             // update seems to return an array, and without our img
             await compendium.updateEntity(item);
@@ -88,12 +91,9 @@ export default class CharacterImport extends Application {
             result = await compendium.getEntity(searchResult._id);
           } else if (!searchResult) {
             // create the item first
-            this.showCurrentTask(
-              `Creating item ${item.name} in compendium ${compendiumLabel}`
-            );
             const newItem = await Item.create(item, {
               temporary: true,
-              displaySheet: false
+              displaySheet: false,
             });
             result = await compendium.importEntity(newItem);
           }
@@ -116,7 +116,7 @@ export default class CharacterImport extends Application {
 
   getData() {
     return {
-      actor: this.actor
+      actor: this.actor,
     };
   }
 
@@ -125,22 +125,45 @@ export default class CharacterImport extends Application {
   activateListeners(html) {
     $(html)
       .find("#json")
-      .on("paste", async event => {
+      .on("paste", async (event) => {
         event.preventDefault();
         var pasteData = event.originalEvent.clipboardData.getData("text");
 
-        this.showCurrentTask = msg => {
-          let element = $(html).find(".task-name");
-          element.text(msg);
-        };
+        let data = undefined;
+        try {
+          data = JSON.parse(pasteData);
+        } catch (error) {
+          if (error.message === "Unexpected end of JSON input") {
+            this.showCurrentTask(
+              html,
+              "JSON invalid",
+              "I could not parse your JSON data because it was cut off. Make sure to wait for the page to stop loading before copying the data into your clipboard.",
+              true
+            );
+          } else {
+            this.showCurrentTask(html, "JSON invalid", error.message, true);
+          }
+          return false;
+        }
 
-        let data = JSON.parse(pasteData);
-        this.result = parser.parseJson(data);
+        try {
+          this.result = parser.parseJson(data);
+        } catch (error) {
+          this.showCurrentTask(
+            html,
+            "I guess you are special!",
+            "We had trouble understanding this character. But you can help us to improve! Please <ul><li>open the console with F12</li><li>search for red error text</li><li>save the JSON as a text file and submit it along with the error message to <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!",
+            true
+          );
+          return false;
+        }
+
         utils.log("Parsing finished");
         utils.log(this.result);
 
         // is magicitems installed
-        const magicItemsInstalled = game.modules.get('magicitems') !== undefined;
+        const magicItemsInstalled =
+          game.modules.get("magicitems") !== undefined;
 
         // updating the image?
         let imagePath = this.actor.img;
@@ -150,16 +173,16 @@ export default class CharacterImport extends Application {
           data.character.avatarUrl &&
           data.character.avatarUrl !== ""
         ) {
-          this.showCurrentTask("Uploading avatar image");
+          this.showCurrentTask(html, "Uploading avatar image");
           let filename = data.character.name
             .replace(/[^a-zA-Z]/g, "-")
             .replace(/\-+/g, "-")
             .trim();
-    
+
           let uploadDirectory = game.settings
             .get("vtta-dndbeyond", "image-upload-directory")
             .replace(/^\/|\/$/g, "");
-    
+
           imagePath = await utils.uploadImage(
             data.character.avatarUrl,
             uploadDirectory,
@@ -169,40 +192,43 @@ export default class CharacterImport extends Application {
         }
 
         // basic import
-        this.showCurrentTask("Updating basic character information");
+        this.showCurrentTask(html, "Updating basic character information");
         await this.actor.update(this.result.character);
 
         // clear items
-        this.showCurrentTask("Clearing inventory");
+        this.showCurrentTask(html, "Clearing inventory");
         await this.actor.deleteManyEmbeddedEntities(
           "OwnedItem",
-          this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
+          this.actor.getEmbeddedCollection("OwnedItem").map((item) => item._id)
         );
         //await this.actor.updateManyEmbeddedEntities('OwnedItem'{ items: [] });
 
-        
         // we need to make sure the item spells are in the compendium
         // once they are, if the magic item module is in use we will get
         // the the spell id, pack and imf from the spell and merge it with
         // the current item flags
-        const compendiumSpells = await this.updateCompendium('itemSpells');
+        const compendiumSpells = await this.updateCompendium("itemSpells");
 
         if (magicItemsInstalled) {
-          this.result.inventory.forEach( item => {
+          this.result.inventory.forEach((item) => {
             if (item.flags.magicitems.spells) {
-              for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
-                const compendiumSpell = compendiumSpells.find( s => s.name === spell.name );
+              for (let [i, spell] of Object.entries(
+                item.flags.magicitems.spells
+              )) {
+                const compendiumSpell = compendiumSpells.find(
+                  (s) => s.name === spell.name
+                );
                 for (const [key, value] of Object.entries(compendiumSpell)) {
                   item.flags.magicitems.spells[i][key] = value;
                 }
-              };
-            };
-          }); 
+              }
+            }
+          });
         }
 
         // Update compendium packs with spells and items
-        this.updateCompendium('inventory');
-        this.updateCompendium('spells');
+        this.updateCompendium("inventory");
+        this.updateCompendium("spells");
 
         // Adding all items to the actor
         let items = [
@@ -210,7 +236,7 @@ export default class CharacterImport extends Application {
           this.result.inventory,
           this.result.spells,
           this.result.features,
-          this.result.classes
+          this.result.classes,
         ].flat();
 
         // If there is no magicitems module fall back to importing the magic
@@ -219,7 +245,7 @@ export default class CharacterImport extends Application {
           items.push(this.result.itemSpells);
           items = items.flat();
         }
-        
+
         utils.log("Character items", "character");
         utils.log(items, "character");
 
@@ -227,7 +253,7 @@ export default class CharacterImport extends Application {
           "OwnedItem",
           items,
           {
-            displaySheet: false
+            displaySheet: false,
           }
         );
 
@@ -236,12 +262,7 @@ export default class CharacterImport extends Application {
 
     $(html)
       .find("input[name=dndbeyond-url]")
-      .on("input", async event => {
-        this.showCurrentTask = msg => {
-          let element = $(html).find(".task-name");
-          element.text(msg);
-        };
-
+      .on("input", async (event) => {
         let matches = event.target.value.match(
           /.*(dndbeyond\.com\/profile\/[\w-_]+\/characters\/\d+)/
         );
@@ -251,19 +272,24 @@ export default class CharacterImport extends Application {
             .replaceWith(
               '<i class="fas fa-check-circle" style="color: green"></i>'
             );
-          this.showCurrentTask("Saving reference");
+          thjis.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
               vtta: {
                 dndbeyond: {
-                  url: "https://www." + matches[1]
-                }
-              }
-            }
+                  url: "https://www." + matches[1],
+                },
+              },
+            },
           });
-          this.showCurrentTask("Status");
+          this.showCurrentTask(html, "Status");
         } else {
-          this.showCurrentTask("URL format incorrect, see above");
+          this.showCurrentTask(
+            html,
+            "URL format incorrect",
+            "That seems not to be the URL we expected...",
+            true
+          );
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith(

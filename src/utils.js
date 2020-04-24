@@ -50,8 +50,8 @@ let utils = {
 
     if (!Array.isArray(arr)) return undefined;
     arr
-      .filter(entry => entry.hasOwnProperty(property))
-      .forEach(entry => {
+      .filter((entry) => entry.hasOwnProperty(property))
+      .forEach((entry) => {
         let distance = levenshtein(searchString, entry[property]);
         if (
           distance < nearestDistance &&
@@ -70,12 +70,17 @@ let utils = {
       data.character.options.race,
       data.character.options.class,
       data.character.options.feat,
-    ].flat().find(option =>
-      option.definition.name === optionName
-    );
+    ]
+      .flat()
+      .find((option) => option.definition.name === optionName);
     return !!classOptions;
   },
-  filterBaseModifiers: (data, type, subType=null, restriction=["", null]) => {
+  filterBaseModifiers: (
+    data,
+    type,
+    subType = null,
+    restriction = ["", null]
+  ) => {
     const modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
@@ -84,10 +89,11 @@ let utils = {
       utils.getActiveItemModifiers(data),
     ]
       .flat()
-      .filter(modifier =>
-        modifier.type === type &&
-        ((subType !== null) ? modifier.subType === subType : true ) &&
-        restriction.includes(modifier.restriction)
+      .filter(
+        (modifier) =>
+          modifier.type === type &&
+          (subType !== null ? modifier.subType === subType : true) &&
+          restriction.includes(modifier.restriction)
       );
 
     return modifiers;
@@ -95,28 +101,27 @@ let utils = {
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
     const targetItemIds = data.character.inventory
-      .filter(item => 
-        (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
-        (item.isAttuned && item.equipped) || // if it is attuned and equipped
-        (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
-        (!item.definition.canAttune && item.equipped) // can't attune but is equipped
+      .filter(
+        (item) =>
+          (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+          (item.isAttuned && item.equipped) || // if it is attuned and equipped
+          (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
+          (!item.definition.canAttune && item.equipped) // can't attune but is equipped
       )
-      .map(item => item.definition.id);
+      .map((item) => item.definition.id);
 
-    const modifiers = data.character.modifiers.item
-      .filter(mod => targetItemIds.includes(mod.componentId));
+    const modifiers = data.character.modifiers.item.filter((mod) =>
+      targetItemIds.includes(mod.componentId)
+    );
 
     return modifiers;
   },
-  calculateModifier: val => {
+  calculateModifier: (val) => {
     return Math.floor((val - 10) / 2);
   },
-  parseDiceString: (str, mods="") => {
+  parseDiceString: (str, mods = "") => {
     // sanitizing possible inputs a bit
-    str = str
-      .toLowerCase()
-      .replace(/-–−/g, "-")
-      .replace(/\s/g, "");
+    str = str.toLowerCase().replace(/-–−/g, "-").replace(/\s/g, "");
 
     // all found dice strings, e.g. 1d8, 4d6
     let dice = [];
@@ -138,12 +143,12 @@ let utils = {
         dice.push({
           sign: sign,
           count: parseInt(sign + count),
-          die: parseInt(die)
+          die: parseInt(die),
         });
       } else {
         bonuses.push({
           sign: sign,
-          count: parseInt(sign + count)
+          count: parseInt(sign + count),
         });
       }
       // sorting dice by die, then by sign
@@ -181,20 +186,21 @@ let utils = {
     }
 
     const diceString = dice.reduce((prev, cur) => {
-        return (
-          prev +
-          " " +
-          (cur.count >= 0 && prev !== ""
-            ? `${cur.sign}${cur.count}d${cur.die}`
-            : `${cur.count}d${cur.die}`)
-        );
-      }, "");
-    const resultBonus = (bonus === 0 ? "" : bonus > 0 ? ` + ${bonus}` : ` ${bonus}`);
+      return (
+        prev +
+        " " +
+        (cur.count >= 0 && prev !== ""
+          ? `${cur.sign}${cur.count}d${cur.die}`
+          : `${cur.count}d${cur.die}`)
+      );
+    }, "");
+    const resultBonus =
+      bonus === 0 ? "" : bonus > 0 ? ` + ${bonus}` : ` ${bonus}`;
 
     const result = {
       dice: dice,
       bonus: bonus,
-      diceString: (diceString + mods + resultBonus).trim()
+      diceString: (diceString + mods + resultBonus).trim(),
     };
     return result;
   },
@@ -222,23 +228,23 @@ let utils = {
     return undefined;
   },
 
-  capitalize: s => {
+  capitalize: (s) => {
     if (typeof s !== "string") return "";
     return s.charAt(0).toUpperCase() + s.slice(1);
   },
 
   // DEVELOPMENT FUNCTION
   // loads a character.json from a file in the file system
-  loadFromFile: filename => {
+  loadFromFile: (filename) => {
     return require(`./input/${filename}.json`);
   },
 
   // checks for a given file
-  serverFileExists: path => {
+  serverFileExists: (path) => {
     return new Promise((resolve, reject) => {
       let http = new XMLHttpRequest();
       http.open("HEAD", path);
-      http.onreadystatechange = function() {
+      http.onreadystatechange = function () {
         if (this.readyState == this.DONE) {
           if (this.status !== 404) {
             resolve(path);
@@ -250,15 +256,15 @@ let utils = {
     });
   },
 
-  getTemplate: type => {
-    let isObject = item => {
+  getTemplate: (type) => {
+    let isObject = (item) => {
       return item && typeof item === "object" && !Array.isArray(item);
     };
 
     let mergeDeep = (target, source) => {
       let output = Object.assign({}, target);
       if (isObject(target) && isObject(source)) {
-        Object.keys(source).forEach(key => {
+        Object.keys(source).forEach((key) => {
           if (isObject(source[key])) {
             if (!(key in target)) Object.assign(output, { [key]: source[key] });
             else output[key] = mergeDeep(target[key], source[key]);
@@ -269,7 +275,7 @@ let utils = {
       }
       return output;
     };
-    let filterDeprecated = data => {
+    let filterDeprecated = (data) => {
       for (let prop in data) {
         if (
           data[prop] &&
@@ -294,7 +300,7 @@ let utils = {
       ) {
         let obj = mergeDeep({}, filterDeprecated(templates[entityType][type]));
         if (obj.templates) {
-          obj.templates.forEach(tpl => {
+          obj.templates.forEach((tpl) => {
             obj = mergeDeep(
               obj,
               filterDeprecated(templates[entityType].templates[tpl])
@@ -308,7 +314,7 @@ let utils = {
     }
     return undefined;
   },
-  uploadImage: async function(url, targetDirectory, baseFilename) {
+  uploadImage: async function (url, targetDirectory, baseFilename) {
     async function download(url) {
       return new Promise((resolve, reject) => {
         try {
@@ -368,10 +374,7 @@ let utils = {
 
     // prepare filenames
     let filename = baseFilename;
-    let ext = url
-      .split(".")
-      .pop()
-      .split(/\#|\?/)[0];
+    let ext = url.split(".").pop().split(/\#|\?/)[0];
 
     // uploading the character avatar and token
     try {
@@ -394,7 +397,7 @@ let utils = {
       const baseColor = "#98020a";
 
       let folder = game.folders.entities.find(
-        f =>
+        (f) =>
           f.data.type === entityType &&
           f.data.name === folderName &&
           f.data.parent === root.id
@@ -405,7 +408,7 @@ let utils = {
           name: folderName,
           type: entityType,
           color: baseColor,
-          parent: root.id
+          parent: root.id,
         },
         { displaySheet: false }
       );
@@ -422,6 +425,7 @@ let utils = {
     entityTypes.set("backpack", "Item");
     entityTypes.set("npc", "Actor");
     entityTypes.set("character", "Actor");
+    entityTypes.set("page", "JournalEntry");
 
     let baseName = "D&D Beyond Import";
     let baseColor = "#6f0006";
@@ -431,7 +435,8 @@ let utils = {
 
     // get base folder, or create it if it does not exist
     let baseFolder = game.folders.entities.find(
-      folder => folder.data.type === entityType && folder.data.name === baseName
+      (folder) =>
+        folder.data.type === entityType && folder.data.name === baseName
     );
     if (!baseFolder) {
       baseFolder = await Folder.create(
@@ -440,7 +445,7 @@ let utils = {
           type: entityType,
           color: baseColor,
           parent: null,
-          sort: 30000
+          sort: 30000,
         },
         { displaySheet: false }
       );
@@ -491,7 +496,7 @@ let utils = {
         default:
           console.log(`${LOG_PREFIX} | ${section} > ${msg}`);
       }
-  }
+  },
 };
 
 export default utils;
