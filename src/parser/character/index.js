@@ -444,7 +444,7 @@ let getArmorClass = (data, character) => {
 
 let getHitpoints = (data, character) => {
   const constitutionHP =
-    character.data.abilities.con.mod * character.data.details.level.value;
+    character.data.abilities.con.mod * character.flags.vtta.dndbeyond.totalLevels;
   let baseHitPoints = data.character.baseHitPoints || 0;
   const bonusHitPoints = data.character.bonusHitPoints || 0;
   const overrideHitPoints = data.character.overrideHitPoints || 0;
@@ -453,7 +453,7 @@ let getHitpoints = (data, character) => {
 
   const hitPointsPerLevel = utils.filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
-  baseHitPoints += hitPointsPerLevel * character.data.details.level.value;
+  baseHitPoints += hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
 
   return {
     value:
@@ -1600,15 +1600,13 @@ export default function getCharacter(ddb) {
     flags: {
       vtta: {
         dndbeyond: {
+          totalLevels: getLevel(ddb),
           proficiencies: getProficiencies(ddb),
           roUrl: ddb.character.readonlyUrl
         }
       }
     }
   };
-
-  // character level (is needed in many places)
-  character.data.details.level.value = getLevel(ddb);
 
   // character abilities
   character.data.abilities = getAbilities(ddb, character);
@@ -1636,7 +1634,7 @@ export default function getCharacter(ddb) {
 
   // proficiency
   character.data.attributes.prof = Math.ceil(
-    1 + 0.25 * character.data.details.level.value
+    1 + 0.25 * character.flags.vtta.dndbeyond.totalLevels
   );
 
   // speeds
@@ -1653,9 +1651,6 @@ export default function getCharacter(ddb) {
 
   // details
   character.data.details.background = getBackground(ddb);
-
-  // level
-  character.data.details.level.value = getLevel(ddb);
 
   // xp
   character.data.details.xp.value = ddb.character.currentXp;
