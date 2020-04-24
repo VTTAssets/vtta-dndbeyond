@@ -78,10 +78,11 @@ let getSpellPreparationMode = data => {
     } else if (prepMode) {
       prepMode = classPrepMode;
     };
-    // Warlocks should use Pact spells, but these are not yet handled well
-    // in VTTA (no slots are showed). Instead we mark as prepared, and 
-    // pretend they are regular spells.
-    if (["Warlock", "Blood Hunter"].includes(data.flags.vtta.dndbeyond.class)) {
+    // Warlocks should use Pact spells
+    // but lets mark level 0 as regular spells so they show up as cantrips
+    if (["Warlock", "Blood Hunter"].includes(data.flags.vtta.dndbeyond.class) &&
+      (data.definition.level === 0)
+    ) {
       prepMode = "prepared";
       prepared = true;
     };
