@@ -580,32 +580,18 @@ const DICTIONARY = {
   },
   spell: {
     preparationModes: [
-      // This is the correct table
-      /*
-            { name: 'Hunter', value: 'always' },
-            { name: 'Bard', value: 'always' },
-            { name: 'Rogue', value: 'always' },
-            { name: 'Sorcerer', value: 'always' },
-            { name: 'Artificer', value: 'always' },
-            { name: 'Cleric', value: 'prepared' },
-            { name: 'Wizard', value: 'prepared' },
-            { name: 'Paladin', value: 'prepared' },
-            { name: 'Druid', value: 'prepared' },
-            { name: 'Warlock', value: 'pact' }
-            */
-      // this table works for the current Foundry UI
-      { name: "Hunter", value: "prepared" },
-      { name: "Bard", value: "prepared" },
-      { name: "Rogue", value: "prepared" },
-      { name: "Sorcerer", value: "prepared" },
       { name: "Artificer", value: "prepared" },
-      { name: "Cleric", value: "prepared" },
-      { name: "Wizard", value: "prepared" },
-      { name: "Paladin", value: "prepared" },
-      { name: "Druid", value: "prepared" },
-      { name: "Warlock", value: "pact" },
-      { name: "Fighter", value: "prepared" },
+      { name: "Bard", value: "always" },
       { name: "Blood Hunter", value: "pact" },
+      { name: "Cleric", value: "prepared" },
+      { name: "Druid", value: "prepared" },
+      { name: "Fighter", value: "always" },
+      { name: "Hunter", value: "always" },
+      { name: "Paladin", value: "prepared" },
+      { name: "Rogue", value: "always" },
+      { name: "Sorcerer", value: "always" },
+      { name: "Warlock", value: "pact" },
+      { name: "Wizard", value: "prepared" },
     ],
     activationTypes: [
       { activationType: 0, value: "none" },

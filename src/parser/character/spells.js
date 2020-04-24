@@ -68,13 +68,15 @@ let getSpellPreparationMode = data => {
   let prepared = data.alwaysPrepared || data.prepared;
   // handle classSpells
   if (data.flags.vtta.dndbeyond.lookup === "classSpell") {
-    let classPrepMode = utils.findByProperty(
+    const classPrepMode = utils.findByProperty(
       DICTIONARY.spell.preparationModes,
       "name",
       data.flags.vtta.dndbeyond.class
-    );
-    if (prepMode) {
-      prepMode = classPrepMode.value;
+    ).value;
+    if (data.alwaysPrepared) {
+      prepMode = "always";
+    } else if (prepMode) {
+      prepMode = classPrepMode;
     };
     // Warlocks should use Pact spells, but these are not yet handled well
     // in VTTA (no slots are showed). Instead we mark as prepared, and 
@@ -97,15 +99,16 @@ let getSpellPreparationMode = data => {
     prepMode = "prepared";
   } else {
     // If spell doesn't use a spell slot and is not a cantrip, mark as always preped
-    let alwaysPrepared = (!data.usesSpellSlot && data.definition.level !== 0);
+    let always = (!data.usesSpellSlot && data.definition.level !== 0);
     let ritaulOnly = (data.ritualCastingType !== null|| data.castOnlyAsRitual); // e.g. Book of ancient secrets & totem barb
-    if (alwaysPrepared && ritaulOnly) {
+    if (always && ritaulOnly) {
       // in this case we want the spell to appear in the spell list unprepared
       prepared = false;
-    } else if (alwaysPrepared) {
+    } else if (always) {
       // these spells are always prepared, and have a limited use that's
       // picked up by getUses() later
-      prepMode = "always";
+      // this was changed to "atwill"
+      prepMode = "atwill";
     };
   };
 
