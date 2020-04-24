@@ -72,6 +72,21 @@ export default function parseClasses(ddb, character) {
       value: profs
     }
 
+    const classSpells = ddb.character.classSpells.map(cls => {
+      if (Array.isArray(cls.spells) && cls.spells.length) {
+        return true;
+      } else {
+        return false;
+      }
+    })
+
+    if (classSpells.includes(true)) {
+      item.data.spellcasting = DICTIONARY.spell.progression.find(
+        cls => cls.name === characterClass.definition.name).value;
+    } else {
+      item.data.spellcasting = ""
+    }
+
     items.push(item);
   });
 
