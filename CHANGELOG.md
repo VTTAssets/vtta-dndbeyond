@@ -1,12 +1,23 @@
 # Changelog
 
+## [2.1.7] Support for dnd5e 0.8.8
+
+### Fixed
+
+- Fixed broken character import on dnd5e 0.8.8. While the current changes are backwards compatible, the next release of this module will only support 0.8.8 and up, so please update your game system
+
+### Added
+
+- Better (any!) error messages on parsing errors
+- Preparations for adventure module import
+
 ## [2.1.6] Hotfix
 
 ### Fixed
 
 - Fixed a hit die issue for certain classes
 - Fixed compendium updates not working correctly
-  
+
 ### Added
 
 - Feats: Observant, Remarkable Athlete
@@ -20,7 +31,7 @@
 - Characters were not able to get updated in compendiums even if the correct setting was applied
 - Improved parsing of magic items
 
-### Added 
+### Added
 
 - Initial support for Bloodhunter and Eldritch Knight
 
