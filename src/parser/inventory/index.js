@@ -56,9 +56,13 @@ let parseItem = (ddb, data, character) => {
             // get improved divine smite etc for melee attacks
             flags.damage.parts = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
             // do we have great weapon fighting?
-            flags.classFeatures.greatWeaponFighting = utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting");
+            if (utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting")) {
+              flags.classFeatures.push("greatWeaponFighting");
+            }
             // do we have dueling fighting style?
-            flags.classFeatures.dueling = utils.hasChosenCharacterOption(ddb, "Dueling");
+            if (utils.hasChosenCharacterOption(ddb, "Dueling")) {
+              flags.classFeatures.push("Dueling");
+            }
           }
           // ranged fighting style is added as a global modifier elsewhere
           // as is defensive style

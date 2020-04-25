@@ -191,8 +191,8 @@ let getDamage = (data, flags) => {
   const magicalDamageBonus = getMagicalBonus(data);
   // we can safely make these assumptions about GWF and Dueling because the
   // flags are only added for melee attacks
-  const greatWeaponFighting = (!!flags.classFeatures.greatWeaponFighting) ? "r<=2" : ""
-  const dueling = (!!flags.classFeatures.dueling) ? " + 2" : ""
+  const greatWeaponFighting = flags.classFeatures.includes("greatWeaponFighting") ? "r<=2" : ""
+  const dueling = flags.classFeatures.includes("dueling") ? " + 2" : ""
   const versatile = data.definition.properties.filter(
     property => property.name === "Versatile"
   ).map(versatile => {
