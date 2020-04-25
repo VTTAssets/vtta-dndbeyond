@@ -202,7 +202,7 @@ export default class CharacterImport extends Application {
           this.actor.getEmbeddedCollection("OwnedItem").map((item) => item._id)
         );
         //await this.actor.updateManyEmbeddedEntities('OwnedItem'{ items: [] });
-
+        
         // we need to make sure the item spells are in the compendium
         // once they are, if the magic item module is in use we will get
         // the the spell id, pack and imf from the spell and merge it with
@@ -257,6 +257,14 @@ export default class CharacterImport extends Application {
           }
         );
 
+        // We loop back over the spell slots to update them to our computed
+        // available value as per DDB.
+        for (const [type, info] of Object.entries(this.result.character.data.spells)) {
+          await this.actor.update({
+            [`data.spells.${type}.value`]: parseInt(info.value)
+          });
+        }
+        
         this.close();
       });
 

@@ -72,6 +72,16 @@ export default function parseClasses(ddb, character) {
       value: profs
     }
 
+    const castSpells = (characterClass.definition.canCastSpells ||
+      (characterClass.subclassDefinition && characterClass.subclassDefinition.canCastSpells));
+
+    if (castSpells) {
+      item.data.spellcasting = DICTIONARY.spell.progression.find(
+        cls => cls.name === characterClass.definition.name).value;
+    } else {
+      item.data.spellcasting = ""
+    }
+
     items.push(item);
   });
 
