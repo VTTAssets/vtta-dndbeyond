@@ -280,7 +280,7 @@ export default class CharacterImport extends Application {
             .replaceWith(
               '<i class="fas fa-check-circle" style="color: green"></i>'
             );
-          thjis.showCurrentTask(html, "Saving reference");
+          this.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
               vtta: {
