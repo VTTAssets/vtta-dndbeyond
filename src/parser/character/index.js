@@ -1422,7 +1422,6 @@ let getSpellSlots = data => {
         if (["Warlock", "Blood Hunter"].includes(name)) {
           // pact casting doesn't count towards multiclass spells casting
           // we still add an entry to get cantrip info
-          console.log("Caster level " +casterLevel);
           const levelSpellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
           const maxLevel = levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
           const maxSlots = Math.max(...levelSpellSlots);
