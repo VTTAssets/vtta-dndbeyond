@@ -149,6 +149,7 @@ export default class CharacterImport extends Application {
         try {
           this.result = parser.parseJson(data);
         } catch (error) {
+          console.error(error);
           this.showCurrentTask(
             html,
             "I guess you are special!",
