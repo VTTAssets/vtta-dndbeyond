@@ -29,21 +29,40 @@ let parseItem = (ddb, data, character) => {
   if (data.definition.filterType) {
     switch (data.definition.filterType) {
       case 'Weapon':
+        let flags = {
+          damage: {},
+          classFeatures: [],
+        };
+        // Some features, notably hexblade abilities we scrape out here
+        ddb.character.characterValues.filter(charValue => 
+          charValue.value &&
+          charValue.valueId === data.id
+        )
+        .forEach(charValue => {
+          const feature = DICTIONARY.character.characterValuesLookup.find(entry => 
+            entry.typeId === charValue.typeId &&
+            entry.valueTypeId === charValue.valueTypeId
+          );
+          if (!!feature) {
+            flags.classFeatures.push(feature.name);
+          }
+        });
+
         if (data.definition.type === 'Ammunition') {
           return parseAmmunition(data, character);
         } else {
-          let flags = {
-            damage: {},
-            classFeatures: {}
-          };
           // for melee attacks get extras
           if (data.definition.attackType === 1) {
             // get improved divine smite etc for melee attacks
             flags.damage.parts = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
             // do we have great weapon fighting?
-            flags.classFeatures.greatWeaponFighting = utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting");
+            if (utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting")) {
+              flags.classFeatures.push("greatWeaponFighting");
+            }
             // do we have dueling fighting style?
-            flags.classFeatures.dueling = utils.hasChosenCharacterOption(ddb, "Dueling");
+            if (utils.hasChosenCharacterOption(ddb, "Dueling")) {
+              flags.classFeatures.push("Dueling");
+            }
           }
           // ranged fighting style is added as a global modifier elsewhere
           // as is defensive style
