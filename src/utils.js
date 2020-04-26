@@ -335,32 +335,36 @@ let utils = {
 
     async function upload(data, path, filename) {
       return new Promise(async (resolve, reject) => {
-        let formData = new FormData();
+        // create new file from the response
+        let file = new File([data], filename, { type: data.type });
 
-        // let target =
-        //   game.data.version === "0.4.0"
-        //     ? "user"
-        //     : game.data.version === "0.4.1"
-        //     ? "user"
-        //     : "data";
-
+        /**
+         * Extract the datasource from the path
+         * "[s3:bucketname] path"
+         * "[data] path"
+         * "[core] path"
+         * @param {string} val A reference to the target path coming from settingsextender (patched)
+         */
         const getDataSource = (val) => {
           let source = "data";
           let path = val;
 
+          // check if we are using the patched settings extender
           let matches = val.trim().match(/\[(.+)\]\s*(.+)/);
           if (matches) {
+            // we do
             source = matches[1];
-            const [s3, bucket] = source.split(":");
+            // get bucket information, if S3 is used
+            const [s3Source, bucket] = source.split(":");
             if (bucket !== undefined) {
               return {
-                source: s3,
+                source: s3Source,
                 bucket: bucket,
                 path: matches[2],
               };
             } else {
               return {
-                source: s3,
+                source: source,
                 bucket: null,
                 path: matches[2],
               };
@@ -374,13 +378,11 @@ let utils = {
         };
 
         const target = getDataSource(path);
-
         if (target.bucket) {
-          formData.append("bucket", target.bucket);
           let result = await FilePicker.upload(
             target.source,
             target.path,
-            data,
+            file,
             { bucket: target.bucket }
           );
           resolve(result);
@@ -388,57 +390,10 @@ let utils = {
           let result = await FilePicker.upload(
             target.source,
             target.path,
-            data,
-            { bucket: target.bucket }
+            file
           );
           resolve(result);
         }
-
-        // let target = getDataSource(path);
-
-        // formData.append("target", target.path);
-        // formData.append("source", target.source);
-        // formData.append("upload", data, filename);
-        // if (target.bucket) {
-        //   formData.append("bucket", target.bucket);
-        // }
-        // //formData.append("file", url);
-
-        // let req = new XMLHttpRequest();
-        // req.open("POST", "/upload", true);
-        // req.onreadystatechange = () => {
-        //   if (req.readyState !== 4) return;
-        //   if (req.status === 200) {
-        //     console.log(req.body);
-        //     utils.log(`Upload successfull, resolving with ${path}/${filename}`);
-        //     try {
-        //       const response = JSON.parse(req.response);
-        //       if (
-        //         response.status &&
-        //         response.status === "success" &&
-        //         response.path
-        //       ) {
-        //         resolve(response.path);
-        //       } else {
-        //         reject(response.status);
-        //       }
-        //     } catch (error) {
-        //       utils.log(
-        //         `Upload **NOT** successfull, rejecting with ${req.responseText}`
-        //       );
-        //       reject(req.responseText);
-        //     }
-
-        //     resolve(req.response.path);
-        //     //resolve(`${path}/${filename}`);
-        //   } else {
-        //     utils.log(
-        //       `Upload **NOT** successfull, rejecting with ${req.responseText}`
-        //     );
-        //     reject(req.responseText);
-        //   }
-        // };
-        // req.send(formData);
       });
     }
 
@@ -455,7 +410,7 @@ let utils = {
     // uploading the character avatar and token
     try {
       let result = await process(
-        "https://proxy.iungimus.de/get/" + url,
+        "https://proxy.vttassets.com/?url=" + url,
         targetDirectory,
         filename + "." + ext
       );
