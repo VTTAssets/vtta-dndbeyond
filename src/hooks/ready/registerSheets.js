@@ -8,11 +8,11 @@ export default function () {
   /**
    * Character sheets
    */
-  let sheetNames = Object.values(CONFIG.Actor.sheetClasses.character)
+  let pcSheetNames = Object.values(CONFIG.Actor.sheetClasses.character)
     .map((sheetClass) => sheetClass.cls)
     .map((sheet) => sheet.name);
 
-  sheetNames.forEach((sheetName) => {
+  pcSheetNames.forEach((sheetName) => {
     Hooks.on("render" + sheetName, (app, html, data) => {
       // only for GMs or the owner of this character
       if (!data.owner || !data.actor) return;
@@ -95,11 +95,11 @@ export default function () {
   /**
    * NPC sheets
    */
-  sheetNames = Object.values(CONFIG.Actor.sheetClasses.npc)
+  let npcSheetNames = Object.values(CONFIG.Actor.sheetClasses.npc)
     .map((sheetClass) => sheetClass.cls)
     .map((sheet) => sheet.name);
 
-  sheetNames.forEach((sheetName) => {
+  npcSheetNames.forEach((sheetName) => {
     Hooks.on("render" + sheetName, (app, html, data) => {
       // only for GMs or the owner of this npc
       if (!data.owner || !data.actor) return;

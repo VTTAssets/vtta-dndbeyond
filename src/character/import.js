@@ -132,6 +132,7 @@ export default class CharacterImport extends Application {
         let data = undefined;
         try {
           data = JSON.parse(pasteData);
+          if (!data.character) data.character = data;
         } catch (error) {
           if (error.message === "Unexpected end of JSON input") {
             this.showCurrentTask(
@@ -149,11 +150,28 @@ export default class CharacterImport extends Application {
         try {
           this.result = parser.parseJson(data);
         } catch (error) {
-          console.error(error);
+          console.log(
+            "%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####",
+            "color: #ff0000"
+          );
+          console.log(`**Foundry version         :** ${game.data.version}`);
+          console.log(
+            `**DND5e version           :** ${game.system.data.version}`
+          );
+          console.log(
+            `**VTTA D&D Beyond version :** ${
+              game.modules.get("vtta-dndbeyond").data.version
+            }`
+          );
+          console.log(error);
+          console.log(
+            "%c ##########################################",
+            "color: #ff0000"
+          );
           this.showCurrentTask(
             html,
             "I guess you are special!",
-            "We had trouble understanding this character. But you can help us to improve! Please <ul><li>open the console with F12</li><li>search for red error text</li><li>save the JSON as a text file and submit it along with the error message to <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!",
+            "We had trouble understanding this character. But you can help us to improve! Please <ul><li>open the console with F12</li><li>search for a block of text starting with #### PLEASE PASTE TO #parsing-errors #####</li><li>save the JSON as a text file and submit it along with the error message to <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!",
             true
           );
           return false;
@@ -198,12 +216,12 @@ export default class CharacterImport extends Application {
 
         // clear items
         this.showCurrentTask(html, "Clearing inventory");
-        await this.actor.deleteManyEmbeddedEntities(
+        await this.actor.deleteEmbeddedEntity(
           "OwnedItem",
           this.actor.getEmbeddedCollection("OwnedItem").map((item) => item._id)
         );
         //await this.actor.updateManyEmbeddedEntities('OwnedItem'{ items: [] });
-        
+
         // we need to make sure the item spells are in the compendium
         // once they are, if the magic item module is in use we will get
         // the the spell id, pack and imf from the spell and merge it with
@@ -250,7 +268,7 @@ export default class CharacterImport extends Application {
         utils.log("Character items", "character");
         utils.log(items, "character");
 
-        let itemImportResult = await this.actor.createManyEmbeddedEntities(
+        let itemImportResult = await this.actor.createEmbeddedEntity(
           "OwnedItem",
           items,
           {
@@ -260,12 +278,14 @@ export default class CharacterImport extends Application {
 
         // We loop back over the spell slots to update them to our computed
         // available value as per DDB.
-        for (const [type, info] of Object.entries(this.result.character.data.spells)) {
+        for (const [type, info] of Object.entries(
+          this.result.character.data.spells
+        )) {
           await this.actor.update({
-            [`data.spells.${type}.value`]: parseInt(info.value)
+            [`data.spells.${type}.value`]: parseInt(info.value),
           });
         }
-        
+
         this.close();
       });
 

@@ -292,9 +292,10 @@ let SettingsExtender = () => {
       }
 
       _addOnClick($selectButton, path) {
+        const activeSource = this.activeSource;
         $selectButton.click((event) => {
           event.stopPropagation();
-          $(this.field).val(path);
+          $(this.field).val(DirectoryPicker.format(path, activeSource));
           this.close();
         });
       }
@@ -304,8 +305,21 @@ let SettingsExtender = () => {
       return val;
     }
 
-    DirectoryPicker.parse = (val) => val;
-    DirectoryPicker.format = (val) => val;
+    DirectoryPicker.parse = (val) => {
+      let source = "data";
+      let current = val;
+
+      let matches = val.match(/\[(\w+)\]\s*(.+)/);
+      if (matches) {
+        source = matches[1];
+        current = matches[2];
+      }
+      return {
+        source: source,
+        current: current,
+      };
+    };
+    DirectoryPicker.format = (val, source = "data") => `[${source}] ${val}`;
     DirectoryPicker._init = ($html) => {
       const $directoryPickers = $html.find(
         `[data-dtype="${DirectoryPicker.name}"]`
@@ -322,9 +336,15 @@ let SettingsExtender = () => {
         $input.after($browseButton);
         $browseButton.click((event) => {
           event.preventDefault();
+          // The path is stored in the format
+          // [activeSource] path
+          // Let's extract both parts and provide sensible defaults
+          let val = DirectoryPicker.parse($input.val());
+
           new DirPicker({
+            source: val.source,
             field: $input,
-            current: $input.val(),
+            current: val.current,
             button: $browseButton,
           }).browse();
         });

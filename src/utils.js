@@ -336,15 +336,36 @@ let utils = {
     async function upload(data, path, filename) {
       return new Promise((resolve, reject) => {
         let formData = new FormData();
-        formData.append("target", path);
 
-        let target =
-          game.data.version === "0.4.0"
-            ? "user"
-            : game.data.version === "0.4.1"
-            ? "user"
-            : "data";
-        formData.append("source", target);
+        // let target =
+        //   game.data.version === "0.4.0"
+        //     ? "user"
+        //     : game.data.version === "0.4.1"
+        //     ? "user"
+        //     : "data";
+
+        const getDataSource = (val) => {
+          let source = "data";
+          let path = val;
+
+          let matches = val.match(/\[(\w+)\]\s*(.+)/);
+          if (matches) {
+            source = matches[1];
+            path = matches[2];
+          }
+          return {
+            source: source,
+            path:
+              path !== "" && path.indexOf("/") !== path.length - 1
+                ? path + "/"
+                : path,
+          };
+        };
+
+        let target = getDataSource(path);
+
+        formData.append("target", target.path);
+        formData.append("source", target.source);
         formData.append("upload", data, filename);
         //formData.append("file", url);
 
@@ -353,8 +374,28 @@ let utils = {
         req.onreadystatechange = () => {
           if (req.readyState !== 4) return;
           if (req.status === 200) {
+            console.log(req.body);
             utils.log(`Upload successfull, resolving with ${path}/${filename}`);
-            resolve(`${path}/${filename}`);
+            try {
+              const response = JSON.parse(req.response);
+              if (
+                response.status &&
+                response.status === "success" &&
+                response.path
+              ) {
+                resolve(response.path);
+              } else {
+                reject(response.status);
+              }
+            } catch (error) {
+              utils.log(
+                `Upload **NOT** successfull, rejecting with ${req.responseText}`
+              );
+              reject(req.responseText);
+            }
+
+            resolve(req.response.path);
+            //resolve(`${path}/${filename}`);
           } else {
             utils.log(
               `Upload **NOT** successfull, rejecting with ${req.responseText}`
@@ -462,16 +503,6 @@ let utils = {
         "Actor",
         type.charAt(0).toUpperCase() + type.slice(1)
       );
-      // if (race !== "") {
-      //   let raceFolder = await getOrCreateFolder(
-      //     typeFolder,
-      //     "Actor",
-      //     race.charAt(0).toUpperCase() + race.slice(1)
-      //   );
-      //   return raceFolder;
-      // } else {
-      //   return typeFolder;
-      // }
       return typeFolder;
     } else {
       return entityFolder;

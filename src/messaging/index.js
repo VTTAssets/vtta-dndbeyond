@@ -1,6 +1,5 @@
 import utils from "../utils.js";
 import queryEntity from "./type/queryEntity.js";
-import importEntity from "./type/importEntity.js";
 import addEntity from "./type/addEntity.js";
 import rollEntity from "./type/rollEntity.js";
 
@@ -61,43 +60,6 @@ class EventPort {
               );
             });
         }
-
-        // import === add from now on
-        // if (head.type === "import") {
-        // importEntity(body)
-        //   .then((response) => {
-        //     utils.log("Import successful", "extension");
-        //     utils.log(response, "extension");
-        //     document.dispatchEvent(
-        //       new CustomEvent(head.id, {
-        //         detail: {
-        //           head: {
-        //             id: head.id,
-        //             type: body,
-        //             code: 200,
-        //           },
-        //           body: response,
-        //         },
-        //       })
-        //     );
-        //   })
-        //   .catch((error) => {
-        //     utils.log("Error in import", "extension");
-        //     utils.log(error, "extension");
-        //     document.dispatchEvent(
-        //       new CustomEvent(head.id, {
-        //         detail: {
-        //           head: {
-        //             id: head.id,
-        //             type: body,
-        //             code: error.code,
-        //           },
-        //           body: error.message,
-        //         },
-        //       })
-        //     );
-        //   });
-        // }
 
         if (head.type === "import" || head.type === "add") {
           addEntity(body)
