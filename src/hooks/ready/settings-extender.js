@@ -341,7 +341,7 @@ let SettingsExtender = () => {
       }
       return {
         source: source,
-        current: path,
+        current: current,
       };
     };
     DirectoryPicker.format = (val, source = "data", bucket = null) => {
@@ -369,7 +369,10 @@ let SettingsExtender = () => {
         $browseButton.click((event) => {
           event.preventDefault();
           // The path is stored in the format
+          // data/ core
           // [activeSource] path
+          // or for S3:
+          // [activeSource:bucket] path
           // Let's extract both parts and provide sensible defaults
           let val = DirectoryPicker.parse($input.val());
 
