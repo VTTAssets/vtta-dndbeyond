@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.2.0] Storage Galore
+
+This Release adds some improvements regarding storage integration: While testing was a bit cumbersome because of my inability to setup S3 reliably, I **think** I made some progress in supporting both S3 and hopefully the assets library of The Forge natively. This required a 
+patched version of settings-extender, which is currently in review by the author. Nevertheless, I am using my own modulized-version here, which **should not conflict** with other versions used by other mods out there. Having only 2h of sleep tonight, I might be very wrong though.
+
+### Fixed
+
+- Several parsing issues regarding character import
+
+### Added
+
+- Better error messages: On character import, the dialog gives way better error messaging (was: zero, now: detailed). If you are prompted to send something in, instructions will be displayed and the relevant error message is enriched by your system information (Foundry version, DND5e version, vtta-dndbeyond version), and marked for an easy copy/paste into the #parsing-errors channel. Please make use of that feature, and upload the failing JSON alongside your bug report, thanks!
+- Support for S3 storage. Please check the Module Settings to browse to your bucket and select a folder. Known error: When using subfolders, the first entry within that subfolder is a blank entry, representing the parent folder. Not sure if that is a bug within Foundry or settings-extender.
+- Added the option for cleaning up imported entities: You can now choose to keep a copy in the world, or if you just want to import into compendiums. You can render the module useless by neither importing into a compendium and by removing imported entities from the world at the same time, so make sure to double-check your settings
+- Initial support to Warlock Hexblades
+
+### Changed
+
+- Using the Upload routine provided by Foundry instead of using a custom POST routine instead
+- Changed the CORS proxy used for downloading the images, setting the correct Content-Type on downloading
+
 ## [2.1.7] Support for dnd5e 0.8.8
 
 ### Fixed

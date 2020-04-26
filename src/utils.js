@@ -378,22 +378,13 @@ let utils = {
         };
 
         const target = getDataSource(path);
-        if (target.bucket) {
-          let result = await FilePicker.upload(
-            target.source,
-            target.path,
-            file,
-            { bucket: target.bucket }
-          );
-          resolve(result);
-        } else {
-          let result = await FilePicker.upload(
-            target.source,
-            target.path,
-            file
-          );
-          resolve(result);
-        }
+        let result = await FilePicker.upload(
+          target.source,
+          target.path,
+          file,
+          target.bucket ? { bucket: target.bucket } : {}
+        );
+        resolve(result.path);
       });
     }
 
