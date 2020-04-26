@@ -34,19 +34,7 @@ let parseItem = (ddb, data, character) => {
           classFeatures: [],
         };
         // Some features, notably hexblade abilities we scrape out here
-        ddb.character.characterValues.filter(charValue => 
-          charValue.value &&
-          charValue.valueId === data.id
-        )
-        .forEach(charValue => {
-          const feature = DICTIONARY.character.characterValuesLookup.find(entry => 
-            entry.typeId === charValue.typeId &&
-            entry.valueTypeId === charValue.valueTypeId
-          );
-          if (!!feature) {
-            flags.classFeatures.push(feature.name);
-          }
-        });
+        flags.classFeatures = getWarlockFeatures(ddb, data.id);
 
         if (data.definition.type === 'Ammunition') {
           return parseAmmunition(data, character);
@@ -126,6 +114,36 @@ let getExtraDamage = (ddb, restrictions) => {
       }
     }
   });
+};
+
+let getWarlockFeatures = (ddb, weaponId) => {
+  // Some features, notably hexblade abilities we scrape out here
+  const warlockFeatures = ddb.character.characterValues
+    .filter(charValue => 
+      charValue.value &&
+      charValue.valueId === weaponId &&
+      DICTIONARY.character.characterValuesLookup.find(entry => 
+        entry.typeId === charValue.typeId &&
+        entry.valueTypeId === charValue.valueTypeId
+      )
+    )
+    .map(charValue =>
+      DICTIONARY.character.characterValuesLookup.find(entry => 
+        entry.typeId === charValue.typeId &&
+        entry.valueTypeId === charValue.valueTypeId
+      ).name
+    );
+
+  // Any Pact Weapon Features 
+  const pactFeatures = ddb.character.options.class
+    .filter(option =>
+      warlockFeatures.includes("pactWeapon") &&
+      !!option.definition.name &&
+      DICTIONARY.character.pactFeatures.includes(option.definition.name)
+    )
+    .map(option => option.definition.name);
+
+  return warlockFeatures.concat(pactFeatures);
 };
 
 export default function getInventory(ddb, character, itemSpells) {

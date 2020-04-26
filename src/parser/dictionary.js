@@ -528,6 +528,11 @@ const DICTIONARY = {
       { name: "pactWeapon", typeId: 28, valueTypeId: 1439493548 },
       { name: "hexWarrior", typeId: 29, valueTypeId: 1439493548 },
     ],
+    // Supported Warlock Pact Weapon options
+    pactFeatures: [
+      "Improved Pact Weapon",
+      "Lifedrinker",
+    ]
   },
   item: {
     characterValues: [
