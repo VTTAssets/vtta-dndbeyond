@@ -293,9 +293,21 @@ let SettingsExtender = () => {
 
       _addOnClick($selectButton, path) {
         const activeSource = this.activeSource;
+        const bucket = this.bucket;
         $selectButton.click((event) => {
           event.stopPropagation();
-          $(this.field).val(DirectoryPicker.format(path, activeSource));
+          if (this.activeSource === "s3") {
+            $(this.field).val(
+              DirectoryPicker.format(
+                path,
+                this.activeSource,
+                this.sources.s3.bucket
+              )
+            );
+          } else {
+            $(this.field).val(DirectoryPicker.format(path, this.activeSource));
+          }
+
           this.close();
         });
       }
@@ -309,17 +321,37 @@ let SettingsExtender = () => {
       let source = "data";
       let current = val;
 
-      let matches = val.match(/\[(\w+)\]\s*(.+)/);
+      let matches = val.trim().match(/\[(.+)\]\s*(.+)/);
       if (matches) {
         source = matches[1];
-        current = matches[2];
+        const [s3, bucket] = source.split(":");
+        if (bucket !== undefined) {
+          return {
+            source: s3,
+            bucket: bucket,
+            current: matches[2],
+          };
+        } else {
+          return {
+            source: s3,
+            bucket: null,
+            current: matches[2],
+          };
+        }
       }
       return {
         source: source,
-        current: current,
+        current: path,
       };
     };
-    DirectoryPicker.format = (val, source = "data") => `[${source}] ${val}`;
+    DirectoryPicker.format = (val, source = "data", bucket = null) => {
+      if (bucket !== null) {
+        return `[${source}:${bucket}] ${val}`;
+      } else {
+        return `[${source}] ${val}`;
+      }
+    };
+
     DirectoryPicker._init = ($html) => {
       const $directoryPickers = $html.find(
         `[data-dtype="${DirectoryPicker.name}"]`
@@ -343,6 +375,7 @@ let SettingsExtender = () => {
 
           new DirPicker({
             source: val.source,
+            bucket: val.bucket,
             field: $input,
             current: val.current,
             button: $browseButton,

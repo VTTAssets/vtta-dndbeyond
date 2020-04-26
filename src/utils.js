@@ -334,7 +334,7 @@ let utils = {
     }
 
     async function upload(data, path, filename) {
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         let formData = new FormData();
 
         // let target =
@@ -348,62 +348,97 @@ let utils = {
           let source = "data";
           let path = val;
 
-          let matches = val.match(/\[(\w+)\]\s*(.+)/);
+          let matches = val.trim().match(/\[(.+)\]\s*(.+)/);
           if (matches) {
             source = matches[1];
-            path = matches[2];
-          }
-          return {
-            source: source,
-            path:
-              path !== "" && path.indexOf("/") !== path.length - 1
-                ? path + "/"
-                : path,
-          };
-        };
-
-        let target = getDataSource(path);
-
-        formData.append("target", target.path);
-        formData.append("source", target.source);
-        formData.append("upload", data, filename);
-        //formData.append("file", url);
-
-        let req = new XMLHttpRequest();
-        req.open("POST", "/upload", true);
-        req.onreadystatechange = () => {
-          if (req.readyState !== 4) return;
-          if (req.status === 200) {
-            console.log(req.body);
-            utils.log(`Upload successfull, resolving with ${path}/${filename}`);
-            try {
-              const response = JSON.parse(req.response);
-              if (
-                response.status &&
-                response.status === "success" &&
-                response.path
-              ) {
-                resolve(response.path);
-              } else {
-                reject(response.status);
-              }
-            } catch (error) {
-              utils.log(
-                `Upload **NOT** successfull, rejecting with ${req.responseText}`
-              );
-              reject(req.responseText);
+            const [s3, bucket] = source.split(":");
+            if (bucket !== undefined) {
+              return {
+                source: s3,
+                bucket: bucket,
+                path: matches[2],
+              };
+            } else {
+              return {
+                source: s3,
+                bucket: null,
+                path: matches[2],
+              };
             }
-
-            resolve(req.response.path);
-            //resolve(`${path}/${filename}`);
           } else {
-            utils.log(
-              `Upload **NOT** successfull, rejecting with ${req.responseText}`
-            );
-            reject(req.responseText);
+            return {
+              source: source,
+              path: path,
+            };
           }
         };
-        req.send(formData);
+
+        const target = getDataSource(path);
+
+        if (target.bucket) {
+          formData.append("bucket", target.bucket);
+          let result = await FilePicker.upload(
+            target.source,
+            target.path,
+            data,
+            { bucket: target.bucket }
+          );
+          resolve(result);
+        } else {
+          let result = await FilePicker.upload(
+            target.source,
+            target.path,
+            data,
+            { bucket: target.bucket }
+          );
+          resolve(result);
+        }
+
+        // let target = getDataSource(path);
+
+        // formData.append("target", target.path);
+        // formData.append("source", target.source);
+        // formData.append("upload", data, filename);
+        // if (target.bucket) {
+        //   formData.append("bucket", target.bucket);
+        // }
+        // //formData.append("file", url);
+
+        // let req = new XMLHttpRequest();
+        // req.open("POST", "/upload", true);
+        // req.onreadystatechange = () => {
+        //   if (req.readyState !== 4) return;
+        //   if (req.status === 200) {
+        //     console.log(req.body);
+        //     utils.log(`Upload successfull, resolving with ${path}/${filename}`);
+        //     try {
+        //       const response = JSON.parse(req.response);
+        //       if (
+        //         response.status &&
+        //         response.status === "success" &&
+        //         response.path
+        //       ) {
+        //         resolve(response.path);
+        //       } else {
+        //         reject(response.status);
+        //       }
+        //     } catch (error) {
+        //       utils.log(
+        //         `Upload **NOT** successfull, rejecting with ${req.responseText}`
+        //       );
+        //       reject(req.responseText);
+        //     }
+
+        //     resolve(req.response.path);
+        //     //resolve(`${path}/${filename}`);
+        //   } else {
+        //     utils.log(
+        //       `Upload **NOT** successfull, rejecting with ${req.responseText}`
+        //     );
+        //     reject(req.responseText);
+        //   }
+        // };
+        // req.send(formData);
       });
     }
 
