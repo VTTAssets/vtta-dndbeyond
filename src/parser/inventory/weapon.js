@@ -168,17 +168,22 @@ let getAbility = (weaponProperties, weaponRange, abilities) => {
 /**
  * Searches for a magical attack bonus granted by this weapon
  * @param {obj} data item data
+ * @param {obj} flags 
  */
-let getMagicalBonus = data => {
-  let boni = data.definition.grantedModifiers.filter(
+let getMagicalBonus = (data, flags) => {
+  const boni = data.definition.grantedModifiers.filter(
     mod =>
       mod.type === "bonus" &&
       mod.subType === "magic" &&
       mod.value &&
       mod.value !== 0
   );
-  let bonus = boni.reduce((prev, cur) => prev + cur.value, 0);
-  return bonus;
+  const bonus = boni.reduce((prev, cur) => prev + cur.value, 0);
+  if (flags.classFeatures.includes("Improved Pact Weapon") && bonus === 0) {
+    return 1;
+  } else {
+    return bonus;
+  }
 };
 
 /**
@@ -188,7 +193,7 @@ let getMagicalBonus = data => {
  * /* damage: { parts: [], versatile: '' }, * /
  */
 let getDamage = (data, flags) => {
-  const magicalDamageBonus = getMagicalBonus(data);
+  const magicalDamageBonus = getMagicalBonus(data, flags);
   // we can safely make these assumptions about GWF and Dueling because the
   // flags are only added for melee attacks
   const greatWeaponFighting = flags.classFeatures.includes("greatWeaponFighting") ? "r<=2" : ""
@@ -384,7 +389,7 @@ export default function parseWeapon(data, character, flags) {
   weapon.data.actionType = weapon.data.range.long === 5 ? "mwak" : "rwak";
 
   /* attackBonus: 0, */
-  weapon.data.attackBonus = getMagicalBonus(data);
+  weapon.data.attackBonus = getMagicalBonus(data, flags);
 
   /* chatFlavor: '', */
   // we leave that as-is
@@ -400,7 +405,7 @@ export default function parseWeapon(data, character, flags) {
   weapon.flags.betterRolls5e = {
     "quickDamage": {
         "context": {
-            "0": (getMagicalBonus(data) > 0) ? "Magical" : ""
+            "0": (getMagicalBonus(data, flags) > 0) ? "Magical" : ""
         },
         "value": {
             "0": true
