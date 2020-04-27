@@ -30,31 +30,29 @@ let parseItem = (ddb, data, character) => {
     switch (data.definition.filterType) {
       case 'Weapon':
         let flags = {
-          damage: {},
+          damage: {
+            parts: [],
+          },
           classFeatures: [],
         };
         // Some features, notably hexblade abilities we scrape out here
-        ddb.character.characterValues.filter(charValue => 
-          charValue.value &&
-          charValue.valueId === data.id
-        )
-        .forEach(charValue => {
-          const feature = DICTIONARY.character.characterValuesLookup.find(entry => 
-            entry.typeId === charValue.typeId &&
-            entry.valueTypeId === charValue.valueTypeId
-          );
-          if (!!feature) {
-            flags.classFeatures.push(feature.name);
-          }
-        });
+        flags.classFeatures = getWarlockFeatures(ddb, data.id);
 
+        if (flags.classFeatures.includes("Lifedrinker")){
+          flags.damage.parts.push(["@mod", "necrotic"]);
+        }
+        
         if (data.definition.type === 'Ammunition') {
           return parseAmmunition(data, character);
         } else {
           // for melee attacks get extras
           if (data.definition.attackType === 1) {
             // get improved divine smite etc for melee attacks
-            flags.damage.parts = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
+            const extraDamage = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
+
+            if (!!extraDamage.length > 0){
+              flags.damage.parts = flags.damage.parts.concat(extraDamage);
+            }
             // do we have great weapon fighting?
             if (utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting")) {
               flags.classFeatures.push("greatWeaponFighting");
@@ -64,6 +62,7 @@ let parseItem = (ddb, data, character) => {
               flags.classFeatures.push("Dueling");
             }
           }
+
           // ranged fighting style is added as a global modifier elsewhere
           // as is defensive style
           return parseWeapon(data, character, flags);
@@ -117,7 +116,6 @@ let parseItem = (ddb, data, character) => {
 let getExtraDamage = (ddb, restrictions) => {
   return utils.filterBaseModifiers(ddb, "damage", null, restrictions)
   .map(mod => {
-    console.log("mod " + JSON.stringify(mod));
     if (mod.dice) {
       return [mod.dice.diceString, mod.subType];
     } else {
@@ -126,6 +124,36 @@ let getExtraDamage = (ddb, restrictions) => {
       }
     }
   });
+};
+
+let getWarlockFeatures = (ddb, weaponId) => {
+  // Some features, notably hexblade abilities we scrape out here
+  const warlockFeatures = ddb.character.characterValues
+    .filter(charValue => 
+      charValue.value &&
+      charValue.valueId === weaponId &&
+      DICTIONARY.character.characterValuesLookup.find(entry => 
+        entry.typeId === charValue.typeId &&
+        entry.valueTypeId === charValue.valueTypeId
+      )
+    )
+    .map(charValue =>
+      DICTIONARY.character.characterValuesLookup.find(entry => 
+        entry.typeId === charValue.typeId &&
+        entry.valueTypeId === charValue.valueTypeId
+      ).name
+    );
+
+  // Any Pact Weapon Features 
+  const pactFeatures = ddb.character.options.class
+    .filter(option =>
+      warlockFeatures.includes("pactWeapon") &&
+      !!option.definition.name &&
+      DICTIONARY.character.pactFeatures.includes(option.definition.name)
+    )
+    .map(option => option.definition.name);
+
+  return warlockFeatures.concat(pactFeatures);
 };
 
 export default function getInventory(ddb, character, itemSpells) {
