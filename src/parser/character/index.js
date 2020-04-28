@@ -492,11 +492,9 @@ let getSpeed = (data, character) => {
     }
   }
 
-  // some races have feats that boost speed
-  let raceBonusSpeed = data.character.modifiers.feat.filter(
-    modifier =>
-      modifier.type === "bonus" && modifier.subType === "speed"
-  ).reduce((speed, feat) => speed + feat.value, 0);
+  // get bonus speed mods
+  const bonusSpeed = utils.filterBaseModifiers(data, "bonus", "speed")
+    .reduce((speed, feat) => speed + feat.value, 0);
 
   //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
@@ -515,20 +513,26 @@ let getSpeed = (data, character) => {
       }
     });
     // overwrite the (perhaps) changed value
-    movementTypes[type] = base + raceBonusSpeed;
+    movementTypes[type] = base + bonusSpeed;
   }
 
   // unarmored movement for barbarians and monks
   if (!isArmored(data)) {
-    let bonusSpeeds = data.character.modifiers.class.filter(
+    data.character.modifiers.class.filter(
       modifier =>
         modifier.type === "bonus" && modifier.subType === "unarmored-movement"
-    );
-    // add all bonus speeds to each movement type
-    bonusSpeeds.forEach(bonusSpeed => {
+    ).forEach(bonusSpeed => {
       for (let type in movementTypes) {
         movementTypes[type] += bonusSpeed.value;
       }
+    });
+  }
+
+  // is there a custom seed over-ride?
+  if (data.character.customSpeeds) {
+    data.character.customSpeeds.forEach(speed => {
+      const type = DICTIONARY.character.speeds.find(s => s.id === speed.movementId).type;
+      movementTypes[type] = speed.distance;
     });
   }
 
