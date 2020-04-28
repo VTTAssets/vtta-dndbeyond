@@ -1248,20 +1248,22 @@ let getSenses = data => {
   let hasDarkvision = false;
   // custom senses
   if (data.character.customSenses) {
-    data.character.customSenses.forEach(sense => {
-      let s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
+    data.character.customSenses
+      .filter(sense => {!!sense.distance})
+      .forEach(sense => {
+        const s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
 
-      let senseName = s ? s.name : null;
-      // remember that this darkvision has precedence
-      if (senseName === "Darkvision") hasDarkvision = true;
+        const senseName = s ? s.name : null;
+        // remember that this darkvision has precedence
+        if (senseName === "Darkvision") hasDarkvision = true;
 
-      // remember this sense
-      senses.push({ name: senseName, value: sense.distance });
-    });
+        // remember this sense
+        senses.push({ name: senseName, value: sense.distance });
+      });
   }
 
   if (!hasDarkvision) {
-    let sense = data.character.modifiers.race.find(
+    const sense = data.character.modifiers.race.find(
       modifier =>
         modifier.type === "set-base" && modifier.subType === "darkvision"
     );
