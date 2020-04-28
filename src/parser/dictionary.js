@@ -84,6 +84,13 @@ const DICTIONARY = {
       { id: 3, name: "Tremorsense" },
       { id: 4, name: "Truesight" },
     ],
+    speeds: [
+      { id: 1, type: "walk" },
+      { id: 2, type: "burrow" },
+      { id: 3, type: "climb" },
+      { id: 4, type: "fly" },
+      { id: 5, type: "swim" },
+    ],
     actorSizes: [
       { name: "Tiny", value: "tiny" },
       { name: "Small", value: "sm" },
