@@ -1267,13 +1267,10 @@ let getSenses = data => {
   }
 
   if (!hasDarkvision) {
-    const sense = data.character.modifiers.race.find(
-      modifier =>
-        modifier.type === "set-base" && modifier.subType === "darkvision"
-    );
-    if (sense && sense.value) {
+    utils.filterBaseModifiers(data, "set-base", "darkvision")
+      .forEach(sense => {
       senses.push({ name: sense.friendlySubtypeName, value: sense.value });
-    }
+    });
   }
   // sort the senses alphabetically
   senses = senses.sort((a, b) => a.name >= b.name);
@@ -1534,23 +1531,25 @@ let getToken = data => {
   let hasDarkvision = false;
   // custom senses
   if (data.character.customSenses) {
-    data.character.customSenses.forEach(sense => {
-      let s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
+    data.character.customSenses
+      .filter(sense => {!!sense.distance})
+      .forEach(sense => {
+        const s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
 
-      let senseName = s ? s.name : null;
-      // remember that this darkvision has precedence
-      if (senseName === "Darkvision") hasDarkvision = true;
+        const senseName = s ? s.name : null;
+        // remember that this darkvision has precedence
+        if (senseName === "Darkvision") hasDarkvision = true;
 
-      // remember this sense
-      senses.push({ name: senseName, value: sense.distance });
-    });
+        // remember this sense
+        senses.push({ name: senseName, value: sense.distance });
+      });
   }
 
   if (!hasDarkvision) {
-    const sense = utils.filterBaseModifiers(data, "set-base", "darkvision");
-    if (sense && sense.value) {
+    utils.filterBaseModifiers(data, "set-base", "darkvision")
+      .forEach(sense => {
       senses.push({ name: sense.friendlySubtypeName, value: sense.value });
-    }
+    });
   }
 
   // Magical bonuses
