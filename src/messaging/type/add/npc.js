@@ -117,7 +117,7 @@ let createNPC = async (npc, options) => {
 
 let addNPC = (body) => {
   return new Promise(async (resolve, reject) => {
-    // if we have a cleanup policy of CLEAN_MONSTER | CLEAN_ALL, we do not create the folder structure
+    // cleaning up after imports
     const cleanupAfterImport =
       game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") ===
         CLEAN_ALL ||

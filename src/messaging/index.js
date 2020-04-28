@@ -1,7 +1,10 @@
 import utils from "../utils.js";
-import queryEntity from "./type/queryEntity.js";
-import addEntity from "./type/addEntity.js";
-import rollEntity from "./type/rollEntity.js";
+//import queryEntity from "./type/queryEntity.js";
+//import addEntity from "./type/addEntity.js";
+import roll from "./type/roll.js";
+
+import query from "./type/query/index.js";
+import add from "./type/add/index.js";
 
 let uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -26,75 +29,67 @@ class EventPort {
 
         // switching to see how to process each message received
         if (head.type === "query") {
-          queryEntity(body)
-            .then((response) => {
-              utils.log("Query successful", "extension");
-              utils.log(response, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: 200,
-                    },
-                    body: response,
+          try {
+            let result = await query(body);
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body.type,
+                    code: 200,
                   },
-                })
-              );
-            })
-            .catch((error) => {
-              utils.log("Error in query", "extension");
-              utils.log(error, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: error.code,
-                    },
-                    body: error.message,
+                  body: result,
+                },
+              })
+            );
+          } catch (error) {
+            console.log(error);
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body.type,
+                    code: 500,
                   },
-                })
-              );
-            });
+                  body: error.message,
+                },
+              })
+            );
+          }
         }
 
         if (head.type === "import" || head.type === "add") {
-          addEntity(body)
-            .then((response) => {
-              utils.log("Add successful: ", "extension");
-              utils.log(response, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: 200,
-                    },
-                    body: response,
+          try {
+            let result = await add(body);
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body.type,
+                    code: 200,
                   },
-                })
-              );
-            })
-            .catch((error) => {
-              utils.log("Error in import", "extension");
-              utils.log(error, "extension");
-              document.dispatchEvent(
-                new CustomEvent(head.id, {
-                  detail: {
-                    head: {
-                      id: head.id,
-                      type: body,
-                      code: error.code,
-                    },
-                    body: error.message,
+                  body: result,
+                },
+              })
+            );
+          } catch (error) {
+            console.log(error);
+            document.dispatchEvent(
+              new CustomEvent(head.id, {
+                detail: {
+                  head: {
+                    id: head.id,
+                    type: body.type,
+                    code: 500,
                   },
-                })
-              );
-            });
+                  body: error.message,
+                },
+              })
+            );
+          }
         }
 
         if (head.type === "roll") {
@@ -144,7 +139,7 @@ class EventPort {
               })
             );
           } else {
-            rollEntity(persona, body.data)
+            roll(persona, body.data)
               .then((response) => {
                 utils.log("Add successful", "extension");
                 utils.log(response, "extension");
