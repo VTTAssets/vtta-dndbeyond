@@ -1248,30 +1248,8 @@ let getSize = data => {
 };
 
 let getSenses = data => {
-  let senses = [];
-  let hasDarkvision = false;
-  // custom senses
-  if (data.character.customSenses) {
-    data.character.customSenses
-      .filter(sense => {!!sense.distance})
-      .forEach(sense => {
-        const s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
-
-        const senseName = s ? s.name : null;
-        // remember that this darkvision has precedence
-        if (senseName === "Darkvision") hasDarkvision = true;
-
-        // remember this sense
-        senses.push({ name: senseName, value: sense.distance });
-      });
-  }
-
-  if (!hasDarkvision) {
-    utils.filterBaseModifiers(data, "set-base", "darkvision")
-      .forEach(sense => {
-      senses.push({ name: sense.friendlySubtypeName, value: sense.value });
-    });
-  }
+  let senses = getSensesLookup(data);
+  
   // sort the senses alphabetically
   senses = senses.sort((a, b) => a.name >= b.name);
 
@@ -1496,6 +1474,54 @@ let getSpellSlots = data => {
   return spellSlots;
 };
 
+let getSensesLookup = data => {
+  let senses = [];
+  let hasDarkvision = false;
+  // custom senses
+  if (data.character.customSenses) {
+    data.character.customSenses
+      .filter(sense => {!!sense.distance})
+      .forEach(sense => {
+        const s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
+
+        const senseName = s ? s.name : null;
+        // remember that this darkvision has precedence
+        if (senseName === "Darkvision") hasDarkvision = true;
+
+        // remember this sense
+        senses.push({ name: senseName, value: sense.distance });
+      });
+  }
+
+  if (!hasDarkvision) {
+    utils.filterBaseModifiers(data, "set-base", "darkvision")
+      .forEach(sense => {
+      senses.push({ name: sense.friendlySubtypeName, value: sense.value });
+    });
+  }
+
+  // Magical bonuses
+  utils.getActiveItemModifiers(data)
+    .filter(mod => mod.type === "sense")
+    .map(mod => {
+      return {
+        name: DICTIONARY.character.senses.find(s => s.id === mod.entityId).name,
+        value: mod.value
+      };
+    })
+    .forEach(mod => {
+      let sense = senses.find(sense => sense.name === mod.name);
+      if (sense) {
+        sense.value += mod.value;
+      } else {
+        if (mod.name === "Darkvision") hasDarkvision = true;
+        senses.push({ name: mod.name, value: mod.value });
+      }
+    });
+
+    return senses;
+}
+
 let getToken = data => {
   /*
           obj.token = this.getToken(character);
@@ -1527,59 +1553,7 @@ let getToken = data => {
     width: 1
   };
 
-  let senses = [];
-  let hasDarkvision = false;
-  // custom senses
-  if (data.character.customSenses) {
-    data.character.customSenses
-      .filter(sense => {!!sense.distance})
-      .forEach(sense => {
-        const s = DICTIONARY.character.senses.find(s => s.id === sense.senseId);
-
-        const senseName = s ? s.name : null;
-        // remember that this darkvision has precedence
-        if (senseName === "Darkvision") hasDarkvision = true;
-
-        // remember this sense
-        senses.push({ name: senseName, value: sense.distance });
-      });
-  }
-
-  if (!hasDarkvision) {
-    utils.filterBaseModifiers(data, "set-base", "darkvision")
-      .forEach(sense => {
-      senses.push({ name: sense.friendlySubtypeName, value: sense.value });
-    });
-  }
-
-  // Magical bonuses
-  let magicalBoni = data.character.inventory
-    .filter(item => item.equipped)
-    .filter(
-      item =>
-        item.definition.grantedModifiers &&
-        Array.isArray(item.definition.grantedModifiers) &&
-        item.definition.grantedModifiers.length !== 0
-    )
-
-    .map(item => {
-      return item.definition.grantedModifiers
-        .filter(mod => mod.type === "sense")
-        .map(mod => {
-          return {
-            name: DICTIONARY.character.senses.find(s => s.id === mod.entityId)
-              .name,
-            value: mod.value
-          };
-        });
-    })
-    .flat();
-  magicalBoni.map(bonus => {
-    let sense = senses.find(sense => sense.name === bonus.name);
-    if (sense) {
-      sense.value = bonus.value;
-    }
-  });
+  let senses = getSensesLookup(data);
 
   // Blindsight/Truesight
   if (
