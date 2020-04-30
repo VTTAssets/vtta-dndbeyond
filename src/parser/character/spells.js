@@ -215,18 +215,8 @@ let getDuration = data => {
   }
 };
 
-/** Spell targets 
- * 
- *             "target": {
-                "value": 4,
-                "units": "mi",
-                "type": "creature"
-            },
-            "range": {
-                "value": 30,
-                "long": 30,
-                "units": "ft"
-            },
+/**
+ * Spell targets 
 */
 let getTarget = data => {
   // if spell is an AOE effect get some details
@@ -239,14 +229,19 @@ let getTarget = data => {
   }
 
   // else lets try and fill in some target details
-  let type = "";
+  let type = null;
   let units = null;
   let value = null;
+
+  const creature = /(a creature you|creature( that)? you can see|interrupt a creature)|would strike a creature|creature of your choice|creature or object within range|cause a creature|creature must be within range/i;
+  const creaturesRange = /(humanoid|monster|creature|target)(s)? (or loose object )?(of your choice )?(that )?(you can see )?within range/i;
+  const creatures = creature.exec(data.definition.description) ||
+    creaturesRange.exec(data.definition.description);
 
   switch (data.definition.range.origin) {
     case "Touch":
       units = "touch"
-      type = "creature";
+      if (creatures) type = "creature";
       break;
     case "Self":
       type = "self";
@@ -255,14 +250,15 @@ let getTarget = data => {
       type = "none";
       break;
     case "Ranged":
-      type = "creature";
+      if (creatures) type = "creature";
       break;
     case "Feet":
-      type = "creature";
+      if (creatures) type = "creature";
       break;
     case "Miles":
-      type = "creature";
+      if (creatures) type = "creature";
       break;
+    case "Sight":
     case "Special":
       units = "special";
       break;
@@ -309,6 +305,7 @@ let getRange = data => {
     case "Miles":
       units = "ml";
       break;
+    case "Sight":
     case "Special":
       units = "special";
       break;
