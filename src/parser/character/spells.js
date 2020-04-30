@@ -217,6 +217,16 @@ let getDuration = data => {
 
 /** Spell targets 
  * 
+ *             "target": {
+                "value": 4,
+                "units": "mi",
+                "type": "creature"
+            },
+            "range": {
+                "value": 30,
+                "long": 30,
+                "units": "ft"
+            },
 */
 let getTarget = data => {
   // if spell is an AOE effect get some details
@@ -230,11 +240,13 @@ let getTarget = data => {
 
   // else lets try and fill in some target details
   let type = "";
-  let units = "";
+  let units = null;
+  let value = null;
 
   switch (data.definition.range.origin) {
     case "Touch":
-      type = "touch";
+      units = "touch"
+      type = "creature";
       break;
     case "Self":
       type = "self";
@@ -243,21 +255,19 @@ let getTarget = data => {
       type = "none";
       break;
     case "Ranged":
-      type = "feet";
+      type = "creature";
       break;
     case "Feet":
-      type = "feet";
-      units = "ft";
+      type = "creature";
       break;
     case "Miles":
-      type = "miles";
-      units = "ml";
+      type = "creature";
       break;
     case "Special":
-      type = "special";
+      units = "special";
       break;
     case "Any":
-      type = "any";
+      units = "any";
       break;
     case undefined:
       type = null;
@@ -265,7 +275,7 @@ let getTarget = data => {
   };
 
   return {
-    value: null, // dd beyond doesn't let us know how many folk a spell can target
+    value: value, // dd beyond doesn't let us know how many folk a spell can target
     units: units, 
     type: type,
   };
