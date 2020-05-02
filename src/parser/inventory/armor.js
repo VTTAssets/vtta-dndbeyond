@@ -7,13 +7,13 @@ import utils from "../../utils.js";
  */
 let getArmorType = data => {
   // get the generic armor type
-  let entry = DICTIONARY.equipment.armorType.find(
+  const entry = DICTIONARY.equipment.armorType.find(
     type => type.name === data.definition.type
   );
 
   // get the armor class
-  let baseArmorClass = data.definition.armorClass;
-  let bonusArmorClass = data.definition.grantedModifiers.reduce((prev, cur) => {
+  const baseArmorClass = data.definition.armorClass;
+  const bonusArmorClass = data.definition.grantedModifiers.reduce((prev, cur) => {
     if (cur.type === "bonus" && cur.subType === "armor-class" && cur.value) {
       return cur.value;
     } else {
@@ -21,8 +21,19 @@ let getArmorType = data => {
     }
   }, 0);
 
-  // get the max dex modifier (Medium Armor: 2, else: 0)
-  let maxDexModifier = data.definition.type === "Medium Armor" ? 2 : null;
+  // get the max dex modifier (Medium Armor: 2, Heavy: 0)
+  let maxDexModifier 
+  switch (data.definition.type) {
+    case "Heavy Armor":
+      maxDexModifier = 0;
+      break;
+    case "Medium Armor":
+      maxDexModifier = 2;
+      break;
+    default:
+      maxDexModifier = "";
+  }
+
 
   return {
     type: entry !== undefined ? entry.value : "medium",
@@ -44,8 +55,8 @@ let getStrength = data => {
 /**
  * Wearing this armor can give a disadvantage on stealth checks
  */
-let getStealth = data => {
-  return data.definition.stealthCheck === 1;
+let getStealthPenalty = data => {
+  return data.definition.stealthCheck === 2;
 };
 
 /**
@@ -162,7 +173,7 @@ export default function parseArmor(data, character) {
   armor.data.strength = getStrength(data);
 
   /* "stealth": false,*/
-  armor.data.stealth = getStealth(data);
+  armor.data.stealth = getStealthPenalty(data);
 
   /* proficient: true, */
   armor.data.proficient = getProficient(
