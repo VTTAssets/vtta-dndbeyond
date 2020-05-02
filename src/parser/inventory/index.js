@@ -88,6 +88,9 @@ let parseItem = (ddb, data, character) => {
         break;
       case 'Other Gear':
         switch (data.definition.subType) {
+          case 'Potion':
+            return parsePotion(data, character);
+            break;
           case 'Tool':
             return parseTool(data, character);
             break;
