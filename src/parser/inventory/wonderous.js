@@ -119,11 +119,9 @@ export default function parseWonderous(data, character) {
   item.data.quantity = data.quantity ? data.quantity : 1;
 
   /* weight */
-  //item.data.weight = data.definition.weight ? data.definition.weight : 0;
-  let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
-  let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  item.data.weight =
-    (totalWeight / bundleSize) * (item.data.quantity / bundleSize);
+  const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
+  const totalWeight = data.definition.weight ? data.definition.weight : 0;
+  item.data.weight =(totalWeight / bundleSize);
 
   /* price */
   item.data.price = data.definition.cost ? data.definition.cost : 0;
