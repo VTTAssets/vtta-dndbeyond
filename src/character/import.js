@@ -21,6 +21,7 @@ export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
     this.actor = game.actors.entities.find((a) => a.id === actor._id);
+    this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
   }
   /**
@@ -44,6 +45,23 @@ export default class CharacterImport extends Application {
       }`
     );
     $(html).parent().parent().css("height", "auto");
+  }
+
+  async copyDynamicEffect(original, target) {
+    if (!!original.flags.dynamiceffects){
+      console.log(`Copying Dynamic Effects for ${original.name}`);
+      target.flags.dynamiceffects = original.flags.dynamiceffects;
+    }
+  }
+
+  async dynamicifyItems(items) {
+    items.forEach(item => {
+      const originalItem = this.actorOriginal.items.find(originalItem =>
+        item.name === originalItem.name &&
+        item.type === originalItem.type
+      );
+      this.copyDynamicEffect(originalItem, item);
+    });
   }
 
   /**
@@ -181,8 +199,7 @@ export default class CharacterImport extends Application {
         utils.log(this.result);
 
         // is magicitems installed
-        const magicItemsInstalled =
-          game.modules.get("magicitems") !== undefined;
+        const magicItemsInstalled = !!game.modules.get("magicitems");
 
         // updating the image?
         let imagePath = this.actor.img;
@@ -264,6 +281,8 @@ export default class CharacterImport extends Application {
           items.push(this.result.itemSpells);
           items = items.flat();
         }
+
+        await this.dynamicifyItems(items);
 
         utils.log("Character items", "character");
         utils.log(items, "character");
