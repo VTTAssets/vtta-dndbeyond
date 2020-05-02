@@ -376,19 +376,26 @@ let getDamage = data => {
   };
 
   // damage
-  let attacks = data.definition.modifiers.filter(mod => mod.type === "damage");
+  const attacks = data.definition.modifiers.filter(mod => mod.type === "damage");
   if (attacks.length !== 0) {
+    const cantripBoost = (data.definition.level === 0 && !!data.flags.vtta.dndbeyond.cantripBoost);
     attacks.forEach(attack => {
-      let diceString = attack.usePrimaryStat
+      let diceString = (attack.usePrimaryStat || cantripBoost)
         ? `${attack.die.diceString} + @mod`
         : attack.die.diceString;
       result.parts.push([diceString, attack.subType]);
     });
+
+    // This is probably just for Toll the dead.
+    const alternativeFormula = getAlternativeFormula(data);
+    result.versatile = (cantripBoost)
+      ? `${alternativeFormula} + @mod`
+      : alternativeFormula;
     return result;
   }
 
   // healing
-  let heals = data.definition.modifiers.filter(
+  const heals = data.definition.modifiers.filter(
     mod => mod.type === "bonus" && mod.subType === "hit-points"
   );
   if (heals.length !== 0) {
@@ -569,7 +576,7 @@ let getSpellScaling = (data, character) => {
   }
 };
 
-let getFormula = data => {
+let getAlternativeFormula = data => {
   // this might be specificially for Toll the Dead only, but it's better than nothing
 
   let description = data.definition.description;
@@ -787,8 +794,6 @@ let parseSpell = (data, character) => {
 
   spell.data.scaling = getSpellScaling(data);
 
-  spell.data.formula = getFormula(data);
-
   spell.data.uses = getUses(data);
 
   // attach the spell ability id to the spell data so VTT always uses the
@@ -800,24 +805,38 @@ let parseSpell = (data, character) => {
     spell.data.ability = data.flags.vtta.dndbeyond.ability;
   }
 
+  // If using better rolls we set alt to be versatile for spells like
+  // Toll The Dead
+  spell.flags.betterRolls5e = {
+    "quickVersatile": {
+        "altValue": true
+    }
+  }
+
   return spell;
 };
 
 export default function parseSpells(ddb, character) {
   let items = [];
-  let proficiencyModifier = character.data.attributes.prof;
-  let lookups = getLookups(ddb.character);
+  const proficiencyModifier = character.data.attributes.prof;
+  const lookups = getLookups(ddb.character);
 
   // each class has an entry here, each entry has spells
   // we loop through each class and process
   ddb.character.classSpells.forEach(playerClass => {
-    let classInfo = ddb.character.classes.find(
+    const classInfo = ddb.character.classes.find(
       cls => cls.id === playerClass.characterClassId
     );
-    let spellCastingAbility = getSpellCastingAbility(classInfo);
-    let abilityModifier = utils.calculateModifier(
+    const spellCastingAbility = getSpellCastingAbility(classInfo);
+    const abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
     );
+
+    const cantripBoost = ddb.character.modifiers.class.filter(mod =>
+      mod.type === "bonus" &&
+      mod.subType === `${classInfo.definition.name.toLowerCase()}-cantrip-damage` &&
+      (mod.restriction === null || mod.restriction === "")
+    ).length > 0;
 
     // parse spells chosen as spellcasting (playerClass.spells)
     playerClass.spells.forEach(spell => {
@@ -832,7 +851,8 @@ export default function parseSpells(ddb, character) {
             spellSlots: character.data.spells,
             ability: spellCastingAbility,
             mod: abilityModifier,
-            dc: 8 + proficiencyModifier + abilityModifier
+            dc: 8 + proficiencyModifier + abilityModifier,
+            cantripBoost: cantripBoost
           }
         }
       };
@@ -863,11 +883,11 @@ export default function parseSpells(ddb, character) {
       spellCastingAbility = "wis";
     }
 
-    let abilityModifier = utils.calculateModifier(
+    const abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
     );
 
-    let classInfo = lookups.classFeature.find(
+    const classInfo = lookups.classFeature.find(
       cls => cls.id === spell.componentId
     );
 
@@ -900,11 +920,11 @@ export default function parseSpells(ddb, character) {
       );
     };
 
-    let abilityModifier = utils.calculateModifier(
+    const abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
     );
 
-    let raceInfo = lookups.race.find(
+    const raceInfo = lookups.race.find(
       rc => rc.id === spell.componentId
     );
 
@@ -947,11 +967,11 @@ export default function parseSpells(ddb, character) {
       );
     };
 
-    let abilityModifier = utils.calculateModifier(
+    const abilityModifier = utils.calculateModifier(
       character.data.abilities[spellCastingAbility].value
     );
 
-    let featInfo = lookups.feat.find(
+    const featInfo = lookups.feat.find(
       ft => ft.id === spell.componentId
     );
 
@@ -998,12 +1018,12 @@ export default function parseSpells(ddb, character) {
 
 export function parseItemSpells(ddb, character) {
   let items = [];
-  let proficiencyModifier = character.data.attributes.prof;
-  let lookups = getLookups(ddb.character);
+  const proficiencyModifier = character.data.attributes.prof;
+  const lookups = getLookups(ddb.character);
 
   // feat spells are handled slightly differently
   ddb.character.spells.item.forEach(spell => {
-    let itemInfo = lookups.item.find(
+    const itemInfo = lookups.item.find(
       it => it.id === spell.componentId
     );
 
@@ -1027,7 +1047,7 @@ export function parseItemSpells(ddb, character) {
           );
         };
     
-        let abilityModifier = utils.calculateModifier(
+        const abilityModifier = utils.calculateModifier(
           character.data.abilities[spellCastingAbility].value
         );
         spellDC = 8 + proficiencyModifier + abilityModifier;
