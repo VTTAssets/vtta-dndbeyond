@@ -270,6 +270,14 @@ let getDamage = (data, flags) => {
   return result;
 };
 
+let getActionType = data => {
+  if (data.definition.attackType = 1) {
+    return "mwak";
+  } else {
+    return "rwak";
+  }
+};
+
 export default function parseWeapon(data, character, flags) {
   /**
    * MAIN parseWeapon
@@ -386,7 +394,7 @@ export default function parseWeapon(data, character, flags) {
   }
 
   /* actionType: null, */
-  weapon.data.actionType = weapon.data.range.long === 5 ? "mwak" : "rwak";
+  weapon.data.actionType =  getActionType(data);
 
   /* attackBonus: 0, */
   weapon.data.attackBonus = getMagicalBonus(data, flags);
