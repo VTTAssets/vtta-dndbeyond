@@ -199,11 +199,9 @@ export default function parseArmor(data, character) {
   armor.data.quantity = data.quantity ? data.quantity : 1;
 
   /* weight */
-  //armor.data.weight = data.definition.weight ? data.definition.weight : 0;
-  let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
-  let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  armor.data.weight =
-    (totalWeight / bundleSize) * (armor.data.quantity / bundleSize);
+  const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
+  const totalWeight = data.definition.weight ? data.definition.weight : 0;
+  armor.data.weight = (totalWeight / bundleSize);
 
   /* price */
   armor.data.price = data.definition.cost ? data.definition.cost : 0;

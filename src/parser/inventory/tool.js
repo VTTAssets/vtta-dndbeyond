@@ -122,11 +122,9 @@ export default function parseTool(data, character) {
   tool.data.quantity = data.quantity ? data.quantity : 1;
 
   /* weight */
-  //tool.data.weight = data.definition.weight ? data.definition.weight : 0;
-  let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
-  let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  tool.data.weight =
-    (totalWeight / bundleSize) * (tool.data.quantity / bundleSize);
+  const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
+  const totalWeight = data.definition.weight ? data.definition.weight : 0;
+  tool.data.weight = (totalWeight / bundleSize);
 
   /* price */
   tool.data.price = data.definition.cost ? data.definition.cost : 0;
