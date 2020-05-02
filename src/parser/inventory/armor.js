@@ -55,8 +55,8 @@ let getStrength = data => {
 /**
  * Wearing this armor can give a disadvantage on stealth checks
  */
-let getStealth = data => {
-  return data.definition.stealthCheck === 1;
+let getStealthPenalty = data => {
+  return data.definition.stealthCheck === 2;
 };
 
 /**
@@ -173,7 +173,7 @@ export default function parseArmor(data, character) {
   armor.data.strength = getStrength(data);
 
   /* "stealth": false,*/
-  armor.data.stealth = getStealth(data);
+  armor.data.stealth = getStealthPenalty(data);
 
   /* proficient: true, */
   armor.data.proficient = getProficient(
