@@ -239,11 +239,11 @@ let getDamage = (data, flags) => {
 
   // additional damage parts
   // Note: For the time being, restricted additional bonus parts are not included in the damage
-  //       The Saving Throw Feature within Foundry is not fully implemented yet, to this will/might change
   data.definition.grantedModifiers
     .filter(
       mod =>
-        mod.type === "damage" && mod.restriction && mod.restriction.length === 0
+      mod.type === "damage" &&
+      (!mod.restriction || (!!mod.restriction && mod.restriction === ""))
     )
     .forEach(mod => {
       if (mod.dice) {
