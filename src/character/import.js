@@ -48,7 +48,7 @@ export default class CharacterImport extends Application {
   }
 
   async copyFlags(flagGroup, originalItem, targetItem) {
-    if (!!originalItem.flags[flagGroup]){
+    if (!!originalItem.flags && !!originalItem.flags[flagGroup]){
       console.log(`Copying ${flagGroup} for ${originalItem.name}`);
       targetItem.flags[flagGroup] = originalItem.flags.dynamiceffects;
     }
@@ -64,7 +64,9 @@ export default class CharacterImport extends Application {
         item.name === originalItem.name &&
         item.type === originalItem.type
       );
-      this.copyFlags("dynamiceffects", originalItem, item);
+      if (!!originalItem) {
+        this.copyFlags("dynamiceffects", originalItem, item);
+      }
     });
   }
 
