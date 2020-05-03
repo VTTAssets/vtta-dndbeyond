@@ -55,7 +55,9 @@ let get5EBuiltIn = data => {
     ).length > 0;
  
   // alert feat
-  // handled in initiative function
+  results.initiativeAlert = data.character.feats.filter(feat =>
+    feat.definition.name === "Alert"
+    ).length > 0;
 
   // advantage on initiative
   results.initiativeAdv = utils.filterBaseModifiers(
@@ -474,11 +476,18 @@ let getInitiative = (data, character) => {
     "initiative"
   );
 
-  const initiative = {
-    "value": initiativeBonus,
-    "bonus": 0, //used by FVTT I think
-    "mod": character.data.abilities.dex.mod,
-  };
+  // If we have the alert Feat set, lets sub 5 so it's correct
+  const initiative = character.flags.dnd5e.initiativeAlert
+    ? {
+        value: initiativeBonus - 5,
+        bonus: 5, //used by FVTT internally
+        mod: character.data.abilities.dex.mod,
+      }
+    : {
+        value: initiativeBonus,
+        bonus: 0, //used by FVTT internally
+        mod: character.data.abilities.dex.mod,
+      };
 
   return initiative;
 };
@@ -1602,6 +1611,10 @@ export default function getCharacter(ddb) {
     }
   };
 
+  // Get supported 5e feats and abilities
+  // We do this first so we can check for them later
+  character.flags.dnd5e = get5EBuiltIn(ddb);
+
   // character abilities
   character.data.abilities = getAbilities(ddb, character);
 
@@ -1676,9 +1689,6 @@ export default function getCharacter(ddb) {
   character.data.currency = getCurrency(ddb);
   character.data.skills = getSkills(ddb, character);
   character.data.spells = getSpellSlots(ddb);
-
-  // Get supported 5e feats and abilities
-  character.flags.dnd5e = get5EBuiltIn(ddb);
 
   // Extra global bonuses
   // Extra bonuses
