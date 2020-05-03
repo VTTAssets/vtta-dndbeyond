@@ -32,6 +32,7 @@ let get5EBuiltIn = data => {
     "weaponCriticalThreshold": 20,
     "observantFeat": false,
     "remarkableAthlete": false,
+    "reliableTalent": false,
   };
 
   // powerful build/equine build
@@ -79,17 +80,16 @@ let get5EBuiltIn = data => {
   // remarkable athlete
   data.character.classes.forEach(cls => {
     if (cls.subclassDefinition) {
-      const improvedCritical = 
+      // Improved Critical
+      const improvedCritical =
         cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Improved Critical"
+            feature.name === "Improved Critical" &&
+            cls.level >= feature.requiredLevel 
           ).length > 0;
-      const superiorCritical = 
+      const superiorCritical =
         cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Superior Critical"
-          ).length > 0;
-      const remarkableAthlete = 
-        cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Remarkable Athlete"
+            feature.name === "Superior Critical" &&
+            cls.level >= feature.requiredLevel 
           ).length > 0;
 
       if (superiorCritical) {
@@ -97,8 +97,21 @@ let get5EBuiltIn = data => {
       } else if (improvedCritical) {
         results.weaponCriticalThreshold = 19
       }
-      results.remarkableAthlete = remarkableAthlete;
+
+      // Remarkable Athlete 
+      results.remarkableAthlete =
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Remarkable Athlete" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
     }
+
+    //Reliable Talent
+    results.reliableTalent =
+        cls.definition.classFeatures.filter(feature => 
+            feature.name === "Reliable Talent" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
   });
 
   return results;
