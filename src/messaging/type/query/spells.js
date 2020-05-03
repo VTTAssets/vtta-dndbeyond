@@ -13,8 +13,8 @@ const querySpells = async (message) => {
         compendium,
         message.name[i]
       );
-      return { spell: result };
     }
+    return { spell: result };
   } else {
     let result = await utils.queryCompendium(compendium, message.name);
     return { spell: result };

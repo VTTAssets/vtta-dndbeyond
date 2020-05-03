@@ -2,17 +2,20 @@ const SAVE_ALL = 0;
 const SAVE_NEW = 1;
 const SAVE_NONE = 2;
 
-const getFolder = async (structure, entityName) => {
-  let getOrCreateFolder = async (root, folderName) => {
+const getFolder = async (structure, entityName, sourcebook) => {
+  const getOrCreateFolder = async (root, folderName, sourcebook) => {
     const baseColor = "#98020a";
-
     const rootId = root !== null && root.id !== null ? root.id : null;
-
     let folder = game.folders.entities.find(
       (f) =>
         f.data.type === entityName &&
         f.data.name === folderName &&
-        f.data.parent === rootId
+        f.data.parent === rootId &&
+        f.data.flags.vtta &&
+        f.data.flags.vtta.dndbeyond &&
+        f.data.flags.vtta.dndbeyond.sourcebook &&
+        f.data.flags.vtta.dndbeyond.sourcebook ===
+          sourcebook.abbrev.toLowerCase()
     );
     if (folder) return folder;
     folder = await Folder.create({
@@ -20,6 +23,13 @@ const getFolder = async (structure, entityName) => {
       type: entityName,
       color: baseColor,
       parent: rootId,
+      flags: {
+        vtta: {
+          dndbeyond: {
+            sourcebook: sourcebook.abbrev.toLowerCase(),
+          },
+        },
+      },
     });
     return folder;
   };
@@ -27,7 +37,7 @@ const getFolder = async (structure, entityName) => {
   parent = null;
   for (let i = 0; i < structure.length; i++) {
     console.log("FOLDER: " + structure[i]);
-    parent = await getOrCreateFolder(parent, structure[i]);
+    parent = await getOrCreateFolder(parent, structure[i], sourcebook);
   }
 
   return parent;
@@ -50,6 +60,7 @@ const insertRollTables = (content) => {
     .find('div[data-type="rolltable"]')
     .html(function () {
       let rollTableId = $(this).attr("data-id");
+      console.log("Found RollTable ID: " + rollTableId);
       if (rollTableId) {
         if (processed.includes(rollTableId)) $(this).remove();
         else {
@@ -73,36 +84,41 @@ const insertRollTables = (content) => {
   return $(orig).html();
 };
 
-const addSection = async (folderNames, section) => {
+const addSection = async (folderNames, section, sourcebook) => {
   console.log(
     "Adding section " + section.title + " at " + folderNames.join("/")
   );
 
   if (
-    folderNames.length <= 3 &&
-    section.sections &&
-    section.sections.length > 0
+    folderNames.length <= 3 //&&
+    // section.sections &&
+    // section.sections.length > 0
   ) {
     folderNames =
       folderNames.length > 0
         ? folderNames.concat([section.title])
         : [section.title];
-    let folder = await getFolder(folderNames, "JournalEntry");
+    let folder = await getFolder(folderNames, "JournalEntry", sourcebook);
 
     // main entry for this page
     let content = insertRollTables(section.content.join(""));
     let entry = await JournalEntry.create({
       folder: folder._id,
       name: section.title,
-      content: section.content.join(""),
+      content: content, //section.content.join(""),
+      img: section.img ? section.img : null,
     });
 
     // create the subsections
     for (let i = 0; i < section.sections.length; i++) {
-      await addSection(folderNames, section.sections[i]);
+      await addSection(folderNames, section.sections[i], sourcebook);
     }
   } else {
-    let folder = await getFolder(folderNames.slice(0, 3), "JournalEntry");
+    let folder = await getFolder(
+      folderNames.slice(0, 3),
+      "JournalEntry",
+      sourcebook
+    );
     // create the content for this entry alone, without subfolders
 
     let content = combineContent(section, 1);
@@ -110,13 +126,17 @@ const addSection = async (folderNames, section) => {
       folder: folder._id,
       name: section.title,
       content: content,
-      img: section.img,
+      img: section.img ? section.img : null,
     });
   }
 };
 
-const addRollTables = async (folderName, rollTables) => {
-  let folder = await getFolder([folderName], "RollTable");
+const addRollTables = async (content, sourcebook) => {
+  //folderName, rollTables, sourcebook) => {
+  const folderName = content.title;
+  const rollTables = content.rollTables;
+
+  let folder = await getFolder([folderName], "RollTable", sourcebook);
   let tables = [];
   for (let data of rollTables) {
     console.log(data);
@@ -124,7 +144,6 @@ const addRollTables = async (folderName, rollTables) => {
       name: data.name,
       formula: `1d${data.max}`,
       folder: folder._id,
-      // data: {
       flags: {
         vtta: {
           dndbeyond: {
@@ -132,7 +151,6 @@ const addRollTables = async (folderName, rollTables) => {
           },
         },
       },
-      //},
     });
     await rollTable.createEmbeddedEntity("TableResult", data.results);
 
@@ -143,23 +161,21 @@ const addRollTables = async (folderName, rollTables) => {
 
 let addPage = (body) => {
   return new Promise(async (resolve, reject) => {
-    // get the folder to add this spell into
-    console.log(body);
+    const { data } = body;
+
+    console.log(data);
     let folderNames = []; //[body.data.module.name];
 
     let rollTables = [];
-    if (
-      body.data.content.rollTables &&
-      body.data.content.rollTables.length > 0
-    ) {
-      rollTables = await addRollTables(
-        body.data.content.title,
-        body.data.content.rollTables
-      );
+    if (data.content.rollTables && data.content.rollTables.length > 0) {
+      rollTables = await addRollTables(data.content, data.sourcebook);
+      //   data.content.title,
+      //   data.content.rollTables
+      // );
     }
 
     // create the content by sections
-    await addSection(folderNames, body.data.content);
+    await addSection(folderNames, data.content, data.sourcebook);
   });
 };
 

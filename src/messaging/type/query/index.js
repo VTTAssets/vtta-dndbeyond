@@ -2,6 +2,7 @@ import queryId from "./id.js";
 import queryMonster from "./monster.js";
 import querySpell from "./spell.js";
 import querySpells from "./spells.js";
+import querySourcebookPage from "./sourcebookPage.js";
 
 const query = async (message) => {
   let response;
@@ -19,6 +20,9 @@ const query = async (message) => {
     case "spells":
     case "spellsref":
       response = await querySpells(message);
+      break;
+    case "sourcebookPage":
+      response = await querySourcebookPage(message);
       break;
   }
 

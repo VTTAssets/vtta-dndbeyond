@@ -174,6 +174,13 @@ class EventPort {
               });
           }
         }
+
+        if (head.type === "ping") {
+          // send an initialisation helo on every other request
+          this.send("ping").then((response) =>
+            utils.log(response, "communication")
+          );
+        }
       }
     );
 

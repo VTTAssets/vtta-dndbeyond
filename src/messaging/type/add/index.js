@@ -8,7 +8,7 @@ export default function (body) {
       return addSpell(body);
     case "npc":
       return addNPC(body);
-    case "page":
+    case "sourcebook":
       return addPage(body);
     default:
       return new Promise((resolve, reject) => reject("Unknown body type"));

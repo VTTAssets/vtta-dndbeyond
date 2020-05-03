@@ -31,11 +31,12 @@
     }
   ],
   "systems": ["dnd5e"],
-  "esmodules": ["src/index.js", "./src/dndbeyond/index.js"],
+  "esmodules": ["src/index.js"],
   "styles": [
     "./css/module-settings.css",
     "./css/default.css",
-    "./src/character/import.css"
+    "./src/character/import.css",
+    "./css/sidebar.css"
   ],
   "packs": [],
   "url": "https://www.vttassets.com/asset/vtta-dndbeyond",

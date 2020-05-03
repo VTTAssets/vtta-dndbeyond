@@ -173,11 +173,13 @@ let addNPC = (body) => {
       utils.log("Iconizer not responding");
     }
 
+    utils.log("Importing NPC");
     // check if there is an NPC with that name in that folder already
     let npc = folder.content
       ? folder.content.find((actor) => actor.name === body.data.name)
       : undefined;
     if (npc) {
+      utils.log("NPC exists");
       // remove the inventory of said npc
       await npc.deleteEmbeddedEntity(
         "OwnedItem",
@@ -185,10 +187,13 @@ let addNPC = (body) => {
       );
       // update items and basic data
       await npc.update(body.data);
+      utils.log("NPC updated");
       if (
         body.data.flags.vtta.dndbeyond.spells &&
         body.data.flags.vtta.dndbeyond.spells.length !== 0
       ) {
+        utils.log("Retrieving spells:");
+        utils.log(body.data.flags.vtta.dndbeyond.spells);
         let spells = await retrieveSpells(
           body.data.flags.vtta.dndbeyond.spells
         );
@@ -244,10 +249,8 @@ let addNPC = (body) => {
 
     if (cleanupAfterImport) {
       await npc.delete();
-      resolve(null);
-    } else {
-      resolve(npc.data);
     }
+    resolve(npc.data);
   });
 };
 
