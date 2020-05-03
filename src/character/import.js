@@ -47,20 +47,24 @@ export default class CharacterImport extends Application {
     $(html).parent().parent().css("height", "auto");
   }
 
-  async copyDynamicEffect(original, target) {
-    if (!!original.flags.dynamiceffects){
-      console.log(`Copying Dynamic Effects for ${original.name}`);
-      target.flags.dynamiceffects = original.flags.dynamiceffects;
+  async copyFlags(flagGroup, originalItem, targetItem) {
+    if (!!originalItem.flags[flagGroup]){
+      console.log(`Copying ${flagGroup} for ${originalItem.name}`);
+      targetItem.flags[flagGroup] = originalItem.flags.dynamiceffects;
     }
   }
 
-  async dynamicifyItems(items) {
+  /**
+   * Coies across some flags for existing items
+   * @param {*} items 
+   */
+  async copySupportedItemFlags(items) {
     items.forEach(item => {
       const originalItem = this.actorOriginal.items.find(originalItem =>
         item.name === originalItem.name &&
         item.type === originalItem.type
       );
-      this.copyDynamicEffect(originalItem, item);
+      this.copyFlags("dynamiceffects", originalItem, item);
     });
   }
 
@@ -282,7 +286,7 @@ export default class CharacterImport extends Application {
           items = items.flat();
         }
 
-        await this.dynamicifyItems(items);
+        await this.copySupportedItemFlags(items);
 
         utils.log("Character items", "character");
         utils.log(items, "character");
