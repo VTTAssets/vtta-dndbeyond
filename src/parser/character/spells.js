@@ -412,12 +412,22 @@ let getDamage = data => {
 
 let getSave = data => {
   if (data.definition.requiresSavingThrow && data.definition.saveDcAbilityId) {
-    return {
-      ability: DICTIONARY.character.abilities.find(
-        ability => ability.id === data.definition.saveDcAbilityId
-      ).value,
-      dc: null // enable scaling to character level within foundry data.flags.dc,
-    };
+    const saveAbility =  DICTIONARY.character.abilities.find(
+      ability => ability.id === data.definition.saveDcAbilityId
+    ).value;
+    if (!!data.overrideSaveDc) {
+      return {
+        ability: saveAbility,
+        dc: data.overrideSaveDc,
+        scaling: "flat"
+      };
+    } else {
+      return {
+        ability: saveAbility,
+        dc: null,
+        scaling: "spell"
+      };
+    }
   } else {
     return {
       ability: "",
@@ -721,7 +731,7 @@ let getLookups = (character) => {
       equipped: trait.equipped,
       isAttuned: trait.isAttuned,
       canAttune: trait.definition.canAttune,
-      canEquip: trait.definition.canEquip,
+      canEquip: trait.definition.canEquip
     })
   });
 
@@ -852,7 +862,8 @@ export default function parseSpells(ddb, character) {
             ability: spellCastingAbility,
             mod: abilityModifier,
             dc: 8 + proficiencyModifier + abilityModifier,
-            cantripBoost: cantripBoost
+            cantripBoost: cantripBoost,
+            overrideDC: false,
           }
         }
       };
@@ -901,7 +912,8 @@ export default function parseSpells(ddb, character) {
           level: character.flags.vtta.dndbeyond.totalLevels,
           ability: spellCastingAbility,
           mod: abilityModifier,
-          dc: 8 + proficiencyModifier + abilityModifier
+          dc: 8 + proficiencyModifier + abilityModifier,
+          overrideDC: false,
         }
       }
     };
@@ -948,7 +960,8 @@ export default function parseSpells(ddb, character) {
           level: spell.castAtLevel,
           ability: spellCastingAbility,
           mod: abilityModifier,
-          dc: 8 + proficiencyModifier + abilityModifier
+          dc: 8 + proficiencyModifier + abilityModifier,
+          overrideDC: false,
         }
       }
     };
@@ -994,7 +1007,8 @@ export default function parseSpells(ddb, character) {
           level: spell.castAtLevel,
           ability: spellCastingAbility,
           mod: abilityModifier,
-          dc: 8 + proficiencyModifier + abilityModifier
+          dc: 8 + proficiencyModifier + abilityModifier,
+          overrideDC: false,
         }
       }
     };
@@ -1066,6 +1080,9 @@ export function parseItemSpells(ddb, character) {
             dc: spellDC,
             limitedUse: itemInfo.limitedUse,
             nameOverride: `${spell.definition.name} (${itemInfo.name})`,
+            overrideDC: !!spell.overrideSaveDc,
+            spellLimitedUse: spell.limitedUse,
+            castAtLevel: spell.castAtLevel,
           }
         }
       };
