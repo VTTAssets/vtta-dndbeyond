@@ -28,5 +28,6 @@
   "vtta-dndbeyond.item-type.tool": "Tool",
   "vtta-dndbeyond.item-type.loot": "Loot",
   "vtta-dndbeyond.item-type.class": "Class",
-  "vtta-dndbeyond.item-type.backpack": "Backpack"
+  "vtta-dndbeyond.item-type.backpack": "Backpack",
+  "vtta-dndbeyond.item-type.dynamic-effects": "Dynamic Effects"
 }
