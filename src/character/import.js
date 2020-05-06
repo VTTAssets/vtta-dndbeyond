@@ -20,7 +20,7 @@ const compendiumLookup = [
 export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
-    this.actor = game.actors.entities.find((a) => a.id === actor._id);
+    this.actor = game.actors.entities.find(a => a.id === actor._id);
     this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
   }
@@ -48,8 +48,8 @@ export default class CharacterImport extends Application {
   }
 
   async copyFlags(flagGroup, originalItem, targetItem) {
-    if (targetItem.flags === undefined ) targetItem.flags = {};
-    if (!!originalItem.flags && !!originalItem.flags[flagGroup]){
+    if (targetItem.flags === undefined) targetItem.flags = {};
+    if (!!originalItem.flags && !!originalItem.flags[flagGroup]) {
       console.log(`Copying ${flagGroup} for ${originalItem.name}`);
       targetItem.flags[flagGroup] = originalItem.flags.dynamiceffects;
     }
@@ -57,13 +57,13 @@ export default class CharacterImport extends Application {
 
   /**
    * Coies across some flags for existing items
-   * @param {*} items 
+   * @param {*} items
    */
   async copySupportedItemFlags(items) {
     items.forEach(item => {
-      const originalItem = this.actorOriginal.items.find(originalItem =>
-        item.name === originalItem.name &&
-        item.type === originalItem.type
+      const originalItem = this.actorOriginal.items.find(
+        originalItem =>
+          item.name === originalItem.name && item.type === originalItem.type
       );
       if (!!originalItem) {
         this.copyFlags("dynamiceffects", originalItem, item);
@@ -86,11 +86,11 @@ export default class CharacterImport extends Application {
       // we are updating inventory and spells only
 
       // compendiumLookup
-      let compendiumName = compendiumLookup.find((c) => c.type == type)
+      let compendiumName = compendiumLookup.find(c => c.type == type)
         .compendium;
       let compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
       let compendium = await game.packs.find(
-        (pack) => pack.collection === compendiumLabel
+        pack => pack.collection === compendiumLabel
       );
 
       if (compendium) {
@@ -105,7 +105,7 @@ export default class CharacterImport extends Application {
           );
 
           // search the compendium for this item
-          let searchResult = index.find((i) => i.name === item.name);
+          let searchResult = index.find(i => i.name === item.name);
           if (searchResult && importPolicy === 0) {
             item._id = searchResult._id;
             // update seems to return an array, and without our img
@@ -150,7 +150,7 @@ export default class CharacterImport extends Application {
   activateListeners(html) {
     $(html)
       .find("#json")
-      .on("paste", async (event) => {
+      .on("paste", async event => {
         event.preventDefault();
         var pasteData = event.originalEvent.clipboardData.getData("text");
 
@@ -242,32 +242,85 @@ export default class CharacterImport extends Application {
         this.showCurrentTask(html, "Clearing inventory");
         await this.actor.deleteEmbeddedEntity(
           "OwnedItem",
-          this.actor.getEmbeddedCollection("OwnedItem").map((item) => item._id)
+          this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
         );
-        //await this.actor.updateManyEmbeddedEntities('OwnedItem'{ items: [] });
 
-        // we need to make sure the item spells are in the compendium
-        // once they are, if the magic item module is in use we will get
-        // the the spell id, pack and imf from the spell and merge it with
-        // the current item flags
-        const compendiumSpells = await this.updateCompendium("itemSpells");
-
-        if (magicItemsInstalled) {
-          this.result.inventory.forEach((item) => {
+        // store all spells in the folder specific for Dynamic Items
+        if (
+          magicItemsInstalled &&
+          this.result.itemSpells &&
+          Array.isArray(this.result.itemSpells)
+        ) {
+          // save all spells for dynamic effects for later reference in the Dynamic Effects folder
+          const dynamicEffectsFolder = await utils.getFolder("dynamic-effects");
+          for (let spell of this.result.itemSpells) {
+            let existingSpell = game.items.entities.find(
+              item =>
+                item.name === spell.name &&
+                item.type === "spell" &&
+                item.data.folder === dynamicEffectsFolder._id
+            );
+            if (existingSpell === undefined) {
+              if (!game.user.can("ITEM_CREATE")) {
+                ui.notifications.warn(
+                  `Cannot create spell ${spell.name} for Dynamic Effect items`
+                );
+              } else {
+                spell.folder = dynamicEffectsFolder._id;
+                await Item.create(spell);
+              }
+            }
+          }
+          // scan the inventory for those saved spells and copy the basic data over
+          this.result.inventory.forEach(item => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(
                 item.flags.magicitems.spells
               )) {
-                const compendiumSpell = compendiumSpells.find(
-                  (s) => s.name === spell.name
+                const compendiumSpell = game.items.entities.find(
+                  item =>
+                    item.name === spell.name &&
+                    item.type === "spell" &&
+                    item.data.folder === dynamicEffectsFolder._id
                 );
-                for (const [key, value] of Object.entries(compendiumSpell)) {
-                  item.flags.magicitems.spells[i][key] = value;
+                if (compendiumSpell)
+                  for (const [key, value] of Object.entries(compendiumSpell)) {
+                    item.flags.magicitems.spells[i][key] = value;
+                  }
+                else {
+                  if (!game.user.can("ITEM_CREATE")) {
+                    ui.notifications.warn(
+                      `Dynamic Item ${item.name} cannot be enriched because of lacking player permissions`
+                    );
+                  }
                 }
               }
             }
           });
         }
+
+        // we need to make sure the item spells are in the compendium
+        // once they are, if the magic item module is in use we will get
+        // the the spell id, pack and imf from the spell and merge it with
+        // the current item flags
+        // const compendiumSpells = await this.updateCompendium("itemSpells");
+
+        // if (magicItemsInstalled) {
+        //   this.result.inventory.forEach((item) => {
+        //     if (item.flags.magicitems.spells) {
+        //       for (let [i, spell] of Object.entries(
+        //         item.flags.magicitems.spells
+        //       )) {
+        //         const compendiumSpell = compendiumSpells.find(
+        //           (s) => s.name === spell.name
+        //         );
+        //         for (const [key, value] of Object.entries(compendiumSpell)) {
+        //           item.flags.magicitems.spells[i][key] = value;
+        //         }
+        //       }
+        //     }
+        //   });
+        // }
 
         // Update compendium packs with spells and items
         this.updateCompendium("inventory");
@@ -317,7 +370,7 @@ export default class CharacterImport extends Application {
 
     $(html)
       .find("input[name=dndbeyond-url]")
-      .on("input", async (event) => {
+      .on("input", async event => {
         let matches = event.target.value.match(
           /.*(dndbeyond\.com\/profile\/[\w-_]+\/characters\/\d+)/
         );
