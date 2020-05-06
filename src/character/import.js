@@ -11,9 +11,12 @@ const compendiumLookup = [
     type: "spells",
     compendium: "entity-spell-compendium",
   },
+];
+
+const gameFolderLookup = [
   {
     type: "itemSpells",
-    compendium: "entity-spell-compendium",
+    folder: "magic-items",
   },
 ];
 
@@ -137,6 +140,56 @@ export default class CharacterImport extends Application {
     return items;
   }
 
+  /**
+   * Updates game folder items
+   * @param {*} type
+   */
+  async updateFolderItems(type) {
+    let items = [];
+
+    // compendiumLookup
+    const folderName = gameFolderLookup.find(c => c.type == type).folder;
+    const magicItemsFolder = await utils.getFolder(folderName);
+
+    for (let spell of this.result.itemSpells) {
+      let existingSpell = game.items.entities.find(
+        item =>
+          item.name === spell.name &&
+          item.type === "spell" &&
+          item.data.folder === magicItemsFolder._id
+      );
+      if (existingSpell === undefined) {
+        if (!game.user.can("ITEM_CREATE")) {
+          ui.notifications.warn(
+            `Cannot create spell ${spell.name} for Magic Items items`
+          );
+        } else {
+          spell.folder = magicItemsFolder._id;
+          await Item.create(spell);
+        }
+      }
+
+      const result = await game.items.entities.find(
+        item =>
+          item.name === spell.name &&
+          item.type === "spell" &&
+          item.data.folder === magicItemsFolder._id
+      );
+
+      const itemUpdate = {
+        _id: result._id,
+        id: result._id,
+        pack: "world",
+        img: result.img,
+        name: result.name,
+      };
+      items.push(itemUpdate);
+    }
+
+
+    return items;
+  }
+
   /* -------------------------------------------- */
 
   getData() {
@@ -251,46 +304,24 @@ export default class CharacterImport extends Application {
           this.result.itemSpells &&
           Array.isArray(this.result.itemSpells)
         ) {
-          // save all spells for dynamic effects for later reference in the Dynamic Effects folder
-          const dynamicEffectsFolder = await utils.getFolder("dynamic-effects");
-          for (let spell of this.result.itemSpells) {
-            let existingSpell = game.items.entities.find(
-              item =>
-                item.name === spell.name &&
-                item.type === "spell" &&
-                item.data.folder === dynamicEffectsFolder._id
-            );
-            if (existingSpell === undefined) {
-              if (!game.user.can("ITEM_CREATE")) {
-                ui.notifications.warn(
-                  `Cannot create spell ${spell.name} for Dynamic Effect items`
-                );
-              } else {
-                spell.folder = dynamicEffectsFolder._id;
-                await Item.create(spell);
-              }
-            }
-          }
+          const itemSpells = await this.updateFolderItems("itemSpells");
           // scan the inventory for those saved spells and copy the basic data over
           this.result.inventory.forEach(item => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(
                 item.flags.magicitems.spells
               )) {
-                const compendiumSpell = game.items.entities.find(
-                  item =>
-                    item.name === spell.name &&
-                    item.type === "spell" &&
-                    item.data.folder === dynamicEffectsFolder._id
+                const itemSpell = itemSpells.find(
+                  item => item.name === spell.name
                 );
-                if (compendiumSpell)
-                  for (const [key, value] of Object.entries(compendiumSpell)) {
+                if (itemSpell)
+                  for (const [key, value] of Object.entries(itemSpell)) {
                     item.flags.magicitems.spells[i][key] = value;
                   }
                 else {
                   if (!game.user.can("ITEM_CREATE")) {
                     ui.notifications.warn(
-                      `Dynamic Item ${item.name} cannot be enriched because of lacking player permissions`
+                      `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
                     );
                   }
                 }
