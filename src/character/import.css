@@ -15,7 +15,7 @@ div.ddbCharacterName {
   max-width: 32px;
   max-height: 32px;
 
-  background-image: url('/modules/vtta-dndbeyond/img/ddb-icon.png');
+  background-image: url("/modules/vtta-dndbeyond/img/ddb-icon.png");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -24,7 +24,7 @@ div.ddbCharacterName {
 }
 
 #ddbImportButton.inactive {
-  background-image: url('/modules/vtta-dndbeyond/img/ddb-icon-inactive.png');
+  background-image: url("/modules/vtta-dndbeyond/img/ddb-icon-inactive.png");
 }
 
 .vtta div.form-section {
@@ -35,7 +35,7 @@ div.ddbCharacterName {
 
 .vtta div.form-caption {
   flex: 0 1 15%;
-  font-family: 'Roboto Condensed';
+  font-family: "Roboto Condensed";
 }
 .vtta div.form-content {
   flex: 0 1 85%;
@@ -50,4 +50,16 @@ div.ddbCharacterName {
   border: none;
   position: relative;
   top: 5px;
+}
+
+.vtta .import-policy-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.vtta .import-policy {
+  display: flex;
+  align-items: center;
 }

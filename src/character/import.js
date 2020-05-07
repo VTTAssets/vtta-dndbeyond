@@ -1,3 +1,4 @@
+import md5 from "../libs/md5.js";
 import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
@@ -16,6 +17,41 @@ const gameFolderLookup = [{
   type: "itemSpells",
   folder: "magic-items",
 }, ];
+
+/**
+ * Returns a combined array of all items to process, filtered by the user's selection on what to skip and what to include
+ * @param {object} result object containing all character items sectioned as individual properties
+ */
+const filterItemsByUserSelection = result => {
+  let items = [];
+
+  let validItemTypes = [];
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-class"))
+    validItemTypes.push("class");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat"))
+    validItemTypes.push("feat");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon"))
+    validItemTypes.push("weapon");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment"))
+    validItemTypes.push("equipment");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
+    validItemTypes = validItemTypes.concat([
+      "consumable",
+      "tool",
+      "loot",
+      "backpack",
+    ]);
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell"))
+    validItemTypes.push("spell");
+
+  let sections = ["classes", "features", "actions", "inventory", "spells"];
+  for (const section of sections) {
+    items = items
+      .concat(result[section])
+      .filter(item => validItemTypes.includes(item.type));
+  }
+  return items;
+};
 
 export default class CharacterImport extends Application {
   constructor(options, actor) {
@@ -186,21 +222,128 @@ export default class CharacterImport extends Application {
       items.push(itemUpdate);
     }
 
-
     return items;
   }
+
+  /**
+   * Deletes items from the inventory bases on which sections a user wants to update
+   * Possible sections:
+   * - class
+   * - feat
+   * - weapon
+   * - equipment
+   * - inventory: consumable, loot, tool and backpack
+   * - spell
+   */
+  clearItemsByUserSelection = async () => {
+    let invalidItemTypes = [];
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-class"))
+      invalidItemTypes.push("class");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat"))
+      invalidItemTypes.push("feat");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon"))
+      invalidItemTypes.push("weapon");
+    if (
+      game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")
+    )
+      invalidItemTypes.push("equipment");
+    if (
+      game.settings.get("vtta-dndbeyond", "character-update-policy-inventory")
+    )
+      invalidItemTypes = invalidItemTypes.concat([
+        "consumable",
+        "tool",
+        "loot",
+        "backpack",
+      ]);
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell"))
+      invalidItemTypes.push("spell");
+
+    // collect all items belonging to one of those inventory item categories
+    let ownedItems = this.actor.getEmbeddedCollection("OwnedItem");
+    let toRemove = ownedItems
+      .filter(item => invalidItemTypes.includes(item.type))
+      .map(item => item._id);
+    await this.actor.deleteEmbeddedEntity("OwnedItem", toRemove);
+    console.log("Removed " + toRemove.length + " items from inventory");
+    console.log(toRemove);
+    return toRemove;
+  };
 
   /* -------------------------------------------- */
 
   getData() {
+    const importPolicies = [
+      {
+        name: "class",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-class"
+        ),
+        description: "Classes",
+      },
+      {
+        name: "feat",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-feat"
+        ),
+        description: "Features",
+      },
+      {
+        name: "weapon",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-weapon"
+        ),
+        description: "Weapons",
+      },
+      {
+        name: "equipment",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-equipment"
+        ),
+        description: "Equipment",
+      },
+      {
+        name: "inventory",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-inventory"
+        ),
+        description: "Other inventory items",
+      },
+      {
+        name: "spell",
+        isChecked: game.settings.get(
+          "vtta-dndbeyond",
+          "character-update-policy-spell"
+        ),
+        description: "Spells",
+      },
+    ];
+
     return {
       actor: this.actor,
+      importPolicies: importPolicies,
     };
   }
 
   /* -------------------------------------------- */
 
   activateListeners(html) {
+    // watch the change of the import-policy-selector checkboxes
+    $(html)
+      .find('.import-policy input[type="checkbox"]')
+      .on("change", event => {
+        game.settings.set(
+          "vtta-dndbeyond",
+          "character-update-policy-" + event.currentTarget.dataset.section,
+          event.currentTarget.checked
+        );
+      });
+
     $(html)
       .find("#json")
       .on("paste", async event => {
@@ -291,12 +434,14 @@ export default class CharacterImport extends Application {
         this.showCurrentTask(html, "Updating basic character information");
         await this.actor.update(this.result.character);
 
-        // clear items
+        // // clear items
         this.showCurrentTask(html, "Clearing inventory");
-        await this.actor.deleteEmbeddedEntity(
-          "OwnedItem",
-          this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
-        );
+        let clearedItems = await this.clearItemsByUserSelection();
+
+        // await this.actor.deleteEmbeddedEntity(
+        //   "OwnedItem",
+        //   this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
+        // / );
 
         // store all spells in the folder specific for Dynamic Items
         if (
@@ -335,13 +480,14 @@ export default class CharacterImport extends Application {
         this.updateCompendium("spells");
 
         // Adding all items to the actor
-        let items = [
-          this.result.actions,
-          this.result.inventory,
-          this.result.spells,
-          this.result.features,
-          this.result.classes,
-        ].flat();
+        let items = filterItemsByUserSelection(this.result);
+        // let items = [
+        //   this.result.actions,
+        //   this.result.inventory,
+        //   this.result.spells,
+        //   this.result.features,
+        //   this.result.classes,
+        // ].flat();
 
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
