@@ -632,6 +632,7 @@ const DICTIONARY = {
       { name: "Sorcerer", value: "full" },
       { name: "Warlock", value: "pact" },
       { name: "Wizard", value: "full" },
+      { name: "Monk", value: "none" },
     ],
     preparationModes: [
       { name: "Artificer", value: "prepared" },
@@ -647,6 +648,7 @@ const DICTIONARY = {
       { name: "Sorcerer", value: "always" },
       { name: "Warlock", value: "pact" },
       { name: "Wizard", value: "prepared" },
+      { name: "Monk", value: "always" },
     ],
     activationTypes: [
       { activationType: 0, value: "none" },

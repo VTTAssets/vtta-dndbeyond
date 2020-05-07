@@ -924,7 +924,7 @@ export default function parseSpells(ddb, character) {
       character.data.abilities[spellCastingAbility].value
     );
 
-    const raceInfo = lookups.race.find(
+    let raceInfo = lookups.race.find(
       rc => rc.id === spell.componentId
     );
 
