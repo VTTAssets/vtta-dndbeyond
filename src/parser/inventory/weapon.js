@@ -239,11 +239,11 @@ let getDamage = (data, flags) => {
 
   // additional damage parts
   // Note: For the time being, restricted additional bonus parts are not included in the damage
-  //       The Saving Throw Feature within Foundry is not fully implemented yet, to this will/might change
   data.definition.grantedModifiers
     .filter(
       mod =>
-        mod.type === "damage" && mod.restriction && mod.restriction.length === 0
+      mod.type === "damage" &&
+      (!mod.restriction || (!!mod.restriction && mod.restriction === ""))
     )
     .forEach(mod => {
       if (mod.dice) {
@@ -268,6 +268,14 @@ let getDamage = (data, flags) => {
   };
 
   return result;
+};
+
+let getActionType = data => {
+  if (data.definition.attackType = 1) {
+    return "mwak";
+  } else {
+    return "rwak";
+  }
 };
 
 export default function parseWeapon(data, character, flags) {
@@ -336,11 +344,10 @@ export default function parseWeapon(data, character, flags) {
   weapon.data.quantity = data.quantity ? data.quantity : 1;
 
   /* weight */
-  //weapon.data.weight = data.definition.weight ? data.definition.weight : 0;
-  let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
-  let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  weapon.data.weight =
-    (totalWeight / bundleSize) * (weapon.data.quantity / bundleSize);
+  const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
+  const totalWeight = data.definition.weight ? data.definition.weight : 0;
+
+  weapon.data.weight = (totalWeight / bundleSize);
 
   /* price */
   weapon.data.price = data.definition.cost ? data.definition.cost : 0;
@@ -386,7 +393,7 @@ export default function parseWeapon(data, character, flags) {
   }
 
   /* actionType: null, */
-  weapon.data.actionType = weapon.data.range.long === 5 ? "mwak" : "rwak";
+  weapon.data.actionType =  getActionType(data);
 
   /* attackBonus: 0, */
   weapon.data.attackBonus = getMagicalBonus(data, flags);

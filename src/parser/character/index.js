@@ -22,16 +22,17 @@ let getProficiencies = (data) => {
 
 let get5EBuiltIn = (data) => {
   let results = {
-    powerfulBuild: false,
-    savageAttacks: false,
-    elvenAccuracy: false,
-    halflingLucky: false,
-    initiativeAdv: false,
-    initiativeAlert: false,
-    initiativeHalfProf: false,
-    weaponCriticalThreshold: 20,
-    observantFeat: false,
-    remarkableAthlete: false,
+    "powerfulBuild": false,
+    "savageAttacks": false,
+    "elvenAccuracy": false,
+    "halflingLucky": false,
+    "initiativeAdv": false,
+    "initiativeAlert": false,
+    "initiativeHalfProf": false,
+    "weaponCriticalThreshold": 20,
+    "observantFeat": false,
+    "remarkableAthlete": false,
+    "reliableTalent": false,
   };
 
   // powerful build/equine build
@@ -61,9 +62,9 @@ let get5EBuiltIn = (data) => {
     ).length > 0;
 
   // alert feat
-  results.initiativeAlert =
-    data.character.feats.filter((feat) => feat.definition.name === "Alert")
-      .length > 0;
+  results.initiativeAlert = data.character.feats.filter(feat =>
+    feat.definition.name === "Alert"
+    ).length > 0;
 
   // advantage on initiative
   results.initiativeAdv =
@@ -84,26 +85,38 @@ let get5EBuiltIn = (data) => {
   // remarkable athlete
   data.character.classes.forEach((cls) => {
     if (cls.subclassDefinition) {
+      // Improved Critical
       const improvedCritical =
-        cls.subclassDefinition.classFeatures.filter(
-          (feature) => feature.name === "Improved Critical"
-        ).length > 0;
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Improved Critical" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
       const superiorCritical =
-        cls.subclassDefinition.classFeatures.filter(
-          (feature) => feature.name === "Superior Critical"
-        ).length > 0;
-      const remarkableAthlete =
-        cls.subclassDefinition.classFeatures.filter(
-          (feature) => feature.name === "Remarkable Athlete"
-        ).length > 0;
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Superior Critical" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
 
       if (superiorCritical) {
         results.weaponCriticalThreshold = 18;
       } else if (improvedCritical) {
         results.weaponCriticalThreshold = 19;
       }
-      results.remarkableAthlete = remarkableAthlete;
+
+      // Remarkable Athlete 
+      results.remarkableAthlete =
+        cls.subclassDefinition.classFeatures.filter(feature => 
+            feature.name === "Remarkable Athlete" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
     }
+
+    //Reliable Talent
+    results.reliableTalent =
+        cls.definition.classFeatures.filter(feature => 
+            feature.name === "Reliable Talent" &&
+            cls.level >= feature.requiredLevel 
+          ).length > 0;
   });
 
   return results;
@@ -497,15 +510,16 @@ let getInitiative = (data, character) => {
     "initiative"
   );
 
-  const initiative = character.flags.dnd5e.initativeAlert
+  // If we have the alert Feat set, lets sub 5 so it's correct
+  const initiative = character.flags.dnd5e.initiativeAlert
     ? {
         value: initiativeBonus - 5,
-        bonus: 5, //used by FVTT I think
+        bonus: 5, //used by FVTT internally
         mod: character.data.abilities.dex.mod,
       }
     : {
         value: initiativeBonus,
-        bonus: 0, //used by FVTT I think
+        bonus: 0, //used by FVTT internally
         mod: character.data.abilities.dex.mod,
       };
 
@@ -1655,6 +1669,7 @@ export default function getCharacter(ddb) {
   };
 
   // Get supported 5e feats and abilities
+  // We do this first so we can check for them later
   character.flags.dnd5e = get5EBuiltIn(ddb);
 
   // character abilities
