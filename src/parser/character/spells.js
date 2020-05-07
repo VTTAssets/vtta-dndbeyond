@@ -667,6 +667,33 @@ let getEldritchInvocations = (data, character) => {
   };
 };
 
+let fixSpells = (spells) => {
+
+  // Eldritch Blast is a special little kitten and has some fun Eldritch
+  // Invocations which can adjust it.
+  spells.filter(
+    spell => spell.name === "Eldritch Blast"
+  ).map(eb => {
+    const eldritchBlastMods = getEldritchInvocations(ddb, character);
+    eb.data.damage.parts[0][0] += " + " + eldritchBlastMods['damage'];
+    eb.data.range.value += eldritchBlastMods['range'];
+    eb.data.range.long += eldritchBlastMods['range'];
+  });
+
+  // The target/range input data are incorrect on some AOE spells centreted
+  // on self.
+  // Range is self with an AoE target of 15 ft cube
+  // i.e. affects all creatures within 5 ft of caster
+  spells.filter(
+    spell =>
+    spell.name === "Thunderclap" ||
+    spell.name === "Word of Radiance"
+  ).map(tc => {
+    tc.data.range = {value: null, units: "self", long: null};
+    tc.data.target = {value: "15", units: "ft", type: "cube"};
+  });
+}
+
 let getLookups = (character) => {
   // racialTraits
   let lookups = {
@@ -1016,27 +1043,8 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
-  // Eldritch Blast is a special little kitten and has some fun Eldritch
-  // Invocations which can adjust it.
-  items.filter(
-    spell => spell.name === "Eldritch Blast"
-  ).map(eb => {
-    const eldritchBlastMods = getEldritchInvocations(ddb, character);
-    eb.data.damage.parts[0][0] += " + " + eldritchBlastMods['damage'];
-    eb.data.range.value += eldritchBlastMods['range'];
-    eb.data.range.long += eldritchBlastMods['range'];
-  });
+  fixSpells(items);
 
-  // Thunderclap's target/range input data are incorrect
-  // Range is self with an AoE target of 15 ft cube
-  // i.e. affects all creatures within 5 ft of caster
-  items.filter(
-    spell => spell.name === "Thunderclap"
-  ).map(tc => {
-    tc.data.range = {value: null, units: "self", long: null};
-    tc.data.target = {value: "15", units: "ft", type: "cube"};
-  });
- 
   return items;
 }
 
@@ -1098,5 +1106,8 @@ export function parseItemSpells(ddb, character) {
     };
     items.push(parseSpell(spell, character));
   });
+
+  fixSpells(items);
+
   return items;
 }
