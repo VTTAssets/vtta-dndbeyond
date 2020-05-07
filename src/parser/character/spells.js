@@ -1027,6 +1027,16 @@ export default function parseSpells(ddb, character) {
     eb.data.range.long += eldritchBlastMods['range'];
   });
 
+  // Thunderclap's target/range input data are incorrect
+  // Range is self with an AoE target of 15 ft cube
+  // i.e. affects all creatures within 5 ft of caster
+  items.filter(
+    spell => spell.name === "Thunderclap"
+  ).map(tc => {
+    tc.data.range = {value: null, units: "self", long: null};
+    tc.data.target = {value: "15", units: "ft", type: "cube"};
+  });
+ 
   return items;
 }
 
