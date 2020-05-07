@@ -59,10 +59,10 @@ let getMaterials = data => {
 
 /**
  * Retrieves the spell preparation mode, depending on the location this spell came from
- * 
+ *
  */
 let getSpellPreparationMode = data => {
-  //default values 
+  //default values
   let prepMode = "prepared";
   // If always prepared mark as such, if not then check to see if prepared
   let prepared = data.alwaysPrepared || data.prepared;
@@ -127,7 +127,7 @@ let getUses = data => {
   let resetType = null;
   let limitedUse = null;
   // we check this, as things like items have useage attached to the item, not spell
-  if (data.flags.vtta.dndbeyond.limitedUse !== undefined && 
+  if (data.flags.vtta.dndbeyond.limitedUse !== undefined &&
       data.flags.vtta.dndbeyond.limitedUse !== null
   ){
     limitedUse = data.flags.vtta.dndbeyond.limitedUse
@@ -141,7 +141,7 @@ let getUses = data => {
       reset => reset.id == limitedUse.resetType
     );
   };
-  
+
   if (resetType !== null && resetType !== undefined) {
     return {
       value: limitedUse.numberUsed
@@ -216,7 +216,7 @@ let getDuration = data => {
 };
 
 /**
- * Spell targets 
+ * Spell targets
 */
 let getTarget = data => {
   // if spell is an AOE effect get some details
@@ -285,7 +285,7 @@ let getTarget = data => {
 
   return {
     value: value,
-    units: units, 
+    units: units,
     type: type,
   };
 };
@@ -296,7 +296,7 @@ let getRange = data => {
   let value = data.definition.range.rangeValue ? data.definition.range.rangeValue: null;
   let units = "ft";
   let long = null;
-  
+
   switch (data.definition.range.origin) {
     case "Touch":
       value = null;
@@ -474,7 +474,7 @@ let getSpellScaling = (data, character) => {
           // mod.atHigherLevels.higherLevelDefinitions contains info about the
           // spells damage die at higher levels, but we can't use this for cantrips as
           // FVTT use a formula to work out the scaling (ddb has a fixed value structure)
-          const isHigherLevelDefinitions = 
+          const isHigherLevelDefinitions =
             mod.atHigherLevels.higherLevelDefinitions &&
             Array.isArray(mod.atHigherLevels.higherLevelDefinitions) &&
             mod.atHigherLevels.higherLevelDefinitions.length >= 1;
@@ -492,8 +492,8 @@ let getSpellScaling = (data, character) => {
                   : definition.dice && definition.dice.fixedValue //else if fixed value
                   ? definition.dice.fixedValue // use fixed value
                   : definition.value; // else use value
-              
-              // some spells have multiple scaling damage (e.g. Wall of Ice, 
+
+              // some spells have multiple scaling damage (e.g. Wall of Ice,
               // Glyph of warding, Acid Arrow, Arcane Hand, Dragon's Breath,
               // Chromatic Orb, Absorb Elements, Storm Sphere, Spirit Guardians)
               // it's hard to model most of these in FVTT, and for some it makes
@@ -658,7 +658,7 @@ let getEldritchInvocations = (data, character) => {
         break;
       default:
         console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`)
-    }   
+    }
   });
 
   return {
@@ -1016,7 +1016,7 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
-  // Eldritch Blast is a special little kitten and has some fun Eldritch 
+  // Eldritch Blast is a special little kitten and has some fun Eldritch
   // Invocations which can adjust it.
   items.filter(
     spell => spell.name === "Eldritch Blast"
@@ -1051,53 +1051,52 @@ export function parseItemSpells(ddb, character) {
       it => it.id === spell.componentId
     );
 
-    //lets see if we have the item equipped/attuned to actually grant anythings
-    if (
+    const active = (
       (!itemInfo.canEquip && !itemInfo.canAttune) || // if item just gives a thing
       (itemInfo.isAttuned) || // if it is attuned (assume equipped)
       (!itemInfo.canAttune && itemInfo.equipped) // can't attune but is equipped
-    ) {
-      // for item spells the spell dc is often on the item spell
-      let spellDC = 8;
-      if (spell.overrideSaveDc) {
-        spellDC = spell.overrideSaveDc;
-      } else if (spell.spellCastingAbilityId) {
-        // If the spell has an ability attached, use that
-        // if there is no ability on spell, we default to wis
-        let spellCastingAbility = "wis";
-        if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
-          spellCastingAbility = convertSpellCastingAbilityId(
-            spell.spellCastingAbilityId
-          );
-        };
-    
-        const abilityModifier = utils.calculateModifier(
-          character.data.abilities[spellCastingAbility].value
+    );
+    // for item spells the spell dc is often on the item spell
+    let spellDC = 8;
+    if (spell.overrideSaveDc) {
+      spellDC = spell.overrideSaveDc;
+    } else if (spell.spellCastingAbilityId) {
+      // If the spell has an ability attached, use that
+      // if there is no ability on spell, we default to wis
+      let spellCastingAbility = "wis";
+      if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
+        spellCastingAbility = convertSpellCastingAbilityId(
+          spell.spellCastingAbilityId
         );
-        spellDC = 8 + proficiencyModifier + abilityModifier;
-      } else {
-        spellDC = null;
-      }; 
-
-      // add some data for the parsing of the spells into the data structure
-      spell.flags = {
-        vtta: {
-          dndbeyond: {
-            lookup: "item",
-            lookupName: itemInfo.name,
-            lookupId: itemInfo.id,
-            level: spell.castAtLevel,
-            dc: spellDC,
-            limitedUse: itemInfo.limitedUse,
-            nameOverride: `${spell.definition.name} (${itemInfo.name})`,
-            overrideDC: !!spell.overrideSaveDc,
-            spellLimitedUse: spell.limitedUse,
-            castAtLevel: spell.castAtLevel,
-          }
-        }
       };
-      items.push(parseSpell(spell, character));
+
+      const abilityModifier = utils.calculateModifier(
+        character.data.abilities[spellCastingAbility].value
+      );
+      spellDC = 8 + proficiencyModifier + abilityModifier;
+    } else {
+      spellDC = null;
     };
+
+    // add some data for the parsing of the spells into the data structure
+    spell.flags = {
+      vtta: {
+        dndbeyond: {
+          lookup: "item",
+          lookupName: itemInfo.name,
+          lookupId: itemInfo.id,
+          level: spell.castAtLevel,
+          dc: spellDC,
+          limitedUse: itemInfo.limitedUse,
+          nameOverride: `${spell.definition.name} (${itemInfo.name})`,
+          overrideDC: !!spell.overrideSaveDc,
+          spellLimitedUse: spell.limitedUse,
+          castAtLevel: spell.castAtLevel,
+          active: active,
+        }
+      }
+    };
+    items.push(parseSpell(spell, character));
   });
   return items;
 }
