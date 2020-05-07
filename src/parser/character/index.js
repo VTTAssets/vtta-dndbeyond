@@ -28,7 +28,7 @@ let get5EBuiltIn = data => {
     halflingLucky: false,
     initiativeAdv: false,
     initiativeAlert: false,
-    initiativeHalfProf: false,
+    jackOfAllTrades: false,
     weaponCriticalThreshold: 20,
     observantFeat: false,
     remarkableAthlete: false,
