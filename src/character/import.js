@@ -2,8 +2,7 @@ import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
 // a mapping of compendiums with content type
-const compendiumLookup = [
-  {
+const compendiumLookup = [{
     type: "inventory",
     compendium: "entity-item-compendium",
   },
@@ -13,12 +12,10 @@ const compendiumLookup = [
   },
 ];
 
-const gameFolderLookup = [
-  {
-    type: "itemSpells",
-    folder: "magic-items",
-  },
-];
+const gameFolderLookup = [{
+  type: "itemSpells",
+  folder: "magic-items",
+}, ];
 
 export default class CharacterImport extends Application {
   constructor(options, actor) {
@@ -66,7 +63,7 @@ export default class CharacterImport extends Application {
     items.forEach(item => {
       const originalItem = this.actorOriginal.items.find(
         originalItem =>
-          item.name === originalItem.name && item.type === originalItem.type
+        item.name === originalItem.name && item.type === originalItem.type
       );
       if (!!originalItem) {
         this.copyFlags("dynamiceffects", originalItem, item);
@@ -154,9 +151,9 @@ export default class CharacterImport extends Application {
     for (let spell of this.result.itemSpells) {
       let existingSpell = game.items.entities.find(
         item =>
-          item.name === spell.name &&
-          item.type === "spell" &&
-          item.data.folder === magicItemsFolder._id
+        item.name === spell.name &&
+        item.type === "spell" &&
+        item.data.folder === magicItemsFolder._id
       );
       if (existingSpell === undefined) {
         if (!game.user.can("ITEM_CREATE")) {
@@ -167,13 +164,16 @@ export default class CharacterImport extends Application {
           spell.folder = magicItemsFolder._id;
           await Item.create(spell);
         }
+      } else {
+        spell._id = existingSpell._id;
+        await Item.update(spell);
       }
 
       const result = await game.items.entities.find(
         item =>
-          item.name === spell.name &&
-          item.type === "spell" &&
-          item.data.folder === magicItemsFolder._id
+        item.name === spell.name &&
+        item.type === "spell" &&
+        item.data.folder === magicItemsFolder._id
       );
 
       const itemUpdate = {
@@ -305,12 +305,12 @@ export default class CharacterImport extends Application {
           Array.isArray(this.result.itemSpells)
         ) {
           const itemSpells = await this.updateFolderItems("itemSpells");
-          // scan the inventory for those saved spells and copy the basic data over
+          // scan the inventory for each item with spells and copy the imported data over
           this.result.inventory.forEach(item => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(
-                item.flags.magicitems.spells
-              )) {
+                  item.flags.magicitems.spells
+                )) {
                 const itemSpell = itemSpells.find(
                   item => item.name === spell.name
                 );
@@ -330,30 +330,7 @@ export default class CharacterImport extends Application {
           });
         }
 
-        // we need to make sure the item spells are in the compendium
-        // once they are, if the magic item module is in use we will get
-        // the the spell id, pack and imf from the spell and merge it with
-        // the current item flags
-        // const compendiumSpells = await this.updateCompendium("itemSpells");
-
-        // if (magicItemsInstalled) {
-        //   this.result.inventory.forEach((item) => {
-        //     if (item.flags.magicitems.spells) {
-        //       for (let [i, spell] of Object.entries(
-        //         item.flags.magicitems.spells
-        //       )) {
-        //         const compendiumSpell = compendiumSpells.find(
-        //           (s) => s.name === spell.name
-        //         );
-        //         for (const [key, value] of Object.entries(compendiumSpell)) {
-        //           item.flags.magicitems.spells[i][key] = value;
-        //         }
-        //       }
-        //     }
-        //   });
-        // }
-
-        // Update compendium packs with spells and items
+        // Update compendium packs with spells and inventory
         this.updateCompendium("inventory");
         this.updateCompendium("spells");
 
@@ -369,7 +346,10 @@ export default class CharacterImport extends Application {
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
         if (!magicItemsInstalled) {
-          items.push(this.result.itemSpells);
+          items.push(this.result.itemSpells.filter(
+            item =>
+            item.flags.vtta.dndbeyond.active === true
+          ));
           items = items.flat();
         }
 
@@ -380,8 +360,7 @@ export default class CharacterImport extends Application {
 
         let itemImportResult = await this.actor.createEmbeddedEntity(
           "OwnedItem",
-          items,
-          {
+          items, {
             displaySheet: false,
           }
         );
@@ -389,8 +368,8 @@ export default class CharacterImport extends Application {
         // We loop back over the spell slots to update them to our computed
         // available value as per DDB.
         for (const [type, info] of Object.entries(
-          this.result.character.data.spells
-        )) {
+            this.result.character.data.spells
+          )) {
           await this.actor.update({
             [`data.spells.${type}.value`]: parseInt(info.value),
           });
