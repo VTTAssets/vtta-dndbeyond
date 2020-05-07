@@ -28,5 +28,6 @@
   "vtta-dndbeyond.item-type.tool": "Werkzeuge",
   "vtta-dndbeyond.item-type.loot": "Beute",
   "vtta-dndbeyond.item-type.class": "Klassen",
-  "vtta-dndbeyond.item-type.backpack": "Rucksack"
+  "vtta-dndbeyond.item-type.backpack": "Rucksack",
+  "vtta-dndbeyond.item-type.dynamic-effects": "Dynamic Effects"
 }
