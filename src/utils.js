@@ -450,7 +450,7 @@ let utils = {
     entityTypes.set("npc", "Actor");
     entityTypes.set("character", "Actor");
     entityTypes.set("page", "JournalEntry");
-    entityTypes.set("dynamic-effects", "Item");
+    entityTypes.set("magic-items", "Item");
 
     let baseName = "D&D Beyond Import";
     let baseColor = "#6f0006";
