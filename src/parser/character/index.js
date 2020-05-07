@@ -28,7 +28,7 @@ let get5EBuiltIn = data => {
     "halflingLucky": false,
     "initiativeAdv": false,
     "initiativeAlert": false,
-    "initiativeHalfProf": false,
+    "jackOfAllTrades": false,
     "weaponCriticalThreshold": 20,
     "observantFeat": false,
     "remarkableAthlete": false,
@@ -37,14 +37,15 @@ let get5EBuiltIn = data => {
 
   // powerful build/equine build
   results.powerfulBuild = data.character.race.racialTraits.filter(trait =>
-    trait.definition.name === "Equine Build" || trait.definition.name === "Powerful Build"
+    trait.definition.name === "Equine Build" ||
+    trait.definition.name === "Powerful Build"
     ).length > 0;
 
   // savage attacks
   results.savageAttacks = data.character.race.racialTraits.filter(trait =>
     trait.definition.name === "Savage Attacks"
     ).length > 0;
-  
+
   // halfling lucky
   results.halflingLucky = data.character.race.racialTraits.filter(trait =>
     trait.definition.name === "Lucky"
@@ -54,7 +55,7 @@ let get5EBuiltIn = data => {
   results.elvenAccuracy = data.character.feats.filter(feat =>
     feat.definition.name === "Elven Accuracy"
     ).length > 0;
- 
+
   // alert feat
   results.initiativeAlert = data.character.feats.filter(feat =>
     feat.definition.name === "Alert"
@@ -63,11 +64,6 @@ let get5EBuiltIn = data => {
   // advantage on initiative
   results.initiativeAdv = utils.filterBaseModifiers(
     data, "advantage", "initiative"
-    ).length > 0;
-
-  // initiative half prof
-  results.initiativeHalfProf = utils.filterBaseModifiers(
-    data, "half-proficiency", "initiative"
     ).length > 0;
 
   // observant
@@ -82,14 +78,14 @@ let get5EBuiltIn = data => {
     if (cls.subclassDefinition) {
       // Improved Critical
       const improvedCritical =
-        cls.subclassDefinition.classFeatures.filter(feature => 
+        cls.subclassDefinition.classFeatures.filter(feature =>
             feature.name === "Improved Critical" &&
-            cls.level >= feature.requiredLevel 
+            cls.level >= feature.requiredLevel
           ).length > 0;
       const superiorCritical =
-        cls.subclassDefinition.classFeatures.filter(feature => 
+        cls.subclassDefinition.classFeatures.filter(feature =>
             feature.name === "Superior Critical" &&
-            cls.level >= feature.requiredLevel 
+            cls.level >= feature.requiredLevel
           ).length > 0;
 
       if (superiorCritical) {
@@ -98,19 +94,26 @@ let get5EBuiltIn = data => {
         results.weaponCriticalThreshold = 19
       }
 
-      // Remarkable Athlete 
+      // Remarkable Athlete
       results.remarkableAthlete =
-        cls.subclassDefinition.classFeatures.filter(feature => 
+        cls.subclassDefinition.classFeatures.filter(feature =>
             feature.name === "Remarkable Athlete" &&
-            cls.level >= feature.requiredLevel 
+            cls.level >= feature.requiredLevel
           ).length > 0;
     }
 
+    //Jack of All Trades
+    results.jackOfAllTrades =
+    cls.definition.classFeatures.filter(feature =>
+        feature.name === "Jack of All Trades" &&
+        cls.level >= feature.requiredLevel
+      ).length > 0;
+
     //Reliable Talent
     results.reliableTalent =
-        cls.definition.classFeatures.filter(feature => 
+        cls.definition.classFeatures.filter(feature =>
             feature.name === "Reliable Talent" &&
-            cls.level >= feature.requiredLevel 
+            cls.level >= feature.requiredLevel
           ).length > 0;
   });
 
@@ -273,7 +276,7 @@ let getUnarmoredAC = (modifiers, character) => {
   let unarmoredACValues = [];
   let isUnarmored = modifiers.filter(
     modifier =>
-      modifier.type === "set" && 
+      modifier.type === "set" &&
       modifier.subType === "unarmored-armor-class" &&
       modifier.isGranted
   );
@@ -283,7 +286,7 @@ let getUnarmoredAC = (modifiers, character) => {
     // +DEX
     unarmoredACValue += character.data.abilities.dex.mod;
     // +WIS or +CON, if monk or barbarian, draconic resilience === null
-    
+
     if (unarmored.statId !== null) {
       let ability = DICTIONARY.character.abilities.find(
         ability => ability.id === unarmored.statId
@@ -327,7 +330,7 @@ let getArmorClass = (data, character) => {
   let armorClassValues = [];
   // get a list of equipped gear and armor
   // we make a distinction so we can loop over armor
-  let equippedGear = data.character.inventory.filter(item => 
+  let equippedGear = data.character.inventory.filter(item =>
     item.equipped && item.definition.filterType !== "Armor"
   );
   let equippedArmor = data.character.inventory.filter(item =>
@@ -394,7 +397,7 @@ let getArmorClass = (data, character) => {
   // the presumption here is that you can only wear a shield and a single
   // additional 'armor' piece. in DDB it's possible to equip multiple armor
   // types and it works out the best AC for you
-  // we also want to handle unarmored for monks etc. 
+  // we also want to handle unarmored for monks etc.
   // we might have multiple shields "equipped" by accident, so work out
   // the best one
   for(var armor = 0; armor < armors.length; armor++) {
@@ -878,7 +881,7 @@ let getSkills = (data, character) => {
      data.character.modifiers.class.find(
       modifier =>
         modifier.type === 	"half-proficiency-round-up" &&
-        modifier.subType === `${longAbility}-ability-checks` 
+        modifier.subType === `${longAbility}-ability-checks`
     ) !== undefined ? true : false;
 
     // Jack of All trades/half-rounded down
@@ -908,7 +911,7 @@ let getSkills = (data, character) => {
       .map(skl => skl.value)
       .reduce((a,b) => a + b, 0);
 
-    const value = character.data.abilities[skill.ability].value + 
+    const value = character.data.abilities[skill.ability].value +
       proficiencyBonus + skillBonus;
 
     result[skill.name] = {
@@ -928,9 +931,9 @@ let getSkills = (data, character) => {
  * Checks the list of modifiers provided for a matching bonus type
  * and returns a sum of it's value. May include a dice string.
  * This only gets modifiers with out a restriction.
- * @param {*} modifiers 
- * @param {*} character 
- * @param {*} bonusSubType 
+ * @param {*} modifiers
+ * @param {*} character
+ * @param {*} bonusSubType
  */
 let getGlobalBonus = (modifiers, character, bonusSubType) => {
   const bonusMods = modifiers
@@ -973,8 +976,8 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
     "damage": "",
   },
  * @param {*} lookupTable
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  */
 let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
   let result = {
@@ -1004,7 +1007,7 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 
     // if a match then a dice string
     if (lookupMatch) {
-      lookupResults[b.fvttType].diceString += (lookupResult === "") ? 
+      lookupResults[b.fvttType].diceString += (lookupResult === "") ?
         lookupResult : " + " + lookupResult;
     } else {
       lookupResults[b.fvttType].sum += lookupResult;
@@ -1031,13 +1034,13 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 /**
  * Gets global bonuses to spell attacks and damage
  * Most likely from items such as wand of the warmage
- * supply type as 'ranged' or 'melee' 
+ * supply type as 'ranged' or 'melee'
   {
     "attack": "",
     "damage": "",
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  * @param {*} type
  */
 let getBonusSpellAttacks = (data, character, type) => {
@@ -1053,13 +1056,13 @@ let getBonusSpellAttacks = (data, character, type) => {
 /**
  * Gets global bonuses to weapon attacks and damage
  * Most likely from items such as wand of the warmage
- * supply type as 'ranged' or 'melee' 
+ * supply type as 'ranged' or 'melee'
   {
     "attack": "",
     "damage": "",
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  * @param {*} type
  */
 let getBonusWeaponAttacks = (data, character, type) => {
@@ -1084,8 +1087,8 @@ let getBonusWeaponAttacks = (data, character, type) => {
     "save": "",
     "skill": ""
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  */
 let getBonusAbilities = (data, character) => {
   let result = {};
@@ -1094,7 +1097,7 @@ let getBonusAbilities = (data, character) => {
     { fvttType: "save", ddbSubType: "saving-throws" },
     // the foundry global ability check doesn't do skills (but should, probs)
     // we add in global ability check boosts here
-    { fvttType: "skill", ddbSubType: "ability-checks" }, 
+    { fvttType: "skill", ddbSubType: "ability-checks" },
   ];
 
   bonusLookup.forEach(b => {
@@ -1271,7 +1274,7 @@ let getSize = data => {
 
 let getSenses = data => {
   let senses = getSensesLookup(data);
-  
+
   // sort the senses alphabetically
   senses = senses.sort((a, b) => a.name >= b.name);
 
