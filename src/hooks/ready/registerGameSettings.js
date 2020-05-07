@@ -3,14 +3,14 @@ SettingsExtender();
 
 export default function () {
   const actorCompendiums = game.packs
-    .filter((pack) => pack.entity === "Actor")
+    .filter(pack => pack.entity === "Actor")
     .reduce((choices, pack) => {
       choices[pack.collection] = pack.metadata.label;
       return choices;
     }, {});
 
   const itemCompendiums = game.packs
-    .filter((pack) => pack.entity === "Item")
+    .filter(pack => pack.entity === "Item")
     .reduce((choices, pack) => {
       choices[pack.collection] = pack.metadata.label;
       return choices;
@@ -85,5 +85,66 @@ export default function () {
       "vtta-dndbeyond.entity-cleanup-policy.2",
       "vtta-dndbeyond.entity-cleanup-policy.3",
     ],
+  });
+
+  /** Character update settings, stored per user and non-configurable in the settings screen */
+  game.settings.register("vtta-dndbeyond", "character-update-policy-class", {
+    name: "vtta-dndbeyond.character-update-policy-class.name",
+    hint: "vtta-dndbeyond.character-update-policy-class.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register("vtta-dndbeyond", "character-update-policy-feat", {
+    name: "vtta-dndbeyond.character-update-policy-feat.name",
+    hint: "vtta-dndbeyond.character-update-policy-feat.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register("vtta-dndbeyond", "character-update-policy-weapon", {
+    name: "vtta-dndbeyond.character-update-policy-weapon.name",
+    hint: "vtta-dndbeyond.character-update-policy-weapon.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
+  });
+  game.settings.register(
+    "vtta-dndbeyond",
+    "character-update-policy-equipment",
+    {
+      name: "vtta-dndbeyond.character-update-policy-equipment.name",
+      hint: "vtta-dndbeyond.character-update-policy-equipment.hint",
+      scope: "player",
+      config: false,
+      type: Boolean,
+      default: true,
+    }
+  );
+  game.settings.register(
+    "vtta-dndbeyond",
+    "character-update-policy-inventory", // = consumable, tool & loot
+    {
+      name: "vtta-dndbeyond.character-update-policy-inventory.name",
+      hint: "vtta-dndbeyond.character-update-policy-inventory.hint",
+      scope: "player",
+      config: false,
+      type: Boolean,
+      default: true,
+    }
+  );
+
+  game.settings.register("vtta-dndbeyond", "character-update-policy-spell", {
+    name: "vtta-dndbeyond.character-update-policy-spell.name",
+    hint: "vtta-dndbeyond.character-update-policy-spell.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
   });
 }
