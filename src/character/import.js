@@ -1,4 +1,3 @@
-import md5 from "../libs/md5.js";
 import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
@@ -438,11 +437,6 @@ export default class CharacterImport extends Application {
         this.showCurrentTask(html, "Clearing inventory");
         let clearedItems = await this.clearItemsByUserSelection();
 
-        // await this.actor.deleteEmbeddedEntity(
-        //   "OwnedItem",
-        //   this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
-        // / );
-
         // store all spells in the folder specific for Dynamic Items
         if (
           magicItemsInstalled &&
@@ -481,13 +475,6 @@ export default class CharacterImport extends Application {
 
         // Adding all items to the actor
         let items = filterItemsByUserSelection(this.result);
-        // let items = [
-        //   this.result.actions,
-        //   this.result.inventory,
-        //   this.result.spells,
-        //   this.result.features,
-        //   this.result.classes,
-        // ].flat();
 
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
