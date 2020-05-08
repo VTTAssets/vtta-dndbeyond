@@ -193,9 +193,17 @@ export default function parseActions(ddb, character) {
     .flat()
     .filter(action => action.limitedUse && action.limitedUse.maxUses)
     .map(action => {
+      let activationType = DICTIONARY.spell.activationTypes.find(
+        type => type.activationType === action.activation.activationType
+      );
       return {
         name: action.name,
         description: action.snippet ? action.snippet : "",
+        activation: {
+          type: activationType.value,
+          cost: action.activation.activationTime,
+          condition: ""
+        },
         value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
         max: action.limitedUse.maxUses,
         sr: action.limitedUse.resetType === 1,
@@ -220,11 +228,7 @@ export default function parseActions(ddb, character) {
     };
 
     feat.data.description.value = action.description;
-    feat.data.activation = {
-      type: "action",
-      cost: 1,
-      condition: ""
-    };
+    feat.data.activation = action.activation;
     feat.data.uses = {
       value: action.value,
       max: action.max,
