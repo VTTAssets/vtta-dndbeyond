@@ -634,7 +634,6 @@ const DICTIONARY = {
       { name: "Warlock", value: "pact" },
       { name: "Wizard", value: "full" },
       { name: "Monk", value: "none" },
-      { }
     ],
     preparationModes: [
       { name: "Artificer", value: "prepared" },
