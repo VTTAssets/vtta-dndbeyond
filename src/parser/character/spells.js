@@ -893,15 +893,23 @@ export default function parseSpells(ddb, character) {
         }
       };
 
-      items.push(parseSpell(spell, character));
-      // do not parse the same spell twice. Had it once with Spiritual Weapons with the same
-      // data, but only a different spell ID
-      if (
-        items.find(
-          existingSpell => existingSpell.name === spell.definition.name
-        ) === undefined
-      ) {
+      // Check for duplicate spells, normally domain ones
+      // We will import spells from a different class that are the same though
+      // as they may come from with different spell casting mods
+      const duplicateSpell = items.findIndex(
+        existingSpell =>
+        existingSpell.name === spell.definition.name &&
+        classInfo.definition.name === existingSpell.flags.vtta.dndbeyond.class
+      );
+      if (!items[duplicateSpell]) {
         items.push(parseSpell(spell, character));
+      } else if (spell.alwaysPrepared) {
+        // if our new spell is always known we overwrite!
+        // it's probably domain
+        items[duplicateSpell] = parseSpell(spell, character);
+      } else {
+        // we'll emit a console message if it doesn't match this case for future debugging
+        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.` );
       }
     });
   });
