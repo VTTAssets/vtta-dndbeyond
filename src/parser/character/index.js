@@ -1434,7 +1434,7 @@ let getToken = data => {
   if (senses.find(sense => sense.name === "Darkvision") !== undefined) {
     tokenData.dimSight = senses.find(sense => sense.name === "Darkvision").value;
   }
-  I;
+
   return tokenData;
 };
 
