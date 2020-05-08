@@ -217,8 +217,6 @@ export default class CharacterImport extends Application {
     let ownedItems = this.actor.getEmbeddedCollection("OwnedItem");
     let toRemove = ownedItems.filter((item) => invalidItemTypes.includes(item.type)).map((item) => item._id);
     await this.actor.deleteEmbeddedEntity("OwnedItem", toRemove);
-    console.log("Removed " + toRemove.length + " items from inventory");
-    console.log(toRemove);
     return toRemove;
   };
 
