@@ -2,7 +2,8 @@ import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
 // a mapping of compendiums with content type
-const compendiumLookup = [{
+const compendiumLookup = [
+  {
     type: "inventory",
     compendium: "entity-item-compendium",
   },
@@ -12,15 +13,40 @@ const compendiumLookup = [{
   },
 ];
 
-const gameFolderLookup = [{
-  type: "itemSpells",
-  folder: "magic-items",
-}, ];
+const gameFolderLookup = [
+  {
+    type: "itemSpells",
+    folder: "magic-items",
+  },
+];
+
+/**
+ * Returns a combined array of all items to process, filtered by the user's selection on what to skip and what to include
+ * @param {object} result object containing all character items sectioned as individual properties
+ * @param {array[string]} sections an array of object properties which should be filtered
+ */
+const filterItemsByUserSelection = (result, sections) => {
+  let items = [];
+
+  let validItemTypes = [];
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) validItemTypes.push("class");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) validItemTypes.push("feat");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) validItemTypes.push("weapon");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) validItemTypes.push("equipment");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
+    validItemTypes = validItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) validItemTypes.push("spell");
+
+  for (const section of sections) {
+    items = items.concat(result[section]).filter((item) => validItemTypes.includes(item.type));
+  }
+  return items;
+};
 
 export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
-    this.actor = game.actors.entities.find(a => a.id === actor._id);
+    this.actor = game.actors.entities.find((a) => a.id === actor._id);
     this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
   }
@@ -39,11 +65,7 @@ export default class CharacterImport extends Application {
 
   showCurrentTask(html, title, message = null, isError = false) {
     let element = $(html).find(".task-name");
-    element.html(
-      `<h2 ${isError ? " class='error'" : ""}>${title}</h2>${
-        message ? `<p>${message}</p>` : ""
-      }`
-    );
+    element.html(`<h2 ${isError ? " class='error'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
     $(html).parent().parent().css("height", "auto");
   }
 
@@ -60,10 +82,9 @@ export default class CharacterImport extends Application {
    * @param {*} items
    */
   async copySupportedItemFlags(items) {
-    items.forEach(item => {
+    items.forEach((item) => {
       const originalItem = this.actorOriginal.items.find(
-        originalItem =>
-        item.name === originalItem.name && item.type === originalItem.type
+        (originalItem) => item.name === originalItem.name && item.type === originalItem.type
       );
       if (!!originalItem) {
         this.copyFlags("dynamiceffects", originalItem, item);
@@ -76,22 +97,16 @@ export default class CharacterImport extends Application {
    * @param {*} type
    */
   async updateCompendium(type) {
-    let importPolicy = game.settings.get(
-      "vtta-dndbeyond",
-      "entity-import-policy"
-    );
+    let importPolicy = game.settings.get("vtta-dndbeyond", "entity-import-policy");
     let items = [];
 
     if (game.user.isGM && importPolicy !== 2) {
       // we are updating inventory and spells only
 
       // compendiumLookup
-      let compendiumName = compendiumLookup.find(c => c.type == type)
-        .compendium;
+      let compendiumName = compendiumLookup.find((c) => c.type == type).compendium;
       let compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
-      let compendium = await game.packs.find(
-        pack => pack.collection === compendiumLabel
-      );
+      let compendium = await game.packs.find((pack) => pack.collection === compendiumLabel);
 
       if (compendium) {
         const index = await compendium.getIndex();
@@ -99,13 +114,10 @@ export default class CharacterImport extends Application {
         for (let i = 0; i < this.result[type].length; i++) {
           const item = this.result[type][i];
           let result;
-          utils.log(
-            `Processing item ${item.name} in compendium ${compendiumLabel}`,
-            "character"
-          );
+          utils.log(`Processing item ${item.name} in compendium ${compendiumLabel}`, "character");
 
           // search the compendium for this item
-          let searchResult = index.find(i => i.name === item.name);
+          let searchResult = index.find((i) => i.name === item.name);
           if (searchResult && importPolicy === 0) {
             item._id = searchResult._id;
             // update seems to return an array, and without our img
@@ -145,21 +157,16 @@ export default class CharacterImport extends Application {
     let items = [];
 
     // compendiumLookup
-    const folderName = gameFolderLookup.find(c => c.type == type).folder;
+    const folderName = gameFolderLookup.find((c) => c.type == type).folder;
     const magicItemsFolder = await utils.getFolder(folderName);
 
     for (let spell of this.result.itemSpells) {
       let existingSpell = game.items.entities.find(
-        item =>
-        item.name === spell.name &&
-        item.type === "spell" &&
-        item.data.folder === magicItemsFolder._id
+        (item) => item.name === spell.name && item.type === "spell" && item.data.folder === magicItemsFolder._id
       );
       if (existingSpell === undefined) {
         if (!game.user.can("ITEM_CREATE")) {
-          ui.notifications.warn(
-            `Cannot create spell ${spell.name} for Magic Items items`
-          );
+          ui.notifications.warn(`Cannot create spell ${spell.name} for Magic Items items`);
         } else {
           spell.folder = magicItemsFolder._id;
           await Item.create(spell);
@@ -170,10 +177,7 @@ export default class CharacterImport extends Application {
       }
 
       const result = await game.items.entities.find(
-        item =>
-        item.name === spell.name &&
-        item.type === "spell" &&
-        item.data.folder === magicItemsFolder._id
+        (item) => item.name === spell.name && item.type === "spell" && item.data.folder === magicItemsFolder._id
       );
 
       const itemUpdate = {
@@ -186,24 +190,95 @@ export default class CharacterImport extends Application {
       items.push(itemUpdate);
     }
 
-
     return items;
   }
+
+  /**
+   * Deletes items from the inventory bases on which sections a user wants to update
+   * Possible sections:
+   * - class
+   * - feat
+   * - weapon
+   * - equipment
+   * - inventory: consumable, loot, tool and backpack
+   * - spell
+   */
+  clearItemsByUserSelection = async () => {
+    let invalidItemTypes = [];
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) invalidItemTypes.push("class");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) invalidItemTypes.push("feat");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) invalidItemTypes.push("weapon");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) invalidItemTypes.push("equipment");
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
+      invalidItemTypes = invalidItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
+    if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) invalidItemTypes.push("spell");
+
+    // collect all items belonging to one of those inventory item categories
+    let ownedItems = this.actor.getEmbeddedCollection("OwnedItem");
+    let toRemove = ownedItems.filter((item) => invalidItemTypes.includes(item.type)).map((item) => item._id);
+    await this.actor.deleteEmbeddedEntity("OwnedItem", toRemove);
+    return toRemove;
+  };
 
   /* -------------------------------------------- */
 
   getData() {
+    const importPolicies = [
+      {
+        name: "class",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-class"),
+        description: "Classes",
+      },
+      {
+        name: "feat",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-feat"),
+        description: "Features",
+      },
+      {
+        name: "weapon",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-weapon"),
+        description: "Weapons",
+      },
+      {
+        name: "equipment",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-equipment"),
+        description: "Equipment",
+      },
+      {
+        name: "inventory",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"),
+        description: "Other inventory items",
+      },
+      {
+        name: "spell",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-spell"),
+        description: "Spells",
+      },
+    ];
+
     return {
       actor: this.actor,
+      importPolicies: importPolicies,
     };
   }
 
   /* -------------------------------------------- */
 
   activateListeners(html) {
+    // watch the change of the import-policy-selector checkboxes
+    $(html)
+      .find('.import-policy input[type="checkbox"]')
+      .on("change", (event) => {
+        game.settings.set(
+          "vtta-dndbeyond",
+          "character-update-policy-" + event.currentTarget.dataset.section,
+          event.currentTarget.checked
+        );
+      });
+
     $(html)
       .find("#json")
-      .on("paste", async event => {
+      .on("paste", async (event) => {
         event.preventDefault();
         var pasteData = event.originalEvent.clipboardData.getData("text");
 
@@ -228,24 +303,12 @@ export default class CharacterImport extends Application {
         try {
           this.result = parser.parseJson(data);
         } catch (error) {
-          console.log(
-            "%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####",
-            "color: #ff0000"
-          );
+          console.log("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000");
           console.log(`**Foundry version         :** ${game.data.version}`);
-          console.log(
-            `**DND5e version           :** ${game.system.data.version}`
-          );
-          console.log(
-            `**VTTA D&D Beyond version :** ${
-              game.modules.get("vtta-dndbeyond").data.version
-            }`
-          );
+          console.log(`**DND5e version           :** ${game.system.data.version}`);
+          console.log(`**VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`);
           console.log(error);
-          console.log(
-            "%c ##########################################",
-            "color: #ff0000"
-          );
+          console.log("%c ##########################################", "color: #ff0000");
           this.showCurrentTask(
             html,
             "I guess you are special!",
@@ -275,15 +338,9 @@ export default class CharacterImport extends Application {
             .replace(/\-+/g, "-")
             .trim();
 
-          let uploadDirectory = game.settings
-            .get("vtta-dndbeyond", "image-upload-directory")
-            .replace(/^\/|\/$/g, "");
+          let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
 
-          imagePath = await utils.uploadImage(
-            data.character.avatarUrl,
-            uploadDirectory,
-            filename
-          );
+          imagePath = await utils.uploadImage(data.character.avatarUrl, uploadDirectory, filename);
           this.result.character.img = imagePath;
         }
 
@@ -291,29 +348,18 @@ export default class CharacterImport extends Application {
         this.showCurrentTask(html, "Updating basic character information");
         await this.actor.update(this.result.character);
 
-        // clear items
+        // // clear items
         this.showCurrentTask(html, "Clearing inventory");
-        await this.actor.deleteEmbeddedEntity(
-          "OwnedItem",
-          this.actor.getEmbeddedCollection("OwnedItem").map(item => item._id)
-        );
+        let clearedItems = await this.clearItemsByUserSelection();
 
         // store all spells in the folder specific for Dynamic Items
-        if (
-          magicItemsInstalled &&
-          this.result.itemSpells &&
-          Array.isArray(this.result.itemSpells)
-        ) {
+        if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
           const itemSpells = await this.updateFolderItems("itemSpells");
           // scan the inventory for each item with spells and copy the imported data over
-          this.result.inventory.forEach(item => {
+          this.result.inventory.forEach((item) => {
             if (item.flags.magicitems.spells) {
-              for (let [i, spell] of Object.entries(
-                  item.flags.magicitems.spells
-                )) {
-                const itemSpell = itemSpells.find(
-                  item => item.name === spell.name
-                );
+              for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
+                const itemSpell = itemSpells.find((item) => item.name === spell.name);
                 if (itemSpell)
                   for (const [key, value] of Object.entries(itemSpell)) {
                     item.flags.magicitems.spells[i][key] = value;
@@ -335,21 +381,13 @@ export default class CharacterImport extends Application {
         this.updateCompendium("spells");
 
         // Adding all items to the actor
-        let items = [
-          this.result.actions,
-          this.result.inventory,
-          this.result.spells,
-          this.result.features,
-          this.result.classes,
-        ].flat();
+        const FILTER_SECTIONS = ["classes", "features", "actions", "inventory", "spells"];
+        let items = filterItemsByUserSelection(this.result, FILTER_SECTIONS);
 
         // If there is no magicitems module fall back to importing the magic
         // item spells as normal spells fo the character
         if (!magicItemsInstalled) {
-          items.push(this.result.itemSpells.filter(
-            item =>
-            item.flags.vtta.dndbeyond.active === true
-          ));
+          items.push(this.result.itemSpells.filter((item) => item.flags.vtta.dndbeyond.active === true));
           items = items.flat();
         }
 
@@ -358,18 +396,13 @@ export default class CharacterImport extends Application {
         utils.log("Character items", "character");
         utils.log(items, "character");
 
-        let itemImportResult = await this.actor.createEmbeddedEntity(
-          "OwnedItem",
-          items, {
-            displaySheet: false,
-          }
-        );
+        let itemImportResult = await this.actor.createEmbeddedEntity("OwnedItem", items, {
+          displaySheet: false,
+        });
 
         // We loop back over the spell slots to update them to our computed
         // available value as per DDB.
-        for (const [type, info] of Object.entries(
-            this.result.character.data.spells
-          )) {
+        for (const [type, info] of Object.entries(this.result.character.data.spells)) {
           await this.actor.update({
             [`data.spells.${type}.value`]: parseInt(info.value),
           });
@@ -380,16 +413,12 @@ export default class CharacterImport extends Application {
 
     $(html)
       .find("input[name=dndbeyond-url]")
-      .on("input", async event => {
-        let matches = event.target.value.match(
-          /.*(dndbeyond\.com\/profile\/[\w-_]+\/characters\/\d+)/
-        );
+      .on("input", async (event) => {
+        let matches = event.target.value.match(/.*(dndbeyond\.com\/profile\/[\w-_]+\/characters\/\d+)/);
         if (matches) {
           $(html)
             .find(".dndbeyond-url-status i")
-            .replaceWith(
-              '<i class="fas fa-check-circle" style="color: green"></i>'
-            );
+            .replaceWith('<i class="fas fa-check-circle" style="color: green"></i>');
           this.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
@@ -402,17 +431,10 @@ export default class CharacterImport extends Application {
           });
           this.showCurrentTask(html, "Status");
         } else {
-          this.showCurrentTask(
-            html,
-            "URL format incorrect",
-            "That seems not to be the URL we expected...",
-            true
-          );
+          this.showCurrentTask(html, "URL format incorrect", "That seems not to be the URL we expected...", true);
           $(html)
             .find(".dndbeyond-url-status i")
-            .replaceWith(
-              '<i class="fas fa-exclamation-triangle" style="color:red"></i>'
-            );
+            .replaceWith('<i class="fas fa-exclamation-triangle" style="color:red"></i>');
         }
       });
   }
