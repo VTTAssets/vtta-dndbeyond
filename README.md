@@ -14,10 +14,10 @@ The data model is migrated to the Foundry 0.4.4 data model and provides way more
 
 - Three created compendiums that are under your personal control. You can either create a small module providing the compendium packs (I will provide information on how to do that later), or simply create those compendiums in the world you are using for your games. You will need to Item Compendiums, one for spells, the other for items, and an actor compendium for monster imports.
 
-- [The Tokenizer](https://www.vttassets.com/asset/vtta-tokenizer) and 
-- [The Iconizer](https://www.vttassets.com/asset/vtta-iconizer) 
+- [The Tokenizer](https://www.vttassets.com/asset/vtta-tokenizer) and
+- [The Iconizer](https://www.vttassets.com/asset/vtta-iconizer)
 
-both are great companions to this module and make working with new content a joyful experience. Give them a shot! 
+both are great companions to this module and make working with new content a joyful experience. Give them a shot!
 
 - [The Chrome Extension](https://www.vttassets.com/asset/vtta-dndbeyond) allows the import of monsters and spells directly from the D&D Beyond website. While the SRD content, ie. all monsters in the Basic Rules, are importable for everyone, all other monsters from sourcebooks including homebrew monsters require a Patronage on my [Patreon campaign](https://www.patreon.com/join/vttassets).
 
