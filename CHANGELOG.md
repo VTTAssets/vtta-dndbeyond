@@ -2,7 +2,7 @@
 
 ## [2.2.0] Storage Galore
 
-This Release adds some improvements regarding storage integration: While testing was a bit cumbersome because of my inability to setup S3 reliably, I **think** I made some progress in supporting both S3 and hopefully the assets library of The Forge natively. This required a 
+This Release adds some improvements regarding storage integration: While testing was a bit cumbersome because of my inability to setup S3 reliably, I **think** I made some progress in supporting both S3 and hopefully the assets library of The Forge natively. This required a
 patched version of settings-extender, which is currently in review by the author. Nevertheless, I am using my own modulized-version here, which **should not conflict** with other versions used by other mods out there. Having only 2h of sleep tonight, I might be very wrong though.
 
 ### Fixed
