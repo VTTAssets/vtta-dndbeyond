@@ -22,63 +22,47 @@ let getProficiencies = (data) => {
 
 let get5EBuiltIn = (data) => {
   let results = {
-    "powerfulBuild": false,
-    "savageAttacks": false,
-    "elvenAccuracy": false,
-    "halflingLucky": false,
-    "initiativeAdv": false,
-    "initiativeAlert": false,
-    "initiativeHalfProf": false,
-    "weaponCriticalThreshold": 20,
-    "observantFeat": false,
-    "remarkableAthlete": false,
-    "reliableTalent": false,
+    powerfulBuild: false,
+    savageAttacks: false,
+    elvenAccuracy: false,
+    halflingLucky: false,
+    initiativeAdv: false,
+    initiativeAlert: false,
+    jackOfAllTrades: false,
+    weaponCriticalThreshold: 20,
+    observantFeat: false,
+    remarkableAthlete: false,
+    reliableTalent: false,
   };
 
   // powerful build/equine build
   results.powerfulBuild =
     data.character.race.racialTraits.filter(
-      (trait) =>
-        trait.definition.name === "Equine Build" ||
-        trait.definition.name === "Powerful Build"
+      (trait) => trait.definition.name === "Equine Build" || trait.definition.name === "Powerful Build"
     ).length > 0;
 
   // savage attacks
   results.savageAttacks =
-    data.character.race.racialTraits.filter(
-      (trait) => trait.definition.name === "Savage Attacks"
-    ).length > 0;
+    data.character.race.racialTraits.filter((trait) => trait.definition.name === "Savage Attacks").length > 0;
 
   // halfling lucky
   results.halflingLucky =
-    data.character.race.racialTraits.filter(
-      (trait) => trait.definition.name === "Lucky"
-    ).length > 0;
+    data.character.race.racialTraits.filter((trait) => trait.definition.name === "Lucky").length > 0;
 
   // elven accuracy
-  results.elvenAccuracy =
-    data.character.feats.filter(
-      (feat) => feat.definition.name === "Elven Accuracy"
-    ).length > 0;
+  results.elvenAccuracy = data.character.feats.filter((feat) => feat.definition.name === "Elven Accuracy").length > 0;
 
   // alert feat
-  results.initiativeAlert = data.character.feats.filter(feat =>
-    feat.definition.name === "Alert"
-    ).length > 0;
+  results.initiativeAlert = data.character.feats.filter((feat) => feat.definition.name === "Alert").length > 0;
 
   // advantage on initiative
-  results.initiativeAdv =
-    utils.filterBaseModifiers(data, "advantage", "initiative").length > 0;
+  results.initiativeAdv = utils.filterBaseModifiers(data, "advantage", "initiative").length > 0;
 
   // initiative half prof
-  results.initiativeHalfProf =
-    utils.filterBaseModifiers(data, "half-proficiency", "initiative").length >
-    0;
+  results.initiativeHalfProf = utils.filterBaseModifiers(data, "half-proficiency", "initiative").length > 0;
 
   // observant
-  results.observantFeat =
-    data.character.feats.filter((feat) => feat.definition.name === "Observant")
-      .length > 0;
+  results.observantFeat = data.character.feats.filter((feat) => feat.definition.name === "Observant").length > 0;
 
   // weapon critical threshold
   // fighter improved crit
@@ -87,15 +71,13 @@ let get5EBuiltIn = (data) => {
     if (cls.subclassDefinition) {
       // Improved Critical
       const improvedCritical =
-        cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Improved Critical" &&
-            cls.level >= feature.requiredLevel 
-          ).length > 0;
+        cls.subclassDefinition.classFeatures.filter(
+          (feature) => feature.name === "Improved Critical" && cls.level >= feature.requiredLevel
+        ).length > 0;
       const superiorCritical =
-        cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Superior Critical" &&
-            cls.level >= feature.requiredLevel 
-          ).length > 0;
+        cls.subclassDefinition.classFeatures.filter(
+          (feature) => feature.name === "Superior Critical" && cls.level >= feature.requiredLevel
+        ).length > 0;
 
       if (superiorCritical) {
         results.weaponCriticalThreshold = 18;
@@ -103,20 +85,24 @@ let get5EBuiltIn = (data) => {
         results.weaponCriticalThreshold = 19;
       }
 
-      // Remarkable Athlete 
+      // Remarkable Athlete
       results.remarkableAthlete =
-        cls.subclassDefinition.classFeatures.filter(feature => 
-            feature.name === "Remarkable Athlete" &&
-            cls.level >= feature.requiredLevel 
-          ).length > 0;
+        cls.subclassDefinition.classFeatures.filter(
+          (feature) => feature.name === "Remarkable Athlete" && cls.level >= feature.requiredLevel
+        ).length > 0;
     }
+
+    //Jack of All Trades
+    results.jackOfAllTrades =
+      cls.definition.classFeatures.filter(
+        (feature) => feature.name === "Jack of All Trades" && cls.level >= feature.requiredLevel
+      ).length > 0;
 
     //Reliable Talent
     results.reliableTalent =
-        cls.definition.classFeatures.filter(feature => 
-            feature.name === "Reliable Talent" &&
-            cls.level >= feature.requiredLevel 
-          ).length > 0;
+      cls.definition.classFeatures.filter(
+        (feature) => feature.name === "Reliable Talent" && cls.level >= feature.requiredLevel
+      ).length > 0;
   });
 
   return results;
@@ -142,14 +128,9 @@ let getAbilities = (data, character) => {
       proficient: 0,
     };
 
-    const stat =
-      data.character.stats.find((stat) => stat.id === ability.id).value || 0;
-    const bonusStat =
-      data.character.bonusStats.find((stat) => stat.id === ability.id).value ||
-      0;
-    const overrideStat =
-      data.character.overrideStats.find((stat) => stat.id === ability.id)
-        .value || 0;
+    const stat = data.character.stats.find((stat) => stat.id === ability.id).value || 0;
+    const bonusStat = data.character.bonusStats.find((stat) => stat.id === ability.id).value || 0;
+    const overrideStat = data.character.overrideStats.find((stat) => stat.id === ability.id).value || 0;
 
     const bonus = utils
       .filterBaseModifiers(data, "bonus", `${ability.long}-score`)
@@ -157,16 +138,11 @@ let getAbilities = (data, character) => {
       .reduce((prev, cur) => prev + cur.value, 0);
 
     // calculate value, mod and proficiency
-    result[ability.value].value =
-      overrideStat === 0 ? stat + bonusStat + bonus : overrideStat;
-    result[ability.value].mod = utils.calculateModifier(
-      result[ability.value].value
-    );
+    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus : overrideStat;
+    result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
     result[ability.value].proficient =
       data.character.modifiers.class.find(
-        (mod) =>
-          mod.subType === ability.long + "-saving-throws" &&
-          mod.type === "proficiency"
+        (mod) => mod.subType === ability.long + "-saving-throws" && mod.type === "proficiency"
       ) !== undefined
         ? 1
         : 0;
@@ -176,10 +152,7 @@ let getAbilities = (data, character) => {
 };
 
 let getHitDice = (data, character) => {
-  let used = data.character.classes.reduce(
-    (prev, cls) => prev + cls.hitDiceUsed,
-    0
-  );
+  let used = data.character.classes.reduce((prev, cls) => prev + cls.hitDiceUsed, 0);
   let total = data.character.classes.reduce((prev, cls) => prev + cls.level, 0);
   return {
     value: total - used,
@@ -196,27 +169,18 @@ let getDeathSaves = (data, character) => {
 };
 
 let getExhaustion = (data, character) => {
-  let condition = data.character.conditions.find(
-    (condition) => (condition.id = 4)
-  );
+  let condition = data.character.conditions.find((condition) => (condition.id = 4));
   let level = condition ? condition.level : 0;
   return level;
 };
 
 let isArmored = (data) => {
-  return (
-    data.character.inventory.filter(
-      (item) => item.equipped && item.definition.armorClass
-    ).length >= 1
-  );
+  return data.character.inventory.filter((item) => item.equipped && item.definition.armorClass).length >= 1;
 };
 
 let getMinimumBaseAC = (modifiers) => {
   let hasBaseArmor = modifiers.filter(
-    (modifier) =>
-      modifier.type === "set" &&
-      modifier.subType === "minimum-base-armor" &&
-      modifier.isGranted
+    (modifier) => modifier.type === "set" && modifier.subType === "minimum-base-armor" && modifier.isGranted
   );
   let baseAC = [];
   hasBaseArmor.forEach((base) => {
@@ -231,9 +195,7 @@ let getBaseArmor = (ac, armorType) => {
       name: "Base Armor - Racial",
       type: armorType,
       armorClass: ac,
-      armorTypeId: DICTIONARY.equipment.armorTypeID.find(
-        (id) => id.name === armorType
-      ).id,
+      armorTypeId: DICTIONARY.equipment.armorTypeID.find((id) => id.name === armorType).id,
       grantedModifiers: [],
       canAttune: false,
       filterType: "Armor",
@@ -279,10 +241,7 @@ let getEquippedAC = (equippedGear) => {
 let getUnarmoredAC = (modifiers, character) => {
   let unarmoredACValues = [];
   let isUnarmored = modifiers.filter(
-    (modifier) =>
-      modifier.type === "set" &&
-      modifier.subType === "unarmored-armor-class" &&
-      modifier.isGranted
+    (modifier) => modifier.type === "set" && modifier.subType === "unarmored-armor-class" && modifier.isGranted
   );
 
   isUnarmored.forEach((unarmored) => {
@@ -292,9 +251,7 @@ let getUnarmoredAC = (modifiers, character) => {
     // +WIS or +CON, if monk or barbarian, draconic resilience === null
 
     if (unarmored.statId !== null) {
-      let ability = DICTIONARY.character.abilities.find(
-        (ability) => ability.id === unarmored.statId
-      );
+      let ability = DICTIONARY.character.abilities.find((ability) => ability.id === unarmored.statId);
       unarmoredACValue += character.data.abilities[ability.value].mod;
     } else {
       // others are picked up here e.g. Draconic Resilience
@@ -309,16 +266,13 @@ let getUnarmoredAC = (modifiers, character) => {
 let getArmoredACBonuses = (modifiers, character) => {
   let armoredACBonuses = [];
   const armoredBonuses = modifiers.filter(
-    (modifier) =>
-      modifier.subType === "armored-armor-class" && modifier.isGranted
+    (modifier) => modifier.subType === "armored-armor-class" && modifier.isGranted
   );
 
   armoredBonuses.forEach((armoredBonus) => {
     let armoredACBonus = 0;
     if (armoredBonus.statId !== null) {
-      let ability = DICTIONARY.character.abilities.find(
-        (ability) => ability.id === armoredBonus.statId
-      );
+      let ability = DICTIONARY.character.abilities.find((ability) => ability.id === armoredBonus.statId);
       armoredACBonus += character.data.abilities[ability.value].mod;
     } else {
       armoredACBonus += armoredBonus.value;
@@ -333,9 +287,7 @@ let getArmorClass = (data, character) => {
   let armorClassValues = [];
   // get a list of equipped gear and armor
   // we make a distinction so we can loop over armor
-  let equippedGear = data.character.inventory.filter(
-    (item) => item.equipped && item.definition.filterType !== "Armor"
-  );
+  let equippedGear = data.character.inventory.filter((item) => item.equipped && item.definition.filterType !== "Armor");
   let equippedArmor = data.character.inventory.filter(
     (item) => item.equipped && item.definition.filterType === "Armor"
   );
@@ -346,10 +298,7 @@ let getArmorClass = (data, character) => {
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
     // unarmored abilities from Class/Race?
-    const unarmoredSources = [
-      data.character.modifiers.class,
-      data.character.modifiers.race,
-    ];
+    const unarmoredSources = [data.character.modifiers.class, data.character.modifiers.race];
     unarmoredSources.forEach((modifiers) => {
       const unarmoredAC = Math.max(getUnarmoredAC(modifiers, character));
       if (unarmoredAC) {
@@ -360,10 +309,7 @@ let getArmorClass = (data, character) => {
     });
   } else {
     // check for things like fighters fighting style defense
-    const armorBonusSources = [
-      data.character.modifiers.class,
-      data.character.modifiers.race,
-    ];
+    const armorBonusSources = [data.character.modifiers.class, data.character.modifiers.race];
     armorBonusSources.forEach((modifiers) => {
       const armoredACBonuses = getArmoredACBonuses(modifiers, character);
       miscACBonus += armoredACBonuses.reduce((a, b) => a + b, 0);
@@ -395,12 +341,10 @@ let getArmorClass = (data, character) => {
   const gearAC = getEquippedAC(equippedGear);
 
   const shields = equippedArmor.filter(
-    (shield) =>
-      shield.definition.type === "Shield" || shield.definition.armorTypeId === 4
+    (shield) => shield.definition.type === "Shield" || shield.definition.armorTypeId === 4
   );
   const armors = equippedArmor.filter(
-    (shield) =>
-      shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
+    (shield) => shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
   );
 
   // the presumption here is that you can only wear a shield and a single
@@ -436,25 +380,19 @@ let getArmorClass = (data, character) => {
       case "Medium Armor":
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value:
-            armorAC +
-            Math.min(2, character.data.abilities.dex.mod) +
-            gearAC +
-            miscACBonus,
+          value: armorAC + Math.min(2, character.data.abilities.dex.mod) + gearAC + miscACBonus,
         });
         break;
       case "Light Armor":
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value:
-            armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus,
+          value: armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus,
         });
         break;
       default:
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value:
-            armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus,
+          value: armorAC + character.data.abilities.dex.mod + gearAC + miscACBonus,
         });
         break;
     }
@@ -476,9 +414,7 @@ let getArmorClass = (data, character) => {
 };
 
 let getHitpoints = (data, character) => {
-  const constitutionHP =
-    character.data.abilities.con.mod *
-    character.flags.vtta.dndbeyond.totalLevels;
+  const constitutionHP = character.data.abilities.con.mod * character.flags.vtta.dndbeyond.totalLevels;
   let baseHitPoints = data.character.baseHitPoints || 0;
   const bonusHitPoints = data.character.bonusHitPoints || 0;
   const overrideHitPoints = data.character.overrideHitPoints || 0;
@@ -536,17 +472,13 @@ let getSpeed = (data, character) => {
   }
 
   // get bonus speed mods
-  const bonusSpeed = utils
-    .filterBaseModifiers(data, "bonus", "speed")
-    .reduce((speed, feat) => speed + feat.value, 0);
+  const bonusSpeed = utils.filterBaseModifiers(data, "bonus", "speed").reduce((speed, feat) => speed + feat.value, 0);
 
   //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
     // is there a 'inntate-speed-[type]ing' race/class modifier?
     let innateSpeeds = data.character.modifiers.race.filter(
-      (modifier) =>
-        modifier.type === "set" &&
-        modifier.subType === `innate-speed-${type}ing`
+      (modifier) => modifier.type === "set" && modifier.subType === `innate-speed-${type}ing`
     );
     let base = movementTypes[type];
 
@@ -563,10 +495,7 @@ let getSpeed = (data, character) => {
   // unarmored movement for barbarians and monks
   if (!isArmored(data)) {
     data.character.modifiers.class
-      .filter(
-        (modifier) =>
-          modifier.type === "bonus" && modifier.subType === "unarmored-movement"
-      )
+      .filter((modifier) => modifier.type === "bonus" && modifier.subType === "unarmored-movement")
       .forEach((bonusSpeed) => {
         for (let type in movementTypes) {
           movementTypes[type] += bonusSpeed.value;
@@ -577,9 +506,7 @@ let getSpeed = (data, character) => {
   // is there a custom seed over-ride?
   if (data.character.customSpeeds) {
     data.character.customSpeeds.forEach((speed) => {
-      const type = DICTIONARY.character.speeds.find(
-        (s) => s.id === speed.movementId
-      ).type;
+      const type = DICTIONARY.character.speeds.find((s) => s.id === speed.movementId).type;
       movementTypes[type] = speed.distance;
     });
   }
@@ -600,45 +527,31 @@ let getSpeed = (data, character) => {
 
 // is there a spell casting ability?
 let hasSpellCastingAbility = (spellCastingAbilityId) => {
-  return (
-    DICTIONARY.character.abilities.find(
-      (ability) => ability.id === spellCastingAbilityId
-    ) !== undefined
-  );
+  return DICTIONARY.character.abilities.find((ability) => ability.id === spellCastingAbilityId) !== undefined;
 };
 
 // convert spellcasting ability id to string used by vtta
 let convertSpellCastingAbilityId = (spellCastingAbilityId) => {
-  return DICTIONARY.character.abilities.find(
-    (ability) => ability.id === spellCastingAbilityId
-  ).value;
+  return DICTIONARY.character.abilities.find((ability) => ability.id === spellCastingAbilityId).value;
 };
 
 let getSpellCasting = (data, character) => {
   let result = [];
   data.character.classSpells.forEach((playerClass) => {
-    let classInfo = data.character.classes.find(
-      (cls) => cls.id === playerClass.characterClassId
-    );
+    let classInfo = data.character.classes.find((cls) => cls.id === playerClass.characterClassId);
     let spellCastingAbility = undefined;
     if (hasSpellCastingAbility(classInfo.definition.spellCastingAbilityId)) {
       // check to see if class has a spell casting ability
-      spellCastingAbility = convertSpellCastingAbilityId(
-        classInfo.definition.spellCastingAbilityId
-      );
+      spellCastingAbility = convertSpellCastingAbilityId(classInfo.definition.spellCastingAbilityId);
     } else if (
       classInfo.subclassDefinition &&
       hasSpellCastingAbility(classInfo.subclassDefinition.spellCastingAbilityId)
     ) {
       //some subclasses attach a spellcasting ability, e.g. Arcane Trickster
-      spellCastingAbility = convertSpellCastingAbilityId(
-        classInfo.subclassDefinition.spellCastingAbilityId
-      );
+      spellCastingAbility = convertSpellCastingAbilityId(classInfo.subclassDefinition.spellCastingAbilityId);
     }
     if (spellCastingAbility !== undefined) {
-      let abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
-      );
+      let abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
       result.push({ label: spellCastingAbility, value: abilityModifier });
     }
   });
@@ -660,21 +573,13 @@ let getSpellDC = (data, character) => {
   if (character.data.attributes.spellcasting === "") {
     return 10;
   } else {
-    return (
-      8 +
-      character.data.abilities[character.data.attributes.spellcasting].mod +
-      character.data.attributes.prof
-    );
+    return 8 + character.data.abilities[character.data.attributes.spellcasting].mod + character.data.attributes.prof;
   }
 };
 
 let getResources = (data) => {
   // get all resources
-  let resources = [
-    data.character.actions.race,
-    data.character.actions.class,
-    data.character.actions.feat,
-  ]
+  let resources = [data.character.actions.race, data.character.actions.class, data.character.actions.feat]
     .flat()
     //let resources = data.character.actions.class
     .filter((action) => action.limitedUse && action.limitedUse.maxUses)
@@ -684,9 +589,7 @@ let getResources = (data) => {
         value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
         max: action.limitedUse.maxUses,
         sr: action.limitedUse.resetType === 1,
-        lr:
-          action.limitedUse.resetType === 1 ||
-          action.limitedUse.resetType === 2,
+        lr: action.limitedUse.resetType === 1 || action.limitedUse.resetType === 2,
       };
     })
     // sort by maxUses, I guess one wants to track the most uses first, because it's used more often
@@ -699,18 +602,9 @@ let getResources = (data) => {
     .slice(0, 3);
 
   let result = {
-    primary:
-      resources.length >= 1
-        ? resources[0]
-        : { value: 0, max: 0, sr: false, lr: false, label: "" },
-    secondary:
-      resources.length >= 2
-        ? resources[1]
-        : { value: 0, max: 0, sr: false, lr: false, label: "" },
-    tertiary:
-      resources.length >= 3
-        ? resources[2]
-        : { value: 0, max: 0, sr: false, lr: false, label: "" },
+    primary: resources.length >= 1 ? resources[0] : { value: 0, max: 0, sr: false, lr: false, label: "" },
+    secondary: resources.length >= 2 ? resources[1] : { value: 0, max: 0, sr: false, lr: false, label: "" },
+    tertiary: resources.length >= 3 ? resources[2] : { value: 0, max: 0, sr: false, lr: false, label: "" },
   };
   return result;
 };
@@ -790,9 +684,7 @@ let getFlaw = (data) => {
  */
 let getAlignment = (data) => {
   let alignmentID = data.character.alignmentId || 5;
-  let alignment = DICTIONARY.character.alignments.find(
-    (alignment) => alignment.id === alignmentID
-  ); // DDBUtils.alignmentIdtoAlignment(alignmentID);
+  let alignment = DICTIONARY.character.alignments.find((alignment) => alignment.id === alignmentID); // DDBUtils.alignmentIdtoAlignment(alignmentID);
   return alignment.name;
 };
 
@@ -808,15 +700,9 @@ let getBiography = (data) => {
   let personalityTraits = data.character.traits.personalityTraits
     ? format("Personality Traits", data.character.traits.personalityTraits)
     : "";
-  let ideals = data.character.traits.ideals
-    ? format("Ideals", data.character.traits.ideals)
-    : "";
-  let bonds = data.character.traits.bonds
-    ? format("Bonds", data.character.traits.bonds)
-    : "";
-  let flaws = data.character.traits.flaws
-    ? format("Flaws", data.character.traits.flaws)
-    : "";
+  let ideals = data.character.traits.ideals ? format("Ideals", data.character.traits.ideals) : "";
+  let bonds = data.character.traits.bonds ? format("Bonds", data.character.traits.bonds) : "";
+  let flaws = data.character.traits.flaws ? format("Flaws", data.character.traits.flaws) : "";
 
   let traits =
     personalityTraits !== "" || ideals !== "" || bonds !== "" || flaws !== ""
@@ -824,9 +710,7 @@ let getBiography = (data) => {
       : "";
 
   let backstory =
-    data.character.notes.backstory !== null
-      ? "<h2>Backstory</h2><p>" + data.character.notes.backstory + "</p>"
-      : "";
+    data.character.notes.backstory !== null ? "<h2>Backstory</h2><p>" + data.character.notes.backstory + "</p>" : "";
 
   if (data.character.background.hasCustomBackground === true) {
     let bg = data.character.background.customBackground;
@@ -842,19 +726,12 @@ let getBiography = (data) => {
     if (
       bg.characteristicsBackground &&
       bg.featuresBackground &&
-      bg.featuresBackground.entityTypeId !=
-        bg.characteristicsBackground.entityTypeId
+      bg.featuresBackground.entityTypeId != bg.characteristicsBackground.entityTypeId
     ) {
       result += "<h2>" + bg.characteristicsBackground.name + "</h2>";
-      result += bg.characteristicsBackground.shortDescription.replace(
-        "\r\n",
-        ""
-      );
+      result += bg.characteristicsBackground.shortDescription.replace("\r\n", "");
       result += "<h3>" + bg.characteristicsBackground.featureName + "</h3>";
-      result += bg.characteristicsBackground.featureDescription.replace(
-        "\r\n",
-        ""
-      );
+      result += bg.characteristicsBackground.featureDescription.replace("\r\n", "");
     }
 
     return {
@@ -906,8 +783,7 @@ let getSkills = (data, character) => {
     const halfProficiencyRoundedUp =
       data.character.modifiers.class.find(
         (modifier) =>
-          modifier.type === "half-proficiency-round-up" &&
-          modifier.subType === `${longAbility}-ability-checks`
+          modifier.type === "half-proficiency-round-up" && modifier.subType === `${longAbility}-ability-checks`
       ) !== undefined
         ? true
         : false;
@@ -916,18 +792,12 @@ let getSkills = (data, character) => {
     const halfProficiency =
       data.character.modifiers.class.find(
         (modifier) =>
-          (modifier.type === "half-proficiency" &&
-            modifier.subType === "ability-checks") ||
-          halfProficiencyRoundedUp
+          (modifier.type === "half-proficiency" && modifier.subType === "ability-checks") || halfProficiencyRoundedUp
       ) !== undefined
         ? 0.5
         : 0;
 
-    const proficient = modifiers.includes("expertise")
-      ? 2
-      : modifiers.includes("proficiency")
-      ? 1
-      : halfProficiency;
+    const proficient = modifiers.includes("expertise") ? 2 : modifiers.includes("proficiency") ? 1 : halfProficiency;
 
     const proficiencyBonus = halfProficiencyRoundedUp
       ? Math.ceil(2 * character.data.attributes.prof * proficient)
@@ -939,10 +809,7 @@ let getSkills = (data, character) => {
       .map((skl) => skl.value)
       .reduce((a, b) => a + b, 0);
 
-    const value =
-      character.data.abilities[skill.ability].value +
-      proficiencyBonus +
-      skillBonus;
+    const value = character.data.abilities[skill.ability].value + proficiencyBonus + skillBonus;
 
     result[skill.name] = {
       type: "Number",
@@ -978,9 +845,7 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
   let diceString = "";
   bonusMods.forEach((bonus) => {
     if (bonus.statId !== null) {
-      const ability = DICTIONARY.character.abilities.find(
-        (ability) => ability.id === bonus.statId
-      );
+      const ability = DICTIONARY.character.abilities.find((ability) => ability.id === bonus.statId);
       sum += character.data.abilities[ability.value].mod;
     } else if (bonus.dice) {
       const mod = bonus.dice.diceString;
@@ -1005,8 +870,8 @@ let getGlobalBonus = (modifiers, character, bonusSubType) => {
     "damage": "",
   },
  * @param {*} lookupTable
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  */
 let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
   let result = {
@@ -1036,8 +901,7 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 
     // if a match then a dice string
     if (lookupMatch) {
-      lookupResults[b.fvttType].diceString +=
-        lookupResult === "" ? lookupResult : " + " + lookupResult;
+      lookupResults[b.fvttType].diceString += lookupResult === "" ? lookupResult : " + " + lookupResult;
     } else {
       lookupResults[b.fvttType].sum += lookupResult;
     }
@@ -1063,13 +927,13 @@ let getGlobalBonusAttackModifiers = (lookupTable, data, character) => {
 /**
  * Gets global bonuses to spell attacks and damage
  * Most likely from items such as wand of the warmage
- * supply type as 'ranged' or 'melee' 
+ * supply type as 'ranged' or 'melee'
   {
     "attack": "",
     "damage": "",
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  * @param {*} type
  */
 let getBonusSpellAttacks = (data, character, type) => {
@@ -1085,13 +949,13 @@ let getBonusSpellAttacks = (data, character, type) => {
 /**
  * Gets global bonuses to weapon attacks and damage
  * Most likely from items such as wand of the warmage
- * supply type as 'ranged' or 'melee' 
+ * supply type as 'ranged' or 'melee'
   {
     "attack": "",
     "damage": "",
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  * @param {*} type
  */
 let getBonusWeaponAttacks = (data, character, type) => {
@@ -1115,8 +979,8 @@ let getBonusWeaponAttacks = (data, character, type) => {
     "save": "",
     "skill": ""
   },
- * @param {*} data 
- * @param {*} character 
+ * @param {*} data
+ * @param {*} character
  */
 let getBonusAbilities = (data, character) => {
   let result = {};
@@ -1158,9 +1022,7 @@ let getArmorProficiencies = (data, character) => {
   let custom = [];
 
   // lookup the characters's proficiencies in the DICT
-  let allProficiencies = DICTIONARY.character.proficiencies.filter(
-    (prof) => prof.type === "Armor"
-  );
+  let allProficiencies = DICTIONARY.character.proficiencies.filter((prof) => prof.type === "Armor");
   character.flags.vtta.dndbeyond.proficiencies.forEach((prof) => {
     if (prof.name === "Light Armor" && !values.includes("lgt")) {
       values.push("lgt");
@@ -1174,10 +1036,7 @@ let getArmorProficiencies = (data, character) => {
     if (prof.name === "Shields" && !values.includes("shl")) {
       values.push("shl");
     }
-    if (
-      allProficiencies.find((p) => p.name === prof.name) !== undefined &&
-      !custom.includes(prof.name)
-    ) {
+    if (allProficiencies.find((p) => p.name === prof.name) !== undefined && !custom.includes(prof.name)) {
       custom.push(prof.name);
     }
   });
@@ -1206,9 +1065,7 @@ let getToolProficiencies = (data, character) => {
   let custom = [];
 
   // lookup the characters's proficiencies in the DICT
-  let allProficiencies = DICTIONARY.character.proficiencies.filter(
-    (prof) => prof.type === "Tool"
-  );
+  let allProficiencies = DICTIONARY.character.proficiencies.filter((prof) => prof.type === "Tool");
   character.flags.vtta.dndbeyond.proficiencies.forEach((prof) => {
     if (prof.name === "Artisan's Tools" && !values.includes("art")) {
       values.push("art");
@@ -1235,17 +1092,12 @@ let getToolProficiencies = (data, character) => {
       values.push("pois");
     }
     if (
-      (prof.name === "Vehicle (Land or Water)" ||
-        prof.name === "Vehicle (Land)" ||
-        prof.name === "Vehicle (Water)") &&
+      (prof.name === "Vehicle (Land or Water)" || prof.name === "Vehicle (Land)" || prof.name === "Vehicle (Water)") &&
       !values.includes("vehicle")
     ) {
       values.push("vehicle");
     }
-    if (
-      allProficiencies.find((p) => p.name === prof.name) !== undefined &&
-      !custom.includes(prof.name)
-    ) {
+    if (allProficiencies.find((p) => p.name === prof.name) !== undefined && !custom.includes(prof.name)) {
       custom.push(prof.name);
     }
   });
@@ -1268,9 +1120,7 @@ let getWeaponProficiencies = (data, character) => {
   let custom = [];
 
   // lookup the characters's proficiencies in the DICT
-  let allProficiencies = DICTIONARY.character.proficiencies.filter(
-    (prof) => prof.type === "Weapon"
-  );
+  let allProficiencies = DICTIONARY.character.proficiencies.filter((prof) => prof.type === "Weapon");
   character.flags.vtta.dndbeyond.proficiencies.forEach((prof) => {
     if (prof.name === "Simple Weapons" && !values.includes("sim")) {
       values.push("sim");
@@ -1278,10 +1128,7 @@ let getWeaponProficiencies = (data, character) => {
     if (prof.name === "Martial Weapons" && !values.includes("mar")) {
       values.push("mar");
     }
-    if (
-      allProficiencies.find((p) => p.name === prof.name) !== undefined &&
-      !custom.includes(prof.name)
-    ) {
+    if (allProficiencies.find((p) => p.name === prof.name) !== undefined && !custom.includes(prof.name)) {
       custom.push(prof.name);
     }
   });
@@ -1293,9 +1140,7 @@ let getWeaponProficiencies = (data, character) => {
 };
 
 let getSize = (data) => {
-  let size = DICTIONARY.character.actorSizes.find(
-    (size) => size.name === data.character.race.size
-  );
+  let size = DICTIONARY.character.actorSizes.find((size) => size.name === data.character.race.size);
   return size ? size.value : "med";
 };
 
@@ -1315,9 +1160,7 @@ let getLanguages = (data) => {
   const modifiers = utils.filterBaseModifiers(data, "language");
 
   modifiers.forEach((language) => {
-    let result = DICTIONARY.character.languages.find(
-      (lang) => lang.name === language.friendlySubtypeName
-    );
+    let result = DICTIONARY.character.languages.find((lang) => lang.name === language.friendlySubtypeName);
     if (result) {
       languages.push(result.value);
     } else {
@@ -1345,15 +1188,10 @@ let getGenericConditionAffect = (data, condition, typeId) => {
 
   let result = utils
     .filterBaseModifiers(data, condition)
-    .filter(
-      (modifier) => modifier.isGranted && damageTypes.includes(modifier.subType)
-    )
+    .filter((modifier) => modifier.isGranted && damageTypes.includes(modifier.subType))
     .map((modifier) => {
       const entry = DICTIONARY.character.damageTypes.find(
-        (type) =>
-          type.type === typeId &&
-          type.kind === modifier.type &&
-          type.value === modifier.subType
+        (type) => type.type === typeId && type.kind === modifier.type && type.value === modifier.subType
       );
       return entry ? entry.vttaValue || entry.value : undefined;
     });
@@ -1363,10 +1201,7 @@ let getGenericConditionAffect = (data, condition, typeId) => {
       .filter((adjustment) => adjustment.type === typeId)
       .map((adjustment) => {
         const entry = DICTIONARY.character.damageTypes.find(
-          (type) =>
-            type.id === adjustment.id &&
-            type.type === adjustment.type &&
-            type.kind === condition
+          (type) => type.id === adjustment.id && type.type === adjustment.type && type.kind === condition
         );
         return entry ? entry.vttaValue || entry.value : undefined;
       })
@@ -1421,10 +1256,7 @@ let getSpellSlots = (data) => {
   let getCasterInfo = () => {
     return data.character.classes
       .filter((cls) => {
-        return (
-          cls.definition.canCastSpells ||
-          (cls.subclassDefinition && cls.subclassDefinition.canCastSpells)
-        );
+        return cls.definition.canCastSpells || (cls.subclassDefinition && cls.subclassDefinition.canCastSpells);
       })
       .map((cls) => {
         // the class total level
@@ -1433,13 +1265,8 @@ let getSpellSlots = (data) => {
         const name = cls.definition.name;
 
         // get the casting level if the character is a multiclassed spellcaster
-        if (
-          cls.definition.spellRules &&
-          cls.definition.spellRules.multiClassSpellSlotDivisor
-        ) {
-          casterLevel = Math.floor(
-            casterLevel / cls.definition.spellRules.multiClassSpellSlotDivisor
-          );
+        if (cls.definition.spellRules && cls.definition.spellRules.multiClassSpellSlotDivisor) {
+          casterLevel = Math.floor(casterLevel / cls.definition.spellRules.multiClassSpellSlotDivisor);
         } else {
           casterLevel = 0;
         }
@@ -1459,9 +1286,7 @@ let getSpellSlots = (data) => {
           const maxLevel =
             levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
           const maxSlots = Math.max(...levelSpellSlots);
-          const currentSlots = data.character.pactMagic.find(
-            (pact) => pact.level === maxLevel
-          ).used;
+          const currentSlots = data.character.pactMagic.find((pact) => pact.level === maxLevel).used;
           spellSlots.pact = { value: maxSlots - currentSlots, max: maxSlots };
           return {
             name: name,
@@ -1507,24 +1332,15 @@ let getSpellSlots = (data) => {
       [4, 3, 3, 3, 3, 2, 1, 1, 1], // 19
       [4, 3, 3, 3, 3, 2, 2, 1, 1], // 20
     ];
-    const casterLevelTotal = casterInfo.reduce(
-      (prev, cur) => prev + cur.casterLevel,
-      0
-    );
-    const cantripsTotal = casterInfo.reduce(
-      (prev, cur) => prev + cur.cantrips,
-      0
-    );
+    const casterLevelTotal = casterInfo.reduce((prev, cur) => prev + cur.casterLevel, 0);
+    const cantripsTotal = casterInfo.reduce((prev, cur) => prev + cur.cantrips, 0);
     result = [cantripsTotal, ...multiClassSpellSlots[casterLevelTotal]];
   } else {
     result = [casterInfo[0].cantrips, ...casterInfo[0].slots];
   }
 
   for (let i = 0; i < result.length; i++) {
-    const currentSlots =
-      data.character.spellSlots
-        .filter((slot) => slot.level === i)
-        .map((slot) => slot.used) || 0;
+    const currentSlots = data.character.spellSlots.filter((slot) => slot.level === i).map((slot) => slot.used) || 0;
     spellSlots["spell" + i] = {
       value: result[i] - currentSlots,
       max: result[i],
@@ -1543,9 +1359,7 @@ let getSensesLookup = (data) => {
         !!sense.distance;
       })
       .forEach((sense) => {
-        const s = DICTIONARY.character.senses.find(
-          (s) => s.id === sense.senseId
-        );
+        const s = DICTIONARY.character.senses.find((s) => s.id === sense.senseId);
 
         const senseName = s ? s.name : null;
         // remember that this darkvision has precedence
@@ -1557,11 +1371,9 @@ let getSensesLookup = (data) => {
   }
 
   if (!hasDarkvision) {
-    utils
-      .filterBaseModifiers(data, "set-base", "darkvision")
-      .forEach((sense) => {
-        senses.push({ name: sense.friendlySubtypeName, value: sense.value });
-      });
+    utils.filterBaseModifiers(data, "set-base", "darkvision").forEach((sense) => {
+      senses.push({ name: sense.friendlySubtypeName, value: sense.value });
+    });
   }
 
   // Magical bonuses
@@ -1570,8 +1382,7 @@ let getSensesLookup = (data) => {
     .filter((mod) => mod.type === "sense")
     .map((mod) => {
       return {
-        name: DICTIONARY.character.senses.find((s) => s.id === mod.entityId)
-          .name,
+        name: DICTIONARY.character.senses.find((s) => s.id === mod.entityId).name,
         value: mod.value,
       };
     })
@@ -1622,26 +1433,17 @@ let getToken = (data) => {
   let senses = getSensesLookup(data);
 
   // Blindsight/Truesight
-  if (
-    senses.find(
-      (sense) => sense.name === "Truesight" || sense.name === "Blindsight"
-    ) !== undefined
-  ) {
+  if (senses.find((sense) => sense.name === "Truesight" || sense.name === "Blindsight") !== undefined) {
     let value = senses
-      .filter(
-        (sense) => sense.name === "Truesight" || sense.name === "Blindsight"
-      )
+      .filter((sense) => sense.name === "Truesight" || sense.name === "Blindsight")
       .reduce((prev, cur) => (prev > cur.value ? prev : cur.value), 0);
     tokenData.brightSight = value;
   }
 
   // Darkvision
   if (senses.find((sense) => sense.name === "Darkvision") !== undefined) {
-    tokenData.dimSight = senses.find(
-      (sense) => sense.name === "Darkvision"
-    ).value;
+    tokenData.dimSight = senses.find((sense) => sense.name === "Darkvision").value;
   }
-
   return tokenData;
 };
 
@@ -1655,7 +1457,7 @@ export default function getCharacter(ddb) {
     data: JSON.parse(utils.getTemplate("character")),
     type: "character",
     name: ddb.character.name,
-    items: [],
+    // items: [],  // modified to check inventory analysis on update
     token: getToken(ddb),
     flags: {
       vtta: {
@@ -1697,9 +1499,7 @@ export default function getCharacter(ddb) {
   character.data.attributes.init = getInitiative(ddb, character);
 
   // proficiency
-  character.data.attributes.prof = Math.ceil(
-    1 + 0.25 * character.flags.vtta.dndbeyond.totalLevels
-  );
+  character.data.attributes.prof = Math.ceil(1 + 0.25 * character.flags.vtta.dndbeyond.totalLevels);
 
   // speeds
   character.data.attributes.speed = getSpeed(ddb, character);
