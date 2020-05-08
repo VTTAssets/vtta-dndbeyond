@@ -367,6 +367,12 @@ let getArmorClass = (data, character) => {
     });
   };
 
+  // Generic AC bonuses like Warforfed Integrated Protection
+  utils.filterBaseModifiers(data, "bonus", "armor-class").forEach(
+    bonus => {
+    miscACBonus += bonus.value;
+  });
+
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
   // modifier is set differently
