@@ -52,40 +52,6 @@ const filterItemsByUserSelection = result => {
   return items;
 };
 
-/**
- * Returns a combined array of all items to process, filtered by the user's selection on what to skip and what to include
- * @param {object} result object containing all character items sectioned as individual properties
- */
-const filterItemsByUserSelection = result => {
-  let items = [];
-
-  let validItemTypes = [];
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-class"))
-    validItemTypes.push("class");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat"))
-    validItemTypes.push("feat");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon"))
-    validItemTypes.push("weapon");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment"))
-    validItemTypes.push("equipment");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
-    validItemTypes = validItemTypes.concat([
-      "consumable",
-      "tool",
-      "loot",
-      "backpack",
-    ]);
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell"))
-    validItemTypes.push("spell");
-
-  let sections = ["classes", "features", "actions", "inventory", "spells"];
-  for (const section of sections) {
-    items = items
-      .concat(result[section])
-      .filter(item => validItemTypes.includes(item.type));
-  }
-  return items;
-};
 
 export default class CharacterImport extends Application {
   constructor(options, actor) {

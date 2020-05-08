@@ -80,9 +80,7 @@ let getSpellPreparationMode = data => {
     };
     // Warlocks should use Pact spells
     // but lets mark level 0 as regular spells so they show up as cantrips
-    if (["Warlock", "Blood Hunter"].includes(data.flags.vtta.dndbeyond.class) &&
-      (data.definition.level === 0)
-    ) {
+    if ((prepMode === "pact") && (data.definition.level === 0)) {
       prepMode = "prepared";
       prepared = true;
     };
