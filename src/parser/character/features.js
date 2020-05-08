@@ -18,7 +18,10 @@ export default function parseFeatures(ddb, character) {
   characterClasses.forEach(cls => {
     let features = cls.definition.classFeatures.filter(
       feat =>
-        feat.name !== 'Proficiencies' && feat.name !== 'Ability Score Improvement' && feat.requiredLevel <= cls.level
+        feat.name !== 'Proficiencies' &&
+        feat.name !== 'Ability Score Improvement' &&
+        feat.requiredLevel <= cls.level &&
+        !ddb.character.actions.class.some(action => action.name === feat.name)
     );
     let source = cls.definition.name;
 
@@ -82,7 +85,7 @@ export default function parseFeatures(ddb, character) {
     }
   });
 
-  let feats = ddb.character.feats;
+  let feats = ddb.character.feats.filter(feat => !ddb.character.actions.feat.some(action => action.name === feat.name));
   feats.forEach(feat => {
     let item = {
       name: feat.definition.name,
@@ -104,7 +107,8 @@ export default function parseFeatures(ddb, character) {
   let racialTraits = ddb.character.race.racialTraits
     .filter(
       trait =>
-        !['Ability Score Increase', 'Age', 'Alignment', 'Size', 'Speed', 'Languages'].includes(trait.definition.name)
+        !['Ability Score Increase', 'Age', 'Alignment', 'Size', 'Speed', 'Languages'].includes(trait.definition.name) &&
+        !ddb.character.actions.race.some(action => action.name === trait.definition.name)
     )
     .forEach(feat => {
       let item = {
