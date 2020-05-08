@@ -622,6 +622,7 @@ const DICTIONARY = {
       { name: "Artificer", value: "artificer" },
       { name: "Bard", value: "full" },
       { name: "Blood Hunter", value: "pact" },
+      { name: "Blood Hunter (archived)", value: "pact" },
       { name: "Cleric", value: "full" },
       { name: "Druid", value: "full" },
       { name: "Fighter", value: "third" },
@@ -633,11 +634,13 @@ const DICTIONARY = {
       { name: "Warlock", value: "pact" },
       { name: "Wizard", value: "full" },
       { name: "Monk", value: "none" },
+      { }
     ],
     preparationModes: [
       { name: "Artificer", value: "prepared" },
       { name: "Bard", value: "always" },
       { name: "Blood Hunter", value: "pact" },
+      { name: "Blood Hunter (archived)", value: "pact" },
       { name: "Cleric", value: "prepared" },
       { name: "Druid", value: "prepared" },
       { name: "Fighter", value: "always" },
