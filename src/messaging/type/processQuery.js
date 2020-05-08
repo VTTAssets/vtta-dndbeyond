@@ -1,3 +1,5 @@
+import utils from "../../utils.js";
+
 let processQuery = message => {
   return new Promise((resolve, reject) => {
     // simple query
