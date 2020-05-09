@@ -6,6 +6,14 @@ import querySourcebookPage from "./sourcebookPage.js";
 
 const query = async (message) => {
   let response;
+
+  // Legacy: Original webstore extension
+  // if (typeof message === "string" && message === "id") {
+  //   response = await queryId(message);
+  //   return response;
+  // }
+
+  // New extension
   switch (message.type) {
     case "id":
       response = await queryId(message);
