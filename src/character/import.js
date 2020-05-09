@@ -107,13 +107,11 @@ export default class CharacterImport extends Application {
     if (game.user.isGM && importPolicy !== 2) {
       const initialIndex = await compendium.getIndex();
       // remove duplicate items based on name and type
-      const compendiumItems = [
-        ...new Map(this.result[type].map((item) => [item["name"] + item["type"], item])).values(),
-      ];
+      const compendiumItems = [...new Map(this.result[type].map((item) => [item["name"] + item["type"], item])).values()];
 
       const updateItems = async() => {
         if (importPolicy === 0) {
-          return await Promise.all(
+          return Promise.all(
             compendiumItems.filter((item) =>
               initialIndex.some((idx) => idx.name === item.name)
             )
@@ -125,11 +123,11 @@ export default class CharacterImport extends Application {
               await compendium.updateEntity(item);
               return item;
             })
-          )
-      }
-        else {
-          return Promise.all([]);}
-      }
+          );
+        } else {
+          return Promise.all([]);
+        }
+      };
 
       const createItems = async() => {
         return Promise.all(
@@ -142,12 +140,12 @@ export default class CharacterImport extends Application {
               const newItem = await Item.create(item, {
                 temporary: true,
                 displaySheet: false,
-              })
+              });
               await compendium.importEntity(newItem);
               return newItem;
           })
-        )
-      }
+        );
+      };
 
       await updateItems();
       await createItems();
@@ -159,13 +157,14 @@ export default class CharacterImport extends Application {
             const searchResult = await updatedIndex.find((idx) => idx.name === item.name);
             if (!searchResult) {
               console.warn(`Couldn't find ${item.name} in the compendium`);
+              return null;
             } else {
               const entity = compendium.getEntity(searchResult._id);
               return entity;
             }
           })
-        )
-      }
+        );
+      };
 
       // lets generate our compendium info like id, pack and img for use
       // by things like magicitems
@@ -201,7 +200,7 @@ export default class CharacterImport extends Application {
 
     // update or create folder items
     const updateItems = async() => {
-      return await Promise.all(
+      return Promise.all(
         this.result[type].filter((item) =>
           existingItems.some((idx) => idx.name === item.name)
         )
@@ -212,8 +211,8 @@ export default class CharacterImport extends Application {
           await Item.update(item);
           return item;
         })
-      )
-    }
+      );
+    };
 
     const createItems = async() => {
       return Promise.all(
@@ -231,8 +230,8 @@ export default class CharacterImport extends Application {
             }
             return item;
         })
-      )
-    }
+      );
+    };
 
     await updateItems();
     await createItems();
@@ -254,7 +253,6 @@ export default class CharacterImport extends Application {
         };
       })
     );
-    console.log(JSON.stringify(items));
     return items;
   }
 
@@ -400,7 +398,7 @@ export default class CharacterImport extends Application {
           CharacterImport.showCurrentTask(html, "Uploading avatar image");
           let filename = data.character.name
             .replace(/[^a-zA-Z]/g, "-")
-            .replace(/\-+/g, "-")
+            .replace(/-+/g, "-")
             .trim();
 
           let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
@@ -415,7 +413,7 @@ export default class CharacterImport extends Application {
 
         // // clear items
         CharacterImport.showCurrentTask(html, "Clearing inventory");
-        let clearedItems = await this.clearItemsByUserSelection();
+        await this.clearItemsByUserSelection();
 
         // store all spells in the folder specific for Dynamic Items
         if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
@@ -426,16 +424,14 @@ export default class CharacterImport extends Application {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
                 const itemSpell = itemSpells.find((item) => item.name === spell.name);
-                if (itemSpell)
+                if (itemSpell) {
                   for (const [key, value] of Object.entries(itemSpell)) {
                     item.flags.magicitems.spells[i][key] = value;
                   }
-                else {
-                  if (!game.user.can("ITEM_CREATE")) {
-                    ui.notifications.warn(
-                      `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
-                    );
-                  }
+                } else if (!game.user.can("ITEM_CREATE")) {
+                  ui.notifications.warn(
+                    `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
+                  );
                 }
               }
             }
@@ -465,7 +461,7 @@ export default class CharacterImport extends Application {
         utils.log(items, "character");
 
         CharacterImport.showCurrentTask(html, "Adding items to character");
-        let itemImportResult = await this.actor.createEmbeddedEntity("OwnedItem", items, {
+        await this.actor.createEmbeddedEntity("OwnedItem", items, {
           displaySheet: false,
         });
 
@@ -473,7 +469,7 @@ export default class CharacterImport extends Application {
         // available value as per DDB.
         CharacterImport.showCurrentTask(html, "Updating spell slots");
         for (const [type, info] of Object.entries(this.result.character.data.spells)) {
-          await this.actor.update({
+          this.actor.update({
             [`data.spells.${type}.value`]: parseInt(info.value),
           });
         }
