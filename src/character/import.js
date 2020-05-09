@@ -475,6 +475,7 @@ export default class CharacterImport extends Application {
         }
 
         this.close();
+        return true;
       });
 
     $(html)
