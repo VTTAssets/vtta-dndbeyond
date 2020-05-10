@@ -80,7 +80,7 @@ export default function parseWonderous(data, character) {
     }
   };
 
-  /* 
+  /*
     "armor": {
     "type": "trinket",
     "value": 10,
@@ -101,10 +101,10 @@ export default function parseWonderous(data, character) {
   /* proficient: true, */
   item.data.proficient = true;
 
-  /* description: { 
-            value: '', 
-            chat: '', 
-            unidentified: '' 
+  /* description: {
+            value: '',
+            chat: '',
+            unidentified: ''
         }, */
   item.data.description = {
     value: data.definition.description,

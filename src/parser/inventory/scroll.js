@@ -87,10 +87,10 @@ export default function parseScroll(data, character) {
   consumable.data.consumableType = "scroll";
   consumable.data.uses = getUses(data);
 
-  /* description: { 
-        value: '', 
-        chat: '', 
-        unidentified: '' 
+  /* description: {
+        value: '',
+        chat: '',
+        unidentified: ''
     }, */
   consumable.data.description = {
     value: data.definition.description,
