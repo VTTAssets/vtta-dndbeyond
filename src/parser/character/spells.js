@@ -1,18 +1,6 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
-/*
-spell.componentId   97  - subclasses.classFeatures // seems to reference the source of a spell, warrants follow-up
-{
-  "id": 97,
-  "name": "Additional Magical Secrets",
-  "prerequisite": null,
-  "description": "<p>At 6th level, you learn two spells of your choice from any class. A spell you choose must be of a level you can cast, as shown on the Bard table, or a cantrip. The chosen spells count as bard spells for you but don&rsquo;t count against the number of bard spells you know.</p>",
-  "requiredLevel": 6,
-  "displayOrder": 3
-}
-*/
-
 let getComponents = (data) => {
   return {
     value: data.definition.componentsDescription,
@@ -28,7 +16,7 @@ let getMaterials = (data) => {
   // this is mainly guessing
   if (data.definition.componentsDescription && data.definition.componentsDescription.length > 0) {
     let cost = 0;
-    let matches = data.definition.componentsDescription.toLowerCase().match(/([\d\.]+)\s*gp/);
+    let matches = data.definition.componentsDescription.toLowerCase().match(/([\d.]+)\s*gp/);
     if (matches) {
       cost = parseInt(matches[1].replace("."));
     }
@@ -54,7 +42,7 @@ let getMaterials = (data) => {
  *
  */
 let getSpellPreparationMode = (data) => {
-  //default values
+  // default values
   let prepMode = "prepared";
   // If always prepared mark as such, if not then check to see if prepared
   let prepared = data.alwaysPrepared || data.prepared;
@@ -188,6 +176,8 @@ let getDuration = (data) => {
       value: data.definition.duration.durationInterval || "",
       units: units,
     };
+  } else {
+    return {};
   }
 };
 
@@ -256,6 +246,7 @@ let getTarget = (data) => {
     case undefined:
       type = null;
       break;
+    // no default
   }
 
   return {
@@ -303,6 +294,7 @@ let getRange = (data) => {
     case undefined:
       units = null;
       break;
+    // no default
   }
 
   return {
@@ -338,6 +330,18 @@ let getActionType = (data) => {
   }
 
   return "other";
+};
+
+let getAlternativeFormula = (data) => {
+  // this might be specificially for Toll the Dead only, but it's better than nothing
+
+  let description = data.definition.description;
+  let match = description.match(/instead[\w\s]+(\d+d\d+) (\w+) damage/);
+  if (match) {
+    return match[1];
+  } else {
+    return "";
+  }
 };
 
 let getDamage = (data) => {
@@ -378,7 +382,7 @@ let getSave = (data) => {
   if (data.definition.requiresSavingThrow && data.definition.saveDcAbilityId) {
     const saveAbility = DICTIONARY.character.abilities.find((ability) => ability.id === data.definition.saveDcAbilityId)
       .value;
-    if (!!data.overrideSaveDc) {
+    if (data.overrideSaveDc) {
       return {
         ability: saveAbility,
         dc: data.overrideSaveDc,
@@ -399,10 +403,10 @@ let getSave = (data) => {
   }
 };
 
-let getSpellScaling = (data, character) => {
+let getSpellScaling = (data) => {
   let baseDamage = "";
   let scaleDamage = "";
-  let scaleType = null; //defaults to null, so will be picked up as a None scaling spell.
+  let scaleType = null; // defaults to null, so will be picked up as a None scaling spell.
 
   // spell scaling
   if (data.definition.canCastAtHigherLevel) {
@@ -445,7 +449,7 @@ let getSpellScaling = (data, character) => {
               const modScaleDamage =
                 definition.dice && definition.dice.diceString // if dice string
                   ? definition.dice.diceString // use dice string
-                  : definition.dice && definition.dice.fixedValue //else if fixed value
+                  : definition.dice && definition.dice.fixedValue // else if fixed value
                   ? definition.dice.fixedValue // use fixed value
                   : definition.value; // else use value
 
@@ -534,18 +538,6 @@ let getSpellScaling = (data, character) => {
   }
 };
 
-let getAlternativeFormula = (data) => {
-  // this might be specificially for Toll the Dead only, but it's better than nothing
-
-  let description = data.definition.description;
-  let match = description.match(/instead[\w\s]+(\d+d\d+) (\w+) damage/);
-  if (match) {
-    return match[1];
-  } else {
-    return "";
-  }
-};
-
 // is there a spell casting ability?
 let hasSpellCastingAbility = (spellCastingAbilityId) => {
   return DICTIONARY.character.abilities.find((ability) => ability.id === spellCastingAbilityId) !== undefined;
@@ -584,11 +576,12 @@ let getEldritchInvocations = (data) => {
 
   eldritchBlastMods.forEach((mod) => {
     switch (mod.subType) {
-      case "bonus-damage":
+      case "bonus-damage": {
         // almost certainly CHA :D
         const abilityModifier = DICTIONARY.character.abilities.find((ability) => ability.id === mod.statId).value;
         damage = `@abilities.${abilityModifier}.mod`;
         break;
+      }
       case "bonus-range":
         range = mod.value;
         break;
@@ -611,15 +604,16 @@ let getEldritchInvocations = (data) => {
  */
 let fixSpells = (ddb, items) => {
 
-  items.forEach(spell => {
-    switch(spell.name) {
+  items.forEach((spell) => {
+    switch (spell.name) {
       // Eldritch Blast is a special little kitten and has some fun Eldritch
       // Invocations which can adjust it.
-      case "Eldritch Blast":
+      case "Eldritch Blast": {
         const eldritchBlastMods = getEldritchInvocations(ddb);
         spell.data.damage.parts[0][0] += " + " + eldritchBlastMods["damage"];
         spell.data.range.value += eldritchBlastMods["range"];
         break;
+      }
       // The target/range input data are incorrect on some AOE spells centreted
       // on self.
       // Range is self with an AoE target of 15 ft cube
@@ -628,8 +622,9 @@ let fixSpells = (ddb, items) => {
       case "Word of Radiance":
         spell.data.range = { value: null, units: "self", long: null };
         spell.data.target = { value: "15", units: "ft", type: "cube" };
+      // no default
     }
-  })
+  });
 };
 
 let getLookups = (character) => {
@@ -934,7 +929,7 @@ export default function parseSpells(ddb, character) {
 
     const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
 
-    const featInfo = lookups.feat.find((ft) => ft.id === spell.componentId);
+    let featInfo = lookups.feat.find((ft) => ft.id === spell.componentId);
 
     if (!featInfo) {
       // for some reason we haven't matched the feat option id with the spell
