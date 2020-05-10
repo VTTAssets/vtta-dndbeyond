@@ -34,10 +34,7 @@ let utils = {
         for (j = 1; j <= alen; j++) {
           tmp = row[j - 1];
           row[j - 1] = res;
-          res =
-            b[i - 1] === a[j - 1]
-              ? tmp
-              : Math.min(tmp + 1, Math.min(res + 1, row[j] + 1));
+          res = b[i - 1] === a[j - 1] ? tmp : Math.min(tmp + 1, Math.min(res + 1, row[j] + 1));
         }
       }
       return res;
@@ -53,11 +50,7 @@ let utils = {
       .filter((entry) => entry.hasOwnProperty(property))
       .forEach((entry) => {
         let distance = levenshtein(searchString, entry[property]);
-        if (
-          distance < nearestDistance &&
-          distance <= maxDistance &&
-          distance < minDistance
-        ) {
+        if (distance < nearestDistance && distance <= maxDistance && distance < minDistance) {
           nearestHit = entry;
           nearestDistance = distance;
         }
@@ -66,21 +59,12 @@ let utils = {
     return nearestHit;
   },
   hasChosenCharacterOption: (data, optionName) => {
-    const classOptions = [
-      data.character.options.race,
-      data.character.options.class,
-      data.character.options.feat,
-    ]
+    const classOptions = [data.character.options.race, data.character.options.class, data.character.options.feat]
       .flat()
       .find((option) => option.definition.name === optionName);
     return !!classOptions;
   },
-  filterBaseModifiers: (
-    data,
-    type,
-    subType = null,
-    restriction = ["", null]
-  ) => {
+  filterBaseModifiers: (data, type, subType = null, restriction = ["", null]) => {
     const modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
@@ -100,19 +84,16 @@ let utils = {
   },
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
-    const targetItemIds = data.character.inventory
+    const modifiers = data.character.inventory
       .filter(
         (item) =>
-          (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+          ((!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
           (item.isAttuned && item.equipped) || // if it is attuned and equipped
           (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
-          (!item.definition.canAttune && item.equipped) // can't attune but is equipped
+            (!item.definition.canAttune && item.equipped)) && // can't attune but is equipped
+          item.definition.grantedModifiers.length > 0
       )
-      .map((item) => item.definition.id);
-
-    const modifiers = data.character.modifiers.item.filter((mod) =>
-      targetItemIds.includes(mod.componentId)
-    );
+      .flatMap((item) => item.definition.grantedModifiers);
 
     return modifiers;
   },
@@ -134,8 +115,7 @@ let utils = {
 
       // sign. We only take the sign standing exactly in front of the dice string
       // so +-1d8 => -1d8. Just as a failsave
-      const sign =
-        result[1] === "" ? "+" : result[1].substr(result[1].length - 1, 1);
+      const sign = result[1] === "" ? "+" : result[1].substr(result[1].length - 1, 1);
       const count = result[2];
       const die = result[4];
 
@@ -174,10 +154,7 @@ let utils = {
     // +1d8-2d8 => +1d8 -2d8 will remain as-is
     for (let i = 0; i < dice.length - 1; i++) {
       let cur = dice[i];
-      let next =
-        i <= dice.length - 1
-          ? dice[i + 1]
-          : { sign: "+", count: 0, die: cur.die };
+      let next = i <= dice.length - 1 ? dice[i + 1] : { sign: "+", count: 0, die: cur.die };
       if (cur.die === next.die && cur.sign === next.sign) {
         cur.count += next.count;
         dice.splice(i + 1, 1);
@@ -187,15 +164,10 @@ let utils = {
 
     const diceString = dice.reduce((prev, cur) => {
       return (
-        prev +
-        " " +
-        (cur.count >= 0 && prev !== ""
-          ? `${cur.sign}${cur.count}d${cur.die}`
-          : `${cur.count}d${cur.die}`)
+        prev + " " + (cur.count >= 0 && prev !== "" ? `${cur.sign}${cur.count}d${cur.die}` : `${cur.count}d${cur.die}`)
       );
     }, "");
-    const resultBonus =
-      bonus === 0 ? "" : bonus > 0 ? ` + ${bonus}` : ` ${bonus}`;
+    const resultBonus = bonus === 0 ? "" : bonus > 0 ? ` + ${bonus}` : ` ${bonus}`;
 
     const result = {
       dice: dice,
@@ -206,14 +178,14 @@ let utils = {
   },
   /**
        * Tries to reverse-match a given string to a given DND5E configuration value, e.g.
-       * 
+       *
        * DND5E.armorProficiencies = {
           "lgt": "Light Armor",
           "med": "Medium Armor",
           "hvy": "Heavy Armor",
           "shl": "Shields"
          };
-  
+
        * findInConfig('armorProficiencies', 'Medium Armor') returns 'med'
        */
   findInConfig: (section, value) => {
@@ -277,11 +249,7 @@ let utils = {
     };
     let filterDeprecated = (data) => {
       for (let prop in data) {
-        if (
-          data[prop] &&
-          data[prop].hasOwnProperty("_deprecated") &&
-          data[prop]["_deprecated"] === true
-        ) {
+        if (data[prop] && data[prop].hasOwnProperty("_deprecated") && data[prop]["_deprecated"] === true) {
           delete data[prop];
         }
         if (prop === "_deprecated" && data[prop] === true) {
@@ -301,10 +269,7 @@ let utils = {
         let obj = mergeDeep({}, filterDeprecated(templates[entityType][type]));
         if (obj.templates) {
           obj.templates.forEach((tpl) => {
-            obj = mergeDeep(
-              obj,
-              filterDeprecated(templates[entityType].templates[tpl])
-            );
+            obj = mergeDeep(obj, filterDeprecated(templates[entityType].templates[tpl]));
           });
           delete obj.templates;
         }
@@ -400,17 +365,11 @@ let utils = {
 
     // uploading the character avatar and token
     try {
-      let result = await process(
-        "https://proxy.vttassets.com/?url=" + url,
-        targetDirectory,
-        filename + "." + ext
-      );
+      let result = await process("https://proxy.vttassets.com/?url=" + url, targetDirectory, filename + "." + ext);
       return result;
     } catch (error) {
       console.log(error);
-      ui.notifications.warn(
-        "Image upload failed. Please check your vtta-dndbeyond upload folder setting"
-      );
+      ui.notifications.warn("Image upload failed. Please check your vtta-dndbeyond upload folder setting");
       return null;
     }
   },
@@ -419,10 +378,7 @@ let utils = {
       const baseColor = "#98020a";
 
       let folder = game.folders.entities.find(
-        (f) =>
-          f.data.type === entityType &&
-          f.data.name === folderName &&
-          f.data.parent === root.id
+        (f) => f.data.type === entityType && f.data.name === folderName && f.data.parent === root.id
       );
       if (folder) return folder;
       folder = await Folder.create(
@@ -458,8 +414,7 @@ let utils = {
 
     // get base folder, or create it if it does not exist
     let baseFolder = game.folders.entities.find(
-      (folder) =>
-        folder.data.type === entityType && folder.data.name === baseName
+      (folder) => folder.data.type === entityType && folder.data.name === baseName
     );
     if (!baseFolder) {
       baseFolder = await Folder.create(
@@ -474,17 +429,9 @@ let utils = {
       );
     }
 
-    let entityFolder = await getOrCreateFolder(
-      baseFolder,
-      entityType,
-      folderName
-    );
+    let entityFolder = await getOrCreateFolder(baseFolder, entityType, folderName);
     if (kind === "npc" && type !== "") {
-      let typeFolder = await getOrCreateFolder(
-        entityFolder,
-        "Actor",
-        type.charAt(0).toUpperCase() + type.slice(1)
-      );
+      let typeFolder = await getOrCreateFolder(entityFolder, "Actor", type.charAt(0).toUpperCase() + type.slice(1));
       return typeFolder;
     } else {
       return entityFolder;
