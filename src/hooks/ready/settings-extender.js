@@ -140,7 +140,7 @@ let SettingsExtender = () => {
     MouseButtonBinding.parse = (val) => {
       if (!val) return val;
       const modifiers = parseModifiers(val, "button");
-      if (/Mouse\d/.test(modifiers.button)) {
+      if ((/Mouse\d/).test(modifiers.button)) {
         modifiers.button = +modifiers.button[5];
       } else {
         modifiers.button = Object.entries(
