@@ -13,46 +13,38 @@ spell.componentId   97  - subclasses.classFeatures // seems to reference the sou
 }
 */
 
-let getComponents = data => {
+let getComponents = (data) => {
   return {
     value: data.definition.componentsDescription,
     vocal: data.definition.components.includes(1),
     somatic: data.definition.components.includes(2),
     material: data.definition.components.includes(3),
     ritual: data.definition.ritual,
-    concentration: data.definition.concentration
+    concentration: data.definition.concentration,
   };
 };
 
-let getMaterials = data => {
+let getMaterials = (data) => {
   // this is mainly guessing
-  if (
-    data.definition.componentsDescription &&
-    data.definition.componentsDescription.length > 0
-  ) {
+  if (data.definition.componentsDescription && data.definition.componentsDescription.length > 0) {
     let cost = 0;
-    let matches = data.definition.componentsDescription
-      .toLowerCase()
-      .match(/([\d\.]+)\s*gp/);
+    let matches = data.definition.componentsDescription.toLowerCase().match(/([\d\.]+)\s*gp/);
     if (matches) {
       cost = parseInt(matches[1].replace("."));
     }
 
     return {
       value: data.definition.componentsDescription,
-      consumed:
-        data.definition.componentsDescription
-          .toLowerCase()
-          .indexOf("consume") !== -1,
+      consumed: data.definition.componentsDescription.toLowerCase().indexOf("consume") !== -1,
       cost: cost,
-      supply: 0
+      supply: 0,
     };
   } else {
     return {
       value: "",
       consumed: false,
       cost: 0,
-      supply: 0
+      supply: 0,
     };
   }
 };
@@ -61,7 +53,7 @@ let getMaterials = data => {
  * Retrieves the spell preparation mode, depending on the location this spell came from
  *
  */
-let getSpellPreparationMode = data => {
+let getSpellPreparationMode = (data) => {
   //default values
   let prepMode = "prepared";
   // If always prepared mark as such, if not then check to see if prepared
@@ -77,19 +69,20 @@ let getSpellPreparationMode = data => {
       prepMode = "always";
     } else if (prepMode) {
       prepMode = classPrepMode;
-    };
+    }
     // Warlocks should use Pact spells
     // but lets mark level 0 as regular spells so they show up as cantrips
-    if ((prepMode === "pact") && (data.definition.level === 0)) {
+    if (prepMode === "pact" && data.definition.level === 0) {
       prepMode = "prepared";
       prepared = true;
-    };
+    }
   } else if (data.flags.vtta.dndbeyond.lookup === "race" && data.definition.level !== 0) {
     // set race spells as innate
     prepMode = "innate";
-  } else if ( // Warlock Mystic Arcanum are passed in as Features
-      data.flags.vtta.dndbeyond.lookupName.startsWith("Mystic Arcanum")
-    ) {
+  } else if (
+    // Warlock Mystic Arcanum are passed in as Features
+    data.flags.vtta.dndbeyond.lookupName.startsWith("Mystic Arcanum")
+  ) {
     // these have limited uses (set with getUses())
     prepMode = "pact";
     prepared = false;
@@ -98,8 +91,8 @@ let getSpellPreparationMode = data => {
     prepMode = "prepared";
   } else {
     // If spell doesn't use a spell slot and is not a cantrip, mark as always preped
-    let always = (!data.usesSpellSlot && data.definition.level !== 0);
-    let ritaulOnly = (data.ritualCastingType !== null|| data.castOnlyAsRitual); // e.g. Book of ancient secrets & totem barb
+    let always = !data.usesSpellSlot && data.definition.level !== 0;
+    let ritaulOnly = data.ritualCastingType !== null || data.castOnlyAsRitual; // e.g. Book of ancient secrets & totem barb
     if (always && ritaulOnly) {
       // in this case we want the spell to appear in the spell list unprepared
       prepared = false;
@@ -108,8 +101,8 @@ let getSpellPreparationMode = data => {
       // picked up by getUses() later
       // this was changed to "atwill"
       prepMode = "atwill";
-    };
-  };
+    }
+  }
 
   return {
     mode: prepMode,
@@ -121,51 +114,38 @@ let getSpellPreparationMode = data => {
  * Get the reset condition of the spell, if uses restricted
  * @param {*} data Spell data
  */
-let getUses = data => {
+let getUses = (data) => {
   let resetType = null;
   let limitedUse = null;
   // we check this, as things like items have useage attached to the item, not spell
-  if (data.flags.vtta.dndbeyond.limitedUse !== undefined &&
-      data.flags.vtta.dndbeyond.limitedUse !== null
-  ){
-    limitedUse = data.flags.vtta.dndbeyond.limitedUse
-    resetType = DICTIONARY.resets.find(
-      reset => reset.id == limitedUse.resetType
-    );
-
-  } else if (data.limitedUse !== undefined && data.limitedUse !== null){
-    limitedUse = data.limitedUse
-    resetType = DICTIONARY.resets.find(
-      reset => reset.id == limitedUse.resetType
-    );
-  };
+  if (data.flags.vtta.dndbeyond.limitedUse !== undefined && data.flags.vtta.dndbeyond.limitedUse !== null) {
+    limitedUse = data.flags.vtta.dndbeyond.limitedUse;
+    resetType = DICTIONARY.resets.find((reset) => reset.id == limitedUse.resetType);
+  } else if (data.limitedUse !== undefined && data.limitedUse !== null) {
+    limitedUse = data.limitedUse;
+    resetType = DICTIONARY.resets.find((reset) => reset.id == limitedUse.resetType);
+  }
 
   if (resetType !== null && resetType !== undefined) {
     return {
-      value: limitedUse.numberUsed
-        ? limitedUse.maxUses - limitedUse.numberUsed
-        : limitedUse.maxUses,
+      value: limitedUse.numberUsed ? limitedUse.maxUses - limitedUse.numberUsed : limitedUse.maxUses,
       max: limitedUse.maxUses,
       per: resetType.value,
     };
   } else {
     return {};
-  };
+  }
 };
 
 /**
  * Gets the sourcebook for a subset of dndbeyond sources
  * @param {obj} data Item data
  */
-let getSource = data => {
+let getSource = (data) => {
   if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(
-      source => source.id === data.definition.sourceId
-    );
+    let source = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
     if (source) {
-      return data.definition.sourcePageNumber
-        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
-        : source.name;
+      return data.definition.sourcePageNumber ? `${source.name} pg. ${data.definition.sourcePageNumber}` : source.name;
     }
   }
   return "";
@@ -174,21 +154,21 @@ let getSource = data => {
 /**
  * Gets the activation information of this spell
  */
-let getActivation = data => {
+let getActivation = (data) => {
   let activationType = DICTIONARY.spell.activationTypes.find(
-    type => type.activationType === data.definition.activation.activationType
+    (type) => type.activationType === data.definition.activation.activationType
   );
   if (activationType && data.definition.activation.activationTime) {
     return {
       type: activationType.value,
       cost: data.definition.activation.activationTime,
-      condition: ""
+      condition: "",
     };
   } else {
     return {
       type: "action",
       cost: 1,
-      condition: ""
+      condition: "",
     };
   }
 };
@@ -196,16 +176,14 @@ let getActivation = data => {
 /**
  * Retrieves the spell duration
  */
-let getDuration = data => {
-  if (
-    data.definition.duration
-  ) {
+let getDuration = (data) => {
+  if (data.definition.duration) {
     let units = "";
     if (data.definition.duration.durationUnit !== null) {
-      units = data.definition.duration.durationUnit.toLowerCase()
+      units = data.definition.duration.durationUnit.toLowerCase();
     } else {
-      units = data.definition.duration.durationType.toLowerCase().substring(0, 4)
-    };
+      units = data.definition.duration.durationType.toLowerCase().substring(0, 4);
+    }
     return {
       value: data.definition.duration.durationInterval || "",
       units: units,
@@ -215,14 +193,14 @@ let getDuration = data => {
 
 /**
  * Spell targets
-*/
-let getTarget = data => {
+ */
+let getTarget = (data) => {
   // if spell is an AOE effect get some details
   if (data.definition.range.aoeType && data.definition.range.aoeValue) {
     return {
       value: data.definition.range.aoeValue,
       type: data.definition.range.aoeType.toLowerCase(),
-      units: "ft"
+      units: "ft",
     };
   }
 
@@ -233,25 +211,24 @@ let getTarget = data => {
 
   const creature = /a creature you|creature( that)? you can see|interrupt a creature|would strike a creature|creature of your choice|creature or object within range|cause a creature|creature must be within range/gi;
   const creaturesRange = /(humanoid|monster|creature|target)(s)? (or loose object )?(of your choice )?(that )?(you can see )?within range/gi;
-  const creatures = data.definition.description.match(creature) ||
-    data.definition.description.match(creaturesRange);
+  const creatures = data.definition.description.match(creature) || data.definition.description.match(creaturesRange);
 
   if (creatures) {
-    const numCreatures = /(?!At Higher Levels.*)(\w*) (falling )?(willing )?(creature|target|monster|celestial|fiend|fey|corpse(s)? of|humanoid)(?!.*you have animated)/gmi;
+    const numCreatures = /(?!At Higher Levels.*)(\w*) (falling )?(willing )?(creature|target|monster|celestial|fiend|fey|corpse(s)? of|humanoid)(?!.*you have animated)/gim;
     const targets = [...data.definition.description.matchAll(numCreatures)];
     const targetValues = targets
-      .filter(target => {
-        const matches = DICTIONARY.numbers.filter(n => n.natural === target[1].toLowerCase())
+      .filter((target) => {
+        const matches = DICTIONARY.numbers.filter((n) => n.natural === target[1].toLowerCase());
         return Array.isArray(matches) && !!matches.length;
       })
-      .map(target => DICTIONARY.numbers.find(n => n.natural === target[1].toLowerCase()).num)
+      .map((target) => DICTIONARY.numbers.find((n) => n.natural === target[1].toLowerCase()).num);
 
     if (Array.isArray(targetValues) && !!targetValues.length) value = Math.max(...targetValues);
   }
 
   switch (data.definition.range.origin) {
     case "Touch":
-      units = "touch"
+      units = "touch";
       if (creatures) type = "creature";
       break;
     case "Self":
@@ -279,7 +256,7 @@ let getTarget = data => {
     case undefined:
       type = null;
       break;
-  };
+  }
 
   return {
     value: value,
@@ -289,16 +266,16 @@ let getTarget = data => {
 };
 
 /** Spell range */
-let getRange = data => {
+let getRange = (data) => {
   // else lets try and fill in some target details
-  let value = data.definition.range.rangeValue ? data.definition.range.rangeValue: null;
+  let value = data.definition.range.rangeValue ? data.definition.range.rangeValue : null;
   let units = "ft";
   let long = null;
 
   switch (data.definition.range.origin) {
     case "Touch":
       value = null;
-      units = "touch"
+      units = "touch";
       break;
     case "Self":
       value = null;
@@ -326,21 +303,17 @@ let getRange = data => {
     case undefined:
       units = null;
       break;
-  };
-
+  }
 
   return {
-    value:value,
+    value: value,
     long: long,
-    units: units
+    units: units,
   };
 };
 
-let getActionType = data => {
-  if (
-    data.definition.requiresSavingThrow &&
-    !data.definition.requiresAttackRoll
-  ) {
+let getActionType = (data) => {
+  if (data.definition.requiresSavingThrow && !data.definition.requiresAttackRoll) {
     return "save";
   }
 
@@ -367,40 +340,33 @@ let getActionType = data => {
   return "other";
 };
 
-let getDamage = data => {
+let getDamage = (data) => {
   let result = {
     parts: [],
-    versatile: ""
+    versatile: "",
   };
 
   // damage
-  const attacks = data.definition.modifiers.filter(mod => mod.type === "damage");
+  const attacks = data.definition.modifiers.filter((mod) => mod.type === "damage");
   if (attacks.length !== 0) {
-    const cantripBoost = (data.definition.level === 0 && !!data.flags.vtta.dndbeyond.cantripBoost);
-    attacks.forEach(attack => {
-      let diceString = (attack.usePrimaryStat || cantripBoost)
-        ? `${attack.die.diceString} + @mod`
-        : attack.die.diceString;
+    const cantripBoost = data.definition.level === 0 && !!data.flags.vtta.dndbeyond.cantripBoost;
+    attacks.forEach((attack) => {
+      let diceString =
+        attack.usePrimaryStat || cantripBoost ? `${attack.die.diceString} + @mod` : attack.die.diceString;
       result.parts.push([diceString, attack.subType]);
     });
 
     // This is probably just for Toll the dead.
     const alternativeFormula = getAlternativeFormula(data);
-    result.versatile = (cantripBoost)
-      ? `${alternativeFormula} + @mod`
-      : alternativeFormula;
+    result.versatile = cantripBoost ? `${alternativeFormula} + @mod` : alternativeFormula;
     return result;
   }
 
   // healing
-  const heals = data.definition.modifiers.filter(
-    mod => mod.type === "bonus" && mod.subType === "hit-points"
-  );
+  const heals = data.definition.modifiers.filter((mod) => mod.type === "bonus" && mod.subType === "hit-points");
   if (heals.length !== 0) {
-    heals.forEach(heal => {
-      let diceString = heal.usePrimaryStat
-        ? `${heal.die.diceString} + @mod`
-        : heal.die.diceString;
+    heals.forEach((heal) => {
+      let diceString = heal.usePrimaryStat ? `${heal.die.diceString} + @mod` : heal.die.diceString;
       result.parts.push([diceString, "healing"]);
     });
     return result;
@@ -408,28 +374,27 @@ let getDamage = data => {
   return result;
 };
 
-let getSave = data => {
+let getSave = (data) => {
   if (data.definition.requiresSavingThrow && data.definition.saveDcAbilityId) {
-    const saveAbility =  DICTIONARY.character.abilities.find(
-      ability => ability.id === data.definition.saveDcAbilityId
-    ).value;
+    const saveAbility = DICTIONARY.character.abilities.find((ability) => ability.id === data.definition.saveDcAbilityId)
+      .value;
     if (!!data.overrideSaveDc) {
       return {
         ability: saveAbility,
         dc: data.overrideSaveDc,
-        scaling: "flat"
+        scaling: "flat",
       };
     } else {
       return {
         ability: saveAbility,
         dc: null,
-        scaling: "spell"
+        scaling: "spell",
       };
     }
   } else {
     return {
       ability: "",
-      dc: null
+      dc: null,
     };
   }
 };
@@ -443,12 +408,8 @@ let getSpellScaling = (data, character) => {
   if (data.definition.canCastAtHigherLevel) {
     // iterate over each spell modifier
     data.definition.modifiers
-      .filter(
-        mod =>
-          mod.type === "damage" ||
-          (mod.type === "bonus" && mod.subType === "hit-points")
-      )
-      .forEach(mod => {
+      .filter((mod) => mod.type === "damage" || (mod.type === "bonus" && mod.subType === "hit-points"))
+      .forEach((mod) => {
         // if the modifier has a die for damage, lets use the string or fixed value
         // for the base damage
         if (mod && mod.die) {
@@ -478,10 +439,7 @@ let getSpellScaling = (data, character) => {
             mod.atHigherLevels.higherLevelDefinitions.length >= 1;
 
           // lets handle normal spell leveling first
-          if (
-            isHigherLevelDefinitions &&
-            modScaleType === "spellscale"
-          ) {
+          if (isHigherLevelDefinitions && modScaleType === "spellscale") {
             const definition = mod.atHigherLevels.higherLevelDefinitions[0];
             if (definition) {
               const modScaleDamage =
@@ -508,14 +466,10 @@ let getSpellScaling = (data, character) => {
               }
               // finally update scaleType
               scaleType = modScaleType;
-
             } else {
               console.warn("No definition found for " + data.definition.name);
             }
-
-          } else if(
-            modScaleType === "spellscale"
-          ) {
+          } else if (modScaleType === "spellscale") {
             // lets handle cases where there is a spellscale type but no damage
             // increase/ higherleveldefinitins e.g. chain lighting
             // these type of spells typically increase targets so we set the
@@ -538,7 +492,7 @@ let getSpellScaling = (data, character) => {
             } else {
               scaleType = modScaleType;
             }
-          } else if (modScaleType === "spelllevel"){
+          } else if (modScaleType === "spelllevel") {
             // spells that have particular level associated benefits
             // these seem to be duration increases or target increases for
             // the most part we can't handle these in FVTT right now (we could
@@ -548,43 +502,39 @@ let getSpellScaling = (data, character) => {
             // examples include: hex, shadowblade, magic weapon, bestow curse
             scaleType = modScaleType;
           } else {
-            console.warn(
-              data.definition.name +
-              ' parse failed: ' +
-              JSON.stringify(modScaleType)
-            );
+            console.warn(data.definition.name + " parse failed: " + JSON.stringify(modScaleType));
             scaleType = modScaleType; // if this is new/unknow will use default
           }
         }
-    });
+      });
   }
 
   switch (scaleType) {
     case "characterlevel":
       return {
         mode: "cantrip",
-        formula: baseDamage
+        formula: baseDamage,
       };
     case "spellscale":
       return {
         mode: "level",
-        formula: scaleDamage
+        formula: scaleDamage,
       };
     case "spelllevel":
     case null:
       return {
         mode: "none",
-        formula: ""
+        formula: "",
       };
     default:
       return {
         mode: "level",
-        formula: ""
+        formula: "",
       };
   }
 };
 
-let getAlternativeFormula = data => {
+let getAlternativeFormula = (data) => {
   // this might be specificially for Toll the Dead only, but it's better than nothing
 
   let description = data.definition.description;
@@ -597,36 +547,26 @@ let getAlternativeFormula = data => {
 };
 
 // is there a spell casting ability?
-let hasSpellCastingAbility = spellCastingAbilityId => {
-  return (
-    DICTIONARY.character.abilities.find(
-      ability => ability.id === spellCastingAbilityId
-    ) !== undefined
-  );
+let hasSpellCastingAbility = (spellCastingAbilityId) => {
+  return DICTIONARY.character.abilities.find((ability) => ability.id === spellCastingAbilityId) !== undefined;
 };
 
 // convert spellcasting ability id to string used by vtta
-let convertSpellCastingAbilityId = spellCastingAbilityId => {
-  return DICTIONARY.character.abilities.find(
-    ability => ability.id === spellCastingAbilityId
-  ).value;
+let convertSpellCastingAbilityId = (spellCastingAbilityId) => {
+  return DICTIONARY.character.abilities.find((ability) => ability.id === spellCastingAbilityId).value;
 };
 
 // search through classinfo and determine spellcasting ability
-let getSpellCastingAbility = classInfo => {
+let getSpellCastingAbility = (classInfo) => {
   let spellCastingAbility = undefined;
   if (hasSpellCastingAbility(classInfo.definition.spellCastingAbilityId)) {
-    spellCastingAbility = convertSpellCastingAbilityId(
-      classInfo.definition.spellCastingAbilityId
-    );
+    spellCastingAbility = convertSpellCastingAbilityId(classInfo.definition.spellCastingAbilityId);
   } else if (
     classInfo.subclassDefinition &&
     hasSpellCastingAbility(classInfo.subclassDefinition.spellCastingAbilityId)
   ) {
     // Arcane Trickster has spellcasting ID granted here
-    spellCastingAbility = convertSpellCastingAbilityId(
-      classInfo.subclassDefinition.spellCastingAbilityId
-    );
+    spellCastingAbility = convertSpellCastingAbilityId(classInfo.subclassDefinition.spellCastingAbilityId);
   } else {
     // special cases: No spellcaster, but can cast spells like totem barbarian, default to wis
     spellCastingAbility = "wis";
@@ -639,58 +579,55 @@ let getEldritchInvocations = (data, character) => {
   let range = 0;
 
   const eldritchBlastMods = data.character.modifiers.class.filter(
-    modifier => modifier.type === "eldritch-blast" && modifier.isGranted
+    (modifier) => modifier.type === "eldritch-blast" && modifier.isGranted
   );
 
-  eldritchBlastMods.forEach(mod =>{
-    switch(mod.subType) {
+  eldritchBlastMods.forEach((mod) => {
+    switch (mod.subType) {
       case "bonus-damage":
         // almost certainly CHA :D
-        const abilityModifier = DICTIONARY.character.abilities.find(
-          ability => ability.id === mod.statId
-        ).value;
+        const abilityModifier = DICTIONARY.character.abilities.find((ability) => ability.id === mod.statId).value;
         damage = `@abilities.${abilityModifier}.mod`;
         break;
       case "bonus-range":
         range = mod.value;
         break;
       default:
-        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`)
+        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`);
     }
   });
 
   return {
     damage: damage,
-    range: range
+    range: range,
   };
 };
 
-let fixSpells = (spells) => {
-
+let fixSpells = (ddb, spells) => {
   // Eldritch Blast is a special little kitten and has some fun Eldritch
   // Invocations which can adjust it.
-  spells.filter(
-    spell => spell.name === "Eldritch Blast"
-  ).map(eb => {
-    const eldritchBlastMods = getEldritchInvocations(ddb, character);
-    eb.data.damage.parts[0][0] += " + " + eldritchBlastMods['damage'];
-    eb.data.range.value += eldritchBlastMods['range'];
-    eb.data.range.long += eldritchBlastMods['range'];
-  });
+  spells = spells
+    .filter((spell) => spell.name === "Eldritch Blast")
+    .map((eb) => {
+      const eldritchBlastMods = getEldritchInvocations(ddb, character);
+      eb.data.damage.parts[0][0] += " + " + eldritchBlastMods["damage"];
+      eb.data.range.value += eldritchBlastMods["range"];
+      eb.data.range.long += eldritchBlastMods["range"];
+    });
 
   // The target/range input data are incorrect on some AOE spells centreted
   // on self.
   // Range is self with an AoE target of 15 ft cube
   // i.e. affects all creatures within 5 ft of caster
-  spells.filter(
-    spell =>
-    spell.name === "Thunderclap" ||
-    spell.name === "Word of Radiance"
-  ).map(tc => {
-    tc.data.range = {value: null, units: "self", long: null};
-    tc.data.target = {value: "15", units: "ft", type: "cube"};
-  });
-}
+  spells = spells
+    .filter((spell) => spell.name === "Thunderclap" || spell.name === "Word of Radiance")
+    .map((tc) => {
+      tc.data.range = { value: null, units: "self", long: null };
+      tc.data.target = { value: "15", units: "ft", type: "cube" };
+    });
+
+  return spells;
+};
 
 let getLookups = (character) => {
   // racialTraits
@@ -701,14 +638,14 @@ let getLookups = (character) => {
     classFeature: [],
     item: [],
   };
-  character.race.racialTraits.forEach( trait => {
+  character.race.racialTraits.forEach((trait) => {
     lookups.race.push({
       id: trait.definition.id,
       name: trait.definition.name,
-    })
-  })
+    });
+  });
 
-  character.classes.forEach( playerClass => {
+  character.classes.forEach((playerClass) => {
     lookups.class.push({
       id: playerClass.definition.id,
       name: playerClass.definition.name,
@@ -718,37 +655,37 @@ let getLookups = (character) => {
       lookups.class.push({
         id: playerClass.subclassDefinition.id,
         name: playerClass.subclassDefinition.name,
-      })
-    };
+      });
+    }
 
     if (playerClass.classFeatures) {
-      playerClass.classFeatures.forEach( trait => {
+      playerClass.classFeatures.forEach((trait) => {
         lookups.classFeature.push({
           id: trait.definition.id,
           name: trait.definition.name,
           componentId: trait.definition.componentId,
         });
       });
-    };
+    }
   });
 
-  character.options.class.forEach( trait => {
+  character.options.class.forEach((trait) => {
     lookups.classFeature.push({
       id: trait.definition.id,
       name: trait.definition.name,
       componentId: trait.componentId,
-    })
+    });
   });
 
-  character.feats.forEach( trait => {
+  character.feats.forEach((trait) => {
     lookups.feat.push({
       id: trait.definition.id,
       name: trait.definition.name,
       componentId: trait.componentId,
-    })
+    });
   });
 
-  character.inventory.forEach( trait => {
+  character.inventory.forEach((trait) => {
     lookups.item.push({
       id: trait.definition.id,
       name: trait.definition.name,
@@ -756,8 +693,8 @@ let getLookups = (character) => {
       equipped: trait.equipped,
       isAttuned: trait.isAttuned,
       canAttune: trait.definition.canAttune,
-      canEquip: trait.definition.canEquip
-    })
+      canEquip: trait.definition.canEquip,
+    });
   });
 
   return lookups;
@@ -772,9 +709,9 @@ let parseSpell = (data, character) => {
     data: JSON.parse(utils.getTemplate("spell")),
     flags: {
       vtta: {
-        dndbeyond: data.flags.vtta.dndbeyond
-      }
-    }
+        dndbeyond: data.flags.vtta.dndbeyond,
+      },
+    },
   };
 
   // spell name
@@ -782,7 +719,7 @@ let parseSpell = (data, character) => {
     spell.name = data.flags.vtta.dndbeyond.nameOverride;
   } else {
     spell.name = data.definition.name;
-  };
+  }
 
   // add tags
   spell.flags.vtta.dndbeyond.tags = data.definition.tags;
@@ -791,10 +728,7 @@ let parseSpell = (data, character) => {
   spell.data.level = data.definition.level;
 
   // get the spell school
-  spell.data.school = utils.findInConfig(
-    "spellSchools",
-    data.definition.school
-  );
+  spell.data.school = utils.findInConfig("spellSchools", data.definition.school);
 
   /**
    * Gets the necessary spell components VSM + material
@@ -808,7 +742,7 @@ let parseSpell = (data, character) => {
   spell.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   spell.data.source = getSource(data);
@@ -834,19 +768,17 @@ let parseSpell = (data, character) => {
   // attach the spell ability id to the spell data so VTT always uses the
   // correct one, useful if multi-classing and spells have different
   // casting abilities
-  if (
-    character.data.attributes.spellcasting !== data.flags.vtta.dndbeyond.ability
-  ) {
+  if (character.data.attributes.spellcasting !== data.flags.vtta.dndbeyond.ability) {
     spell.data.ability = data.flags.vtta.dndbeyond.ability;
   }
 
   // If using better rolls we set alt to be versatile for spells like
   // Toll The Dead
   spell.flags.betterRolls5e = {
-    "quickVersatile": {
-        "altValue": true
-    }
-  }
+    quickVersatile: {
+      altValue: true,
+    },
+  };
 
   return spell;
 };
@@ -858,23 +790,21 @@ export default function parseSpells(ddb, character) {
 
   // each class has an entry here, each entry has spells
   // we loop through each class and process
-  ddb.character.classSpells.forEach(playerClass => {
-    const classInfo = ddb.character.classes.find(
-      cls => cls.id === playerClass.characterClassId
-    );
+  ddb.character.classSpells.forEach((playerClass) => {
+    const classInfo = ddb.character.classes.find((cls) => cls.id === playerClass.characterClassId);
     const spellCastingAbility = getSpellCastingAbility(classInfo);
-    const abilityModifier = utils.calculateModifier(
-      character.data.abilities[spellCastingAbility].value
-    );
+    const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
 
-    const cantripBoost = ddb.character.modifiers.class.filter(mod =>
-      mod.type === "bonus" &&
-      mod.subType === `${classInfo.definition.name.toLowerCase()}-cantrip-damage` &&
-      (mod.restriction === null || mod.restriction === "")
-    ).length > 0;
+    const cantripBoost =
+      ddb.character.modifiers.class.filter(
+        (mod) =>
+          mod.type === "bonus" &&
+          mod.subType === `${classInfo.definition.name.toLowerCase()}-cantrip-damage` &&
+          (mod.restriction === null || mod.restriction === "")
+      ).length > 0;
 
     // parse spells chosen as spellcasting (playerClass.spells)
-    playerClass.spells.forEach(spell => {
+    playerClass.spells.forEach((spell) => {
       // add some data for the parsing of the spells into the data structure
       spell.flags = {
         vtta: {
@@ -889,17 +819,17 @@ export default function parseSpells(ddb, character) {
             dc: 8 + proficiencyModifier + abilityModifier,
             cantripBoost: cantripBoost,
             overrideDC: false,
-          }
-        }
+          },
+        },
       };
 
       // Check for duplicate spells, normally domain ones
       // We will import spells from a different class that are the same though
       // as they may come from with different spell casting mods
       const duplicateSpell = items.findIndex(
-        existingSpell =>
-        existingSpell.name === spell.definition.name &&
-        classInfo.definition.name === existingSpell.flags.vtta.dndbeyond.class
+        (existingSpell) =>
+          existingSpell.name === spell.definition.name &&
+          classInfo.definition.name === existingSpell.flags.vtta.dndbeyond.class
       );
       if (!items[duplicateSpell]) {
         items.push(parseSpell(spell, character));
@@ -909,31 +839,25 @@ export default function parseSpells(ddb, character) {
         items[duplicateSpell] = parseSpell(spell, character);
       } else {
         // we'll emit a console message if it doesn't match this case for future debugging
-        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.` );
+        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
       }
     });
   });
 
   // Parse any spells granted by class features, such as Barbarian Totem
-  ddb.character.spells.class.forEach(spell => {
+  ddb.character.spells.class.forEach((spell) => {
     // If the spell has an ability attached, use that
     let spellCastingAbility = undefined;
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
-      spellCastingAbility = convertSpellCastingAbilityId(
-        spell.spellCastingAbilityId
-      );
+      spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
     } else {
       // if there is no ability on spell, we default to wis
       spellCastingAbility = "wis";
     }
 
-    const abilityModifier = utils.calculateModifier(
-      character.data.abilities[spellCastingAbility].value
-    );
+    const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
 
-    const classInfo = lookups.classFeature.find(
-      cls => cls.id === spell.componentId
-    );
+    const classInfo = lookups.classFeature.find((cls) => cls.id === spell.componentId);
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -947,31 +871,25 @@ export default function parseSpells(ddb, character) {
           mod: abilityModifier,
           dc: 8 + proficiencyModifier + abilityModifier,
           overrideDC: false,
-        }
-      }
+        },
+      },
     };
 
     items.push(parseSpell(spell, character));
   });
 
   // Race spells are handled slightly differently
-  ddb.character.spells.race.forEach(spell => {
+  ddb.character.spells.race.forEach((spell) => {
     // for race spells the spell spellCastingAbilityId is on the spell
     // if there is no ability on spell, we default to wis
     let spellCastingAbility = "wis";
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
-      spellCastingAbility = convertSpellCastingAbilityId(
-        spell.spellCastingAbilityId
-      );
-    };
+      spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
+    }
 
-    const abilityModifier = utils.calculateModifier(
-      character.data.abilities[spellCastingAbility].value
-    );
+    const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
 
-    let raceInfo = lookups.race.find(
-      rc => rc.id === spell.componentId
-    );
+    let raceInfo = lookups.race.find((rc) => rc.id === spell.componentId);
 
     if (!raceInfo) {
       // for some reason we haven't matched the race option id with the spell
@@ -980,7 +898,7 @@ export default function parseSpells(ddb, character) {
         name: "Racial spell",
         id: spell.componentId,
       };
-    };
+    }
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -995,31 +913,25 @@ export default function parseSpells(ddb, character) {
           mod: abilityModifier,
           dc: 8 + proficiencyModifier + abilityModifier,
           overrideDC: false,
-        }
-      }
+        },
+      },
     };
 
     items.push(parseSpell(spell, character));
   });
 
   // feat spells are handled slightly differently
-  ddb.character.spells.feat.forEach(spell => {
+  ddb.character.spells.feat.forEach((spell) => {
     // If the spell has an ability attached, use that
     // if there is no ability on spell, we default to wis
     let spellCastingAbility = "wis";
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
-      spellCastingAbility = convertSpellCastingAbilityId(
-        spell.spellCastingAbilityId
-      );
-    };
+      spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
+    }
 
-    const abilityModifier = utils.calculateModifier(
-      character.data.abilities[spellCastingAbility].value
-    );
+    const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
 
-    const featInfo = lookups.feat.find(
-      ft => ft.id === spell.componentId
-    );
+    const featInfo = lookups.feat.find((ft) => ft.id === spell.componentId);
 
     if (!featInfo) {
       // for some reason we haven't matched the feat option id with the spell
@@ -1028,7 +940,7 @@ export default function parseSpells(ddb, character) {
         name: "Feat option spell",
         id: spell.componentId,
       };
-    };
+    }
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -1042,14 +954,15 @@ export default function parseSpells(ddb, character) {
           mod: abilityModifier,
           dc: 8 + proficiencyModifier + abilityModifier,
           overrideDC: false,
-        }
-      }
+        },
+      },
     };
 
     items.push(parseSpell(spell, character));
   });
 
-  fixSpells(items);
+  // is this needed twice?
+  // fixSpells(items);
 
   return items;
 }
@@ -1060,16 +973,13 @@ export function parseItemSpells(ddb, character) {
   const lookups = getLookups(ddb.character);
 
   // feat spells are handled slightly differently
-  ddb.character.spells.item.forEach(spell => {
-    const itemInfo = lookups.item.find(
-      it => it.id === spell.componentId
-    );
+  ddb.character.spells.item.forEach((spell) => {
+    const itemInfo = lookups.item.find((it) => it.id === spell.componentId);
 
-    const active = (
+    const active =
       (!itemInfo.canEquip && !itemInfo.canAttune) || // if item just gives a thing
-      (itemInfo.isAttuned) || // if it is attuned (assume equipped)
-      (!itemInfo.canAttune && itemInfo.equipped) // can't attune but is equipped
-    );
+      itemInfo.isAttuned || // if it is attuned (assume equipped)
+      (!itemInfo.canAttune && itemInfo.equipped); // can't attune but is equipped
     // for item spells the spell dc is often on the item spell
     let spellDC = 8;
     if (spell.overrideSaveDc) {
@@ -1079,18 +989,14 @@ export function parseItemSpells(ddb, character) {
       // if there is no ability on spell, we default to wis
       let spellCastingAbility = "wis";
       if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
-        spellCastingAbility = convertSpellCastingAbilityId(
-          spell.spellCastingAbilityId
-        );
-      };
+        spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
+      }
 
-      const abilityModifier = utils.calculateModifier(
-        character.data.abilities[spellCastingAbility].value
-      );
+      const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
       spellDC = 8 + proficiencyModifier + abilityModifier;
     } else {
       spellDC = null;
-    };
+    }
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -1107,13 +1013,13 @@ export function parseItemSpells(ddb, character) {
           spellLimitedUse: spell.limitedUse,
           castAtLevel: spell.castAtLevel,
           active: active,
-        }
-      }
+        },
+      },
     };
     items.push(parseSpell(spell, character));
   });
 
-  fixSpells(items);
+  items = fixSpells(ddb, items);
 
   return items;
 }
