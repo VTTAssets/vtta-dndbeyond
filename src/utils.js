@@ -100,19 +100,15 @@ let utils = {
   },
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
-    const targetItemIds = data.character.inventory
+    const modifiers = data.character.inventory
       .filter(
         (item) =>
-          (!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
-          (item.isAttuned && item.equipped) || // if it is attuned and equipped
-          (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
-          (!item.definition.canAttune && item.equipped) // can't attune but is equipped
-      )
-      .map((item) => item.definition.id);
-
-    const modifiers = data.character.modifiers.item.filter((mod) =>
-      targetItemIds.includes(mod.componentId)
-    );
+          ((!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+            (item.isAttuned && item.equipped) || // if it is attuned and equipped
+            (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
+            (!item.definition.canAttune && item.equipped)) // can't attune but is equipped
+          && (item.definition.grantedModifiers.length > 0)
+      ).flatMap((item) => item.definition.grantedModifiers)
 
     return modifiers;
   },
@@ -206,14 +202,14 @@ let utils = {
   },
   /**
        * Tries to reverse-match a given string to a given DND5E configuration value, e.g.
-       * 
+       *
        * DND5E.armorProficiencies = {
           "lgt": "Light Armor",
           "med": "Medium Armor",
           "hvy": "Heavy Armor",
           "shl": "Shields"
          };
-  
+
        * findInConfig('armorProficiencies', 'Medium Armor') returns 'med'
        */
   findInConfig: (section, value) => {
