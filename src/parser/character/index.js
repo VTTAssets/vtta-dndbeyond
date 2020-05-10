@@ -338,10 +338,9 @@ let getArmorClass = (data, character) => {
       );
       equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
       break;
+    default:
+      equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
   }
-
-  // include a base unarmored value, just in case.
-  equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
 
   // lets get the AC for all our non-armored gear, we'll add this later
   const gearAC = getEquippedAC(equippedGear);
