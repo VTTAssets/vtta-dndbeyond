@@ -1,42 +1,42 @@
-import utils from '../../utils.js';
-import DICTIONARY from '../dictionary.js';
+import utils from "../../utils.js";
+import DICTIONARY from "../dictionary.js";
 
-let getSource = data => {
+let getSource = (data) => {
   if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(source => source.id === data.definition.sourceId);
+    let source = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
     if (source) {
       return data.definition.sourcePageNumber ? `${source.name} pg. ${data.definition.sourcePageNumber}` : source.name;
     }
   }
-  return '';
+  return "";
 };
 
 export default function parseFeatures(ddb, character) {
   let items = [];
 
   let characterClasses = ddb.character.classes;
-  characterClasses.forEach(cls => {
+  characterClasses.forEach((cls) => {
     let features = cls.definition.classFeatures.filter(
-      feat =>
-        feat.name !== 'Proficiencies' &&
-        feat.name !== 'Ability Score Improvement' &&
+      (feat) =>
+        feat.name !== "Proficiencies" &&
+        feat.name !== "Ability Score Improvement" &&
         feat.requiredLevel <= cls.level &&
-        !ddb.character.actions.class.some(action => action.name === feat.name)
+        !ddb.character.actions.class.some((action) => action.name === feat.name)
     );
     let source = cls.definition.name;
 
-    features.forEach(feat => {
+    features.forEach((feat) => {
       // filter proficiencies and Ability Score Improvement
       let item = {
         name: feat.name,
-        type: 'feat',
-        data: JSON.parse(utils.getTemplate('feat')),
+        type: "feat",
+        data: JSON.parse(utils.getTemplate("feat")),
       };
 
-      /* description: { 
-          value: '', 
-          chat: '', 
-          unidentified: '' 
+      /* description: {
+          value: '',
+          chat: '',
+          unidentified: ''
       }, */
       item.data.description = {
         value: feat.description,
@@ -52,25 +52,25 @@ export default function parseFeatures(ddb, character) {
     // subclasses
     if (cls.subclassDefinition && cls.subclassDefinition.classFeatures) {
       features = cls.subclassDefinition.classFeatures.filter(
-        feat =>
-          feat.name !== 'Bonus Proficiency' &&
-          feat.name !== 'Ability Score Improvement' &&
+        (feat) =>
+          feat.name !== "Bonus Proficiency" &&
+          feat.name !== "Ability Score Improvement" &&
           feat.requiredLevel <= cls.level
       );
       let subSource = cls.subclassDefinition.name;
 
-      features.forEach(feat => {
+      features.forEach((feat) => {
         // filter proficiencies and Ability Score Improvement
         let item = {
           name: feat.name,
-          type: 'feat',
-          data: JSON.parse(utils.getTemplate('feat')),
+          type: "feat",
+          data: JSON.parse(utils.getTemplate("feat")),
         };
 
-        /* description: { 
-          value: '', 
-          chat: '', 
-          unidentified: '' 
+        /* description: {
+          value: '',
+          chat: '',
+          unidentified: ''
       }, */
         item.data.description = {
           value: feat.description,
@@ -85,12 +85,14 @@ export default function parseFeatures(ddb, character) {
     }
   });
 
-  let feats = ddb.character.feats.filter(feat => !ddb.character.actions.feat.some(action => action.name === feat.name));
-  feats.forEach(feat => {
+  let feats = ddb.character.feats.filter(
+    (feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name)
+  );
+  feats.forEach((feat) => {
     let item = {
       name: feat.definition.name,
-      type: 'feat',
-      data: JSON.parse(utils.getTemplate('feat')),
+      type: "feat",
+      data: JSON.parse(utils.getTemplate("feat")),
     };
 
     item.data.description = {
@@ -104,17 +106,17 @@ export default function parseFeatures(ddb, character) {
     items.push(item);
   });
 
-  let racialTraits = ddb.character.race.racialTraits
+  ddb.character.race.racialTraits
     .filter(
-      trait =>
-        !['Ability Score Increase', 'Age', 'Alignment', 'Size', 'Speed', 'Languages'].includes(trait.definition.name) &&
-        !ddb.character.actions.race.some(action => action.name === trait.definition.name)
+      (trait) =>
+        !["Ability Score Increase", "Age", "Alignment", "Size", "Speed", "Languages"].includes(trait.definition.name) &&
+        !ddb.character.actions.race.some((action) => action.name === trait.definition.name)
     )
-    .forEach(feat => {
+    .forEach((feat) => {
       let item = {
         name: feat.definition.name,
-        type: 'feat',
-        data: JSON.parse(utils.getTemplate('feat')),
+        type: "feat",
+        data: JSON.parse(utils.getTemplate("feat")),
       };
 
       item.data.description = {
