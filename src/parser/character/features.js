@@ -11,7 +11,7 @@ let getSource = (data) => {
   return "";
 };
 
-export default function parseFeatures(ddb, character) {
+export default function parseFeatures(ddb) {
   let items = [];
 
   let characterClasses = ddb.character.classes;
@@ -33,11 +33,6 @@ export default function parseFeatures(ddb, character) {
         data: JSON.parse(utils.getTemplate("feat")),
       };
 
-      /* description: {
-          value: '',
-          chat: '',
-          unidentified: ''
-      }, */
       item.data.description = {
         value: feat.description,
         chat: feat.description,
@@ -67,11 +62,6 @@ export default function parseFeatures(ddb, character) {
           data: JSON.parse(utils.getTemplate("feat")),
         };
 
-        /* description: {
-          value: '',
-          chat: '',
-          unidentified: ''
-      }, */
         item.data.description = {
           value: feat.description,
           chat: feat.description,

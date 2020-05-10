@@ -1,6 +1,5 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
-import parseWeapon from "../inventory/weapon.js";
 
 export default function parseActions(ddb, character) {
   let items = [];
@@ -85,7 +84,7 @@ export default function parseActions(ddb, character) {
             }
           });
 
-          //set the weapon damage
+          // set the weapon damage
           weapon.data.damage = {
             parts: [[die + "+ @mod", "bludgeoning"]],
             versatile: "",
@@ -160,7 +159,7 @@ export default function parseActions(ddb, character) {
     /* actionType: null, */
     weapon.data.actionType = "mwak";
 
-    //set the weapon damage
+    // set the weapon damage
     weapon.data.damage = {
       parts: [["1 + @mod", "bludgeoning"]],
       versatile: "",
@@ -177,11 +176,13 @@ export default function parseActions(ddb, character) {
       const activationType = DICTIONARY.spell.activationTypes.find(
         (type) => type.activationType === action.activation.activationType
       );
-      const activation = (!activationType) ? {} : {
-        type: activationType.value,
-        cost: action.activation.activationTime,
-        condition: "",
-      }
+      const activation = !activationType
+        ? {}
+        : {
+            type: activationType.value,
+            cost: action.activation.activationTime,
+            condition: "",
+          };
 
       return {
         name: action.name,
@@ -201,7 +202,7 @@ export default function parseActions(ddb, character) {
     });
 
   // the first three are already included in the resources tab, so we do not include them again
-  //actions = actions.slice(3, actions.length);
+  // actions = actions.slice(3, actions.length);
   actions.forEach((action) => {
     let feat = {
       name: action.name,
