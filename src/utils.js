@@ -4,6 +4,7 @@ let utils = {
   debug: () => {
     return true;
   },
+  
   findByProperty: (arr, property, searchString) => {
     function levenshtein(a, b) {
       var tmp;
@@ -58,12 +59,14 @@ let utils = {
 
     return nearestHit;
   },
+  
   hasChosenCharacterOption: (data, optionName) => {
     const classOptions = [data.character.options.race, data.character.options.class, data.character.options.feat]
       .flat()
       .find((option) => option.definition.name === optionName);
     return !!classOptions;
   },
+  
   filterBaseModifiers: (data, type, subType = null, restriction = ["", null]) => {
     const modifiers = [
       data.character.modifiers.class,
@@ -82,6 +85,7 @@ let utils = {
 
     return modifiers;
   },
+  
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
     const modifiers = data.character.inventory
@@ -97,9 +101,11 @@ let utils = {
 
     return modifiers;
   },
+  
   calculateModifier: (val) => {
     return Math.floor((val - 10) / 2);
   },
+  
   parseDiceString: (str, mods = "") => {
     // sanitizing possible inputs a bit
     str = str.toLowerCase().replace(/-–−/g, "-").replace(/\s/g, "");
@@ -279,6 +285,7 @@ let utils = {
     }
     return undefined;
   },
+  
   uploadImage: async function (url, targetDirectory, baseFilename) {
     async function download(url) {
       return new Promise((resolve, reject) => {
@@ -373,6 +380,7 @@ let utils = {
       return null;
     }
   },
+  
   getFolder: async (kind, type = "", race = "") => {
     let getOrCreateFolder = async (root, entityType, folderName) => {
       const baseColor = "#98020a";
@@ -437,6 +445,86 @@ let utils = {
       return entityFolder;
     }
   },
+  
+  
+  normalizeString: (str) => {
+    return str.toLowerCase().replace(/\W/g, "");
+  },
+
+  /**
+   * Queries a compendium for a given entity name
+   * @returns the index entries of all matches, otherwise an empty array
+   */
+  queryCompendium: async (compendiumName, entityName) => {
+    entityName = utils.normalizeString(entityName);
+
+    let compendium = game.packs.find(
+      (pack) => pack.collection === compendiumName
+    );
+    if (!compendium) return null;
+    let index = await compendium.getIndex();
+    let entity = index.find(
+      (entity) => utils.normalizeString(entity.name) === entityName
+    );
+    return entity;
+  },
+
+  /**
+   * Creates or updates a given entity
+   */
+  createCompendiumEntry: async (
+    compendiumName,
+    entity,
+    updateExistingEntry = false
+  ) => {
+    let compendium = game.packs.find(
+      (pack) => pack.collection === compendiumName
+    );
+
+    if (!compendium) return null;
+
+    let existingEntry = await utils.queryCompendium(
+      compendiumName,
+      entity.name
+    );
+    if (existingEntry) {
+      console.log("Entry exists already:");
+      console.log(existingEntry);
+      if (updateExistingEntry) {
+        // update all existing entries
+        existingEntry = await compendium.updateEntity({
+          ...entity.data,
+          _id: existingEntry._id,
+        });
+
+        return {
+          _id: existingEntry._id,
+          img: existingEntry.img,
+          name: existingEntry.name,
+        };
+      } else {
+        console.log("Update: no");
+        return existingEntry;
+      }
+    } else {
+      console.log("Entry does not exist");
+      let compendiumEntry = await compendium.createEntity(entity.data);
+      console.log(compendiumEntry);
+      return {
+        _id: compendiumEntry._id,
+        img: compendiumEntry.img,
+        name: compendiumEntry.name,
+      };
+    }
+  },
+
+  getFolderHierarchy: (folder) => {
+    if (!folder || !folder._parent) return "/";
+    return folder._parent._id !== null
+      ? `${utils.getFolderHierarchy(folder._parent)}/${folder.name}`
+      : `/${folder.name}`;
+  },
+  
   log: (msg, section = "general") => {
     const LOG_PREFIX = "VTTA D&D Beyond";
     if (

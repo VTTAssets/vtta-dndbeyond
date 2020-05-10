@@ -31,12 +31,8 @@
     }
   ],
   "systems": ["dnd5e"],
-  "esmodules": ["src/index.js", "./src/dndbeyond/index.js"],
-  "styles": [
-    "./css/module-settings.css",
-    "./css/default.css",
-    "./src/character/import.css"
-  ],
+  "esmodules": ["src/index.js"],
+  "styles": ["./css/module-settings.css", "./css/default.css", "./src/character/import.css", "./css/sidebar.css"],
   "packs": [],
   "url": "https://www.vttassets.com/asset/vtta-dndbeyond",
   "manifest": "https://www.vttassets.com/manifest/vtta-dndbeyond/latest?5d6e51d59834bf61c4ace7ef",

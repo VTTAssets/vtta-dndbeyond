@@ -74,10 +74,8 @@ let addSpell = (body) => {
     }
     if (cleanupAfterImport) {
       await spell.delete();
-      resolve(null);
-    } else {
-      resolve(spell.data);
     }
+    resolve(spell.data);
   });
 };
 

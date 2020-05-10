@@ -327,11 +327,15 @@ let getArmorClass = (data, character) => {
   // modifier is set differently
   switch (data.character.race.fullName) {
     case "Lizardfolk":
-      baseAC = Math.max(getUnarmoredAC(data.character.modifiers.race, character));
+      baseAC = Math.max(
+        getUnarmoredAC(data.character.modifiers.race, character)
+      );
       equippedArmor.push(getBaseArmor(baseAC, "Light Armor"));
       break;
     case "Tortle":
-      baseAC = Math.max(getMinimumBaseAC(data.character.modifiers.race, character));
+      baseAC = Math.max(
+        getMinimumBaseAC(data.character.modifiers.race, character)
+      );
       equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
       break;
   }
@@ -426,7 +430,8 @@ let getHitpoints = (data, character) => {
   const hitPointsPerLevel = utils
     .filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
-  baseHitPoints += hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
+  baseHitPoints +=
+    hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
 
   return {
     value:
@@ -1282,8 +1287,10 @@ let getSpellSlots = (data) => {
         if (["Warlock", "Blood Hunter"].includes(name)) {
           // pact casting doesn't count towards multiclass spells casting
           // we still add an entry to get cantrip info
-          const levelSpellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
-          const maxLevel = levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
+          const levelSpellSlots =
+            cls.definition.spellRules.levelSpellSlots[casterLevel];
+          const maxLevel =
+            levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
           const maxSlots = Math.max(...levelSpellSlots);
           const currentSlots = data.character.pactMagic.find((pact) => pact.level === maxLevel).used;
           spellSlots.pact = { value: maxSlots - currentSlots, max: maxSlots };
