@@ -269,10 +269,10 @@ export default function parseWeapon(data, character) {
     character.flags.vtta.dndbeyond.proficiencies
   );
 
-  /* description: { 
-            value: '', 
-            chat: '', 
-            unidentified: '' 
+  /* description: {
+            value: '',
+            chat: '',
+            unidentified: ''
         }, */
   weapon.data.description = {
     value: data.definition.description,

@@ -96,10 +96,10 @@ export default function parseTool(data, character) {
   // well. How should I know how YOU are using those tools. By pure intellect? Or with your hands?
   tool.data.ability = "dex";
 
-  /* description: { 
-       value: '', 
-       chat: '', 
-       unidentified: '' 
+  /* description: {
+       value: '',
+       chat: '',
+       unidentified: ''
    }, */
   tool.data.description = {
     value: data.definition.description,

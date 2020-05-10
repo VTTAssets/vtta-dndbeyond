@@ -281,10 +281,10 @@ export default function parseStaff(data, character) {
     character.flags.vtta.dndbeyond.proficiencies
   );
 
-  /* description: { 
-            value: '', 
-            chat: '', 
-            unidentified: '' 
+  /* description: {
+            value: '',
+            chat: '',
+            unidentified: ''
         }, */
   weapon.data.description = {
     value: data.definition.description,
