@@ -34,7 +34,7 @@ const getFolder = async (structure, entityName, sourcebook) => {
     return folder;
   };
 
-  parent = null;
+  let parent = null;
   for (let i = 0; i < structure.length; i++) {
     console.log("FOLDER: " + structure[i]);
     parent = await getOrCreateFolder(parent, structure[i], sourcebook);

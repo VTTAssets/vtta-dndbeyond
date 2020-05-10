@@ -17,6 +17,7 @@ const gameFolderLookup = [
   {
     type: "itemSpells",
     folder: "magic-items",
+    itemType: "spell",
   },
 ];
 
@@ -50,6 +51,7 @@ export default class CharacterImport extends Application {
     this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
   }
+
   /**
    * Define default options for the PartySummary application
    */
@@ -63,15 +65,15 @@ export default class CharacterImport extends Application {
     return options;
   }
 
-  showCurrentTask(html, title, message = null, isError = false) {
+  static showCurrentTask(html, title, message = null, isError = false) {
     let element = $(html).find(".task-name");
     element.html(`<h2 ${isError ? " class='error'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
     $(html).parent().parent().css("height", "auto");
   }
 
-  async copyFlags(flagGroup, originalItem, targetItem) {
+  static async copyFlags(flagGroup, originalItem, targetItem) {
     if (targetItem.flags === undefined) targetItem.flags = {};
-    if (!!originalItem.flags && !!originalItem.flags[flagGroup]) {
+    if (originalItem.flags && !!originalItem.flags[flagGroup]) {
       console.log(`Copying ${flagGroup} for ${originalItem.name}`);
       targetItem.flags[flagGroup] = originalItem.flags.dynamiceffects;
     }
@@ -86,8 +88,8 @@ export default class CharacterImport extends Application {
       const originalItem = this.actorOriginal.items.find(
         (originalItem) => item.name === originalItem.name && item.type === originalItem.type
       );
-      if (!!originalItem) {
-        this.copyFlags("dynamiceffects", originalItem, item);
+      if (originalItem) {
+        CharacterImport.copyFlags("dynamiceffects", originalItem, item);
       }
     });
   }
@@ -97,56 +99,91 @@ export default class CharacterImport extends Application {
    * @param {*} type
    */
   async updateCompendium(type) {
-    let importPolicy = game.settings.get("vtta-dndbeyond", "entity-import-policy");
-    let items = [];
+    const importPolicy = game.settings.get("vtta-dndbeyond", "entity-import-policy");
+    const compendiumName = compendiumLookup.find((c) => c.type == type).compendium;
+    const compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
+    const compendium = await game.packs.find((pack) => pack.collection === compendiumLabel);
 
     if (game.user.isGM && importPolicy !== 2) {
-      // we are updating inventory and spells only
+      const initialIndex = await compendium.getIndex();
+      // remove duplicate items based on name and type
+      const compendiumItems = [...new Map(this.result[type].map((item) => [item["name"] + item["type"], item])).values()];
 
-      // compendiumLookup
-      let compendiumName = compendiumLookup.find((c) => c.type == type).compendium;
-      let compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
-      let compendium = await game.packs.find((pack) => pack.collection === compendiumLabel);
+      const updateItems = async() => {
+        if (importPolicy === 0) {
+          return Promise.all(
+            compendiumItems.filter((item) =>
+              initialIndex.some((idx) => idx.name === item.name)
+            )
+            .map(async (item) => {
+              const entry = await compendium.index.find((idx) => idx.name === item.name);
+              console.log("Updating " + entry.name);
+              const existing = await compendium.getEntity(entry._id);
+              item._id = existing._id;
+              await compendium.updateEntity(item);
+              return item;
+            })
+          );
+        } else {
+          return Promise.all([]);
+        }
+      };
 
-      if (compendium) {
-        const index = await compendium.getIndex();
+      const createItems = async() => {
+        return Promise.all(
+          compendiumItems.filter((item) =>
+            !initialIndex.some((idx) => idx.name === item.name)
+          )
+          .map(
+            async (item) => {
+              console.log("Creating " + item.name);
+              const newItem = await Item.create(item, {
+                temporary: true,
+                displaySheet: false,
+              });
+              await compendium.importEntity(newItem);
+              return newItem;
+          })
+        );
+      };
 
-        for (let i = 0; i < this.result[type].length; i++) {
-          const item = this.result[type][i];
-          let result;
-          utils.log(`Processing item ${item.name} in compendium ${compendiumLabel}`, "character");
+      await updateItems();
+      await createItems();
 
-          // search the compendium for this item
-          let searchResult = index.find((i) => i.name === item.name);
-          if (searchResult && importPolicy === 0) {
-            item._id = searchResult._id;
-            // update seems to return an array, and without our img
-            await compendium.updateEntity(item);
-            // sp lets fetch afterwards!
-            result = await compendium.getEntity(searchResult._id);
-          } else if (searchResult) {
-            result = await compendium.getEntity(searchResult._id);
-          } else if (!searchResult) {
-            // create the item first
-            const newItem = await Item.create(item, {
-              temporary: true,
-              displaySheet: false,
-            });
-            result = await compendium.importEntity(newItem);
-          }
+      const updatedIndex = await compendium.getIndex();
+      const getItems = async() => {
+        return Promise.all(
+          this.result[type].map(async (item) => {
+            const searchResult = await updatedIndex.find((idx) => idx.name === item.name);
+            if (!searchResult) {
+              console.warn(`Couldn't find ${item.name} in the compendium`);
+              return null;
+            } else {
+              const entity = compendium.getEntity(searchResult._id);
+              return entity;
+            }
+          })
+        );
+      };
 
-          const itemUpdate = {
+      // lets generate our compendium info like id, pack and img for use
+      // by things like magicitems
+      const items = getItems().then((entries) => {
+        const results = entries.map((result) => {
+          return {
             _id: result._id,
             id: result._id,
             pack: compendium.collection,
             img: result.img,
-            name: item.name,
+            name: result.name,
           };
-          items.push(itemUpdate);
-        }
-      }
+        });
+        return results;
+      });
+
+      return items;
     }
-    return items;
+    return [];
   }
 
   /**
@@ -154,42 +191,68 @@ export default class CharacterImport extends Application {
    * @param {*} type
    */
   async updateFolderItems(type) {
-    let items = [];
+    const folderLookup = gameFolderLookup.find((c) => c.type == type);
+    const magicItemsFolder = await utils.getFolder(folderLookup.folder);
+    const existingItems = await game.items.entities.filter(
+      (item) =>
+      item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id
+    );
 
-    // compendiumLookup
-    const folderName = gameFolderLookup.find((c) => c.type == type).folder;
-    const magicItemsFolder = await utils.getFolder(folderName);
-
-    for (let spell of this.result.itemSpells) {
-      let existingSpell = game.items.entities.find(
-        (item) => item.name === spell.name && item.type === "spell" && item.data.folder === magicItemsFolder._id
+    // update or create folder items
+    const updateItems = async() => {
+      return Promise.all(
+        this.result[type].filter((item) =>
+          existingItems.some((idx) => idx.name === item.name)
+        )
+        .map(async (item) => {
+          const existingItem = await existingItems.find((existing) => item.name === existing.name);
+          console.log("Updating " + existingItem.name);
+          item._id = existingItem._id;
+          await Item.update(item);
+          return item;
+        })
       );
-      if (existingSpell === undefined) {
-        if (!game.user.can("ITEM_CREATE")) {
-          ui.notifications.warn(`Cannot create spell ${spell.name} for Magic Items items`);
-        } else {
-          spell.folder = magicItemsFolder._id;
-          await Item.create(spell);
-        }
-      } else {
-        spell._id = existingSpell._id;
-        await Item.update(spell);
-      }
+    };
 
-      const result = await game.items.entities.find(
-        (item) => item.name === spell.name && item.type === "spell" && item.data.folder === magicItemsFolder._id
+    const createItems = async() => {
+      return Promise.all(
+        this.result[type].filter((item) =>
+          !existingItems.some((idx) => idx.name === item.name)
+        )
+        .map(
+          async (item) => {
+            if (!game.user.can("ITEM_CREATE")) {
+              ui.notifications.warn(`Cannot create ${folderLookup.type} ${item.name} for ${type}`);
+            } else {
+              console.log("Creating " + item.name);
+              item.folder = magicItemsFolder._id;
+              await Item.create(item);
+            }
+            return item;
+        })
       );
+    };
 
-      const itemUpdate = {
-        _id: result._id,
-        id: result._id,
-        pack: "world",
-        img: result.img,
-        name: result.name,
-      };
-      items.push(itemUpdate);
-    }
+    await updateItems();
+    await createItems();
 
+    // lets generate our compendium info like id, pack and img for use
+    // by things like magicitems
+    const items = Promise.all(
+      game.items.entities
+      .filter((item) =>
+        item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id
+      )
+      .map((result) => {
+        return {
+          _id: result._id,
+          id: result._id,
+          pack: "world",
+          img: result.img,
+          name: result.name,
+        };
+      })
+    );
     return items;
   }
 
@@ -203,7 +266,7 @@ export default class CharacterImport extends Application {
    * - inventory: consumable, loot, tool and backpack
    * - spell
    */
-  clearItemsByUserSelection = async () => {
+  async clearItemsByUserSelection() {
     let invalidItemTypes = [];
     if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) invalidItemTypes.push("class");
     if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) invalidItemTypes.push("feat");
@@ -218,7 +281,7 @@ export default class CharacterImport extends Application {
     let toRemove = ownedItems.filter((item) => invalidItemTypes.includes(item.type)).map((item) => item._id);
     await this.actor.deleteEmbeddedEntity("OwnedItem", toRemove);
     return toRemove;
-  };
+  }
 
   /* -------------------------------------------- */
 
@@ -288,14 +351,14 @@ export default class CharacterImport extends Application {
           if (!data.character) data.character = data;
         } catch (error) {
           if (error.message === "Unexpected end of JSON input") {
-            this.showCurrentTask(
+            CharacterImport.showCurrentTask(
               html,
               "JSON invalid",
               "I could not parse your JSON data because it was cut off. Make sure to wait for the page to stop loading before copying the data into your clipboard.",
               true
             );
           } else {
-            this.showCurrentTask(html, "JSON invalid", error.message, true);
+            CharacterImport.showCurrentTask(html, "JSON invalid", error.message, true);
           }
           return false;
         }
@@ -309,7 +372,7 @@ export default class CharacterImport extends Application {
           console.log(`**VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`);
           console.log(error);
           console.log("%c ##########################################", "color: #ff0000");
-          this.showCurrentTask(
+          CharacterImport.showCurrentTask(
             html,
             "I guess you are special!",
             "We had trouble understanding this character. But you can help us to improve! Please <ul><li>open the console with F12</li><li>search for a block of text starting with #### PLEASE PASTE TO #parsing-errors #####</li><li>save the JSON as a text file and submit it along with the error message to <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!",
@@ -332,10 +395,10 @@ export default class CharacterImport extends Application {
           data.character.avatarUrl &&
           data.character.avatarUrl !== ""
         ) {
-          this.showCurrentTask(html, "Uploading avatar image");
+          CharacterImport.showCurrentTask(html, "Uploading avatar image");
           let filename = data.character.name
             .replace(/[^a-zA-Z]/g, "-")
-            .replace(/\-+/g, "-")
+            .replace(/-+/g, "-")
             .trim();
 
           let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
@@ -345,31 +408,30 @@ export default class CharacterImport extends Application {
         }
 
         // basic import
-        this.showCurrentTask(html, "Updating basic character information");
+        CharacterImport.showCurrentTask(html, "Updating basic character information");
         await this.actor.update(this.result.character);
 
         // // clear items
-        this.showCurrentTask(html, "Clearing inventory");
-        let clearedItems = await this.clearItemsByUserSelection();
+        CharacterImport.showCurrentTask(html, "Clearing inventory");
+        await this.clearItemsByUserSelection();
 
         // store all spells in the folder specific for Dynamic Items
         if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
+          CharacterImport.showCurrentTask(html, "Preparing magicitem spells");
           const itemSpells = await this.updateFolderItems("itemSpells");
           // scan the inventory for each item with spells and copy the imported data over
           this.result.inventory.forEach((item) => {
             if (item.flags.magicitems.spells) {
               for (let [i, spell] of Object.entries(item.flags.magicitems.spells)) {
                 const itemSpell = itemSpells.find((item) => item.name === spell.name);
-                if (itemSpell)
+                if (itemSpell) {
                   for (const [key, value] of Object.entries(itemSpell)) {
                     item.flags.magicitems.spells[i][key] = value;
                   }
-                else {
-                  if (!game.user.can("ITEM_CREATE")) {
-                    ui.notifications.warn(
-                      `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
-                    );
-                  }
+                } else if (!game.user.can("ITEM_CREATE")) {
+                  ui.notifications.warn(
+                    `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
+                  );
                 }
               }
             }
@@ -377,6 +439,7 @@ export default class CharacterImport extends Application {
         }
 
         // Update compendium packs with spells and inventory
+        CharacterImport.showCurrentTask(html, "Updating compendium(s)");
         this.updateCompendium("inventory");
         this.updateCompendium("spells");
 
@@ -391,24 +454,28 @@ export default class CharacterImport extends Application {
           items = items.flat();
         }
 
+        CharacterImport.showCurrentTask(html, "Copying existing flags");
         await this.copySupportedItemFlags(items);
 
         utils.log("Character items", "character");
         utils.log(items, "character");
 
-        let itemImportResult = await this.actor.createEmbeddedEntity("OwnedItem", items, {
+        CharacterImport.showCurrentTask(html, "Adding items to character");
+        await this.actor.createEmbeddedEntity("OwnedItem", items, {
           displaySheet: false,
         });
 
         // We loop back over the spell slots to update them to our computed
         // available value as per DDB.
+        CharacterImport.showCurrentTask(html, "Updating spell slots");
         for (const [type, info] of Object.entries(this.result.character.data.spells)) {
-          await this.actor.update({
+          this.actor.update({
             [`data.spells.${type}.value`]: parseInt(info.value),
           });
         }
 
         this.close();
+        return true;
       });
 
     $(html)
@@ -419,7 +486,7 @@ export default class CharacterImport extends Application {
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith('<i class="fas fa-check-circle" style="color: green"></i>');
-          this.showCurrentTask(html, "Saving reference");
+          CharacterImport.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
               vtta: {
@@ -429,9 +496,14 @@ export default class CharacterImport extends Application {
               },
             },
           });
-          this.showCurrentTask(html, "Status");
+          CharacterImport.showCurrentTask(html, "Status");
         } else {
-          this.showCurrentTask(html, "URL format incorrect", "That seems not to be the URL we expected...", true);
+          CharacterImport.showCurrentTask(
+            html,
+            "URL format incorrect",
+            "That seems not to be the URL we expected...",
+            true
+          );
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith('<i class="fas fa-exclamation-triangle" style="color:red"></i>');
