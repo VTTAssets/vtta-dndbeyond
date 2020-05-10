@@ -3,14 +3,14 @@ SettingsExtender();
 
 export default function () {
   const actorCompendiums = game.packs
-    .filter(pack => pack.entity === "Actor")
+    .filter((pack) => pack.entity === "Actor")
     .reduce((choices, pack) => {
       choices[pack.collection] = pack.metadata.label;
       return choices;
     }, {});
 
   const itemCompendiums = game.packs
-    .filter(pack => pack.entity === "Item")
+    .filter((pack) => pack.entity === "Item")
     .reduce((choices, pack) => {
       choices[pack.collection] = pack.metadata.label;
       return choices;
@@ -23,7 +23,7 @@ export default function () {
     hint: "vtta-dndbeyond.image-upload-directory.hint",
     scope: "world",
     config: true,
-    //type: String,
+    // type: String,
     type: Azzu.SettingsTypes.DirectoryPicker,
     default: "",
   });
