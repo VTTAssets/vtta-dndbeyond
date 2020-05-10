@@ -9,52 +9,6 @@ let SettingsExtender = () => {
     patch: 1,
   };
 
-  window.Azzu = window.Azzu || {};
-  registerSettingsTypes();
-  extendSettingsWindow();
-
-  // Definitions
-
-  /**
-   * Collection of utility methods whose only purpose it is to maintain backwards compatibility.
-   */
-  class Compatibility {
-    /**
-     * Compatibility for <0.5.3
-     *
-     * @param data SettingsConfig.getData() object
-     * @returns data.settings.modules or data.modules
-     */
-    static getSettingsConfigModules(data) {
-      return data.settings && data.settings.modules
-        ? data.settings.modules
-        : data.modules;
-    }
-
-    /**
-     * Compatibility for <0.5.3
-     *
-     * @param key the key of the game setting
-     * @returns the game setting object
-     */
-    static getGameSettting(key) {
-      const settings = game.settings.settings;
-      if (settings instanceof Map) {
-        return settings.get(key);
-      } else {
-        return settings[key];
-      }
-    }
-  }
-
-  function registerSettingsTypes() {
-    if (window.Azzu.SettingsTypes) {
-      return;
-    }
-
-    window.Azzu.SettingsTypes = createExtraInputTypes();
-  }
-
   function createExtraInputTypes() {
     const MODIFIERS = {
       ctrlKey: "Ctrl + ",
@@ -262,6 +216,10 @@ let SettingsExtender = () => {
       FilePicker.format = (val) => val;
     });
 
+    function DirectoryPicker(val) {
+      return val;
+    }
+
     class DirPicker extends FilePicker {
       constructor(options) {
         super(options);
@@ -292,8 +250,6 @@ let SettingsExtender = () => {
       }
 
       _addOnClick($selectButton, path) {
-        const activeSource = this.activeSource;
-        const bucket = this.bucket;
         $selectButton.click((event) => {
           event.stopPropagation();
           if (this.activeSource === "s3") {
@@ -311,10 +267,6 @@ let SettingsExtender = () => {
           this.close();
         });
       }
-    }
-
-    function DirectoryPicker(val) {
-      return val;
     }
 
     DirectoryPicker.parse = (val) => {
@@ -395,28 +347,44 @@ let SettingsExtender = () => {
     };
   }
 
-  function isNewestVersionEnabled() {
-    const existingClass = window.Azzu.ExtendedSettingsConfig;
-    if (!existingClass) return false;
+  function registerSettingsTypes() {
+    if (window.Azzu.SettingsTypes) {
+      return;
+    }
 
-    const oldVersion = existingClass.settingsExtenderVersion;
-    if (!oldVersion) return false;
-
-    const curVersion = SETTINGS_EXTENDER_VERSION;
-    return (
-      oldVersion.major < curVersion.major ||
-      oldVersion.minor < curVersion.minor ||
-      oldVersion.patch < curVersion.patch
-    );
+    window.Azzu.SettingsTypes = createExtraInputTypes();
   }
 
-  function extendSettingsWindow() {
-    Hooks.once("ready", () => {
-      if (isNewestVersionEnabled()) return;
+  /**
+   * Collection of utility methods whose only purpose it is to maintain backwards compatibility.
+   */
+  class Compatibility {
+    /**
+     * Compatibility for <0.5.3
+     *
+     * @param data SettingsConfig.getData() object
+     * @returns data.settings.modules or data.modules
+     */
+    static getSettingsConfigModules(data) {
+      return data.settings && data.settings.modules
+        ? data.settings.modules
+        : data.modules;
+    }
 
-      window.Azzu.ExtendedSettingsConfig = ExtendedSettingsConfig;
-      game.settings._sheet = new ExtendedSettingsConfig(game.settings.settings);
-    });
+    /**
+     * Compatibility for <0.5.3
+     *
+     * @param key the key of the game setting
+     * @returns the game setting object
+     */
+    static getGameSettting(key) {
+      const settings = game.settings.settings;
+      if (settings instanceof Map) {
+        return settings.get(key);
+      } else {
+        return settings[key];
+      }
+    }
   }
 
   class ExtendedSettingsConfig extends SettingsConfig {
@@ -466,6 +434,34 @@ let SettingsExtender = () => {
       });
     }
   }
+
+  function isNewestVersionEnabled() {
+    const existingClass = window.Azzu.ExtendedSettingsConfig;
+    if (!existingClass) return false;
+
+    const oldVersion = existingClass.settingsExtenderVersion;
+    if (!oldVersion) return false;
+
+    const curVersion = SETTINGS_EXTENDER_VERSION;
+    return (
+      oldVersion.major < curVersion.major ||
+      oldVersion.minor < curVersion.minor ||
+      oldVersion.patch < curVersion.patch
+    );
+  }
+
+  function extendSettingsWindow() {
+    Hooks.once("ready", () => {
+      if (isNewestVersionEnabled()) return;
+
+      window.Azzu.ExtendedSettingsConfig = ExtendedSettingsConfig;
+      game.settings._sheet = new ExtendedSettingsConfig(game.settings.settings);
+    });
+  }
+
+  window.Azzu = window.Azzu || {};
+  registerSettingsTypes();
+  extendSettingsWindow();
 };
 
 export default SettingsExtender;
