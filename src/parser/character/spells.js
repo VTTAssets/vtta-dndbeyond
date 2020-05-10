@@ -574,7 +574,7 @@ let getSpellCastingAbility = (classInfo) => {
   return spellCastingAbility;
 };
 
-let getEldritchInvocations = (data, character) => {
+let getEldritchInvocations = (data) => {
   let damage = 0;
   let range = 0;
 
@@ -603,30 +603,33 @@ let getEldritchInvocations = (data, character) => {
   };
 };
 
-let fixSpells = (ddb, spells) => {
-  // Eldritch Blast is a special little kitten and has some fun Eldritch
-  // Invocations which can adjust it.
-  spells = spells
-    .filter((spell) => spell.name === "Eldritch Blast")
-    .map((eb) => {
-      const eldritchBlastMods = getEldritchInvocations(ddb, character);
-      eb.data.damage.parts[0][0] += " + " + eldritchBlastMods["damage"];
-      eb.data.range.value += eldritchBlastMods["range"];
-      eb.data.range.long += eldritchBlastMods["range"];
-    });
+/**
+ * Some spells we need to fix up or massage because they are modified
+ * in interesting ways
+ * @param {*} ddb
+ * @param {*} items
+ */
+let fixSpells = (ddb, items) => {
 
-  // The target/range input data are incorrect on some AOE spells centreted
-  // on self.
-  // Range is self with an AoE target of 15 ft cube
-  // i.e. affects all creatures within 5 ft of caster
-  spells = spells
-    .filter((spell) => spell.name === "Thunderclap" || spell.name === "Word of Radiance")
-    .map((tc) => {
-      tc.data.range = { value: null, units: "self", long: null };
-      tc.data.target = { value: "15", units: "ft", type: "cube" };
-    });
-
-  return spells;
+  items.forEach(spell => {
+    switch(spell.name) {
+      // Eldritch Blast is a special little kitten and has some fun Eldritch
+      // Invocations which can adjust it.
+      case "Eldritch Blast":
+        const eldritchBlastMods = getEldritchInvocations(ddb);
+        spell.data.damage.parts[0][0] += " + " + eldritchBlastMods["damage"];
+        spell.data.range.value += eldritchBlastMods["range"];
+        break;
+      // The target/range input data are incorrect on some AOE spells centreted
+      // on self.
+      // Range is self with an AoE target of 15 ft cube
+      // i.e. affects all creatures within 5 ft of caster
+      case "Thunderclap":
+      case "Word of Radiance":
+        spell.data.range = { value: null, units: "self", long: null };
+        spell.data.target = { value: "15", units: "ft", type: "cube" };
+    }
+  })
 };
 
 let getLookups = (character) => {
@@ -961,8 +964,7 @@ export default function parseSpells(ddb, character) {
     items.push(parseSpell(spell, character));
   });
 
-  // is this needed twice?
-  // fixSpells(items);
+  if (items) fixSpells(ddb, items);
 
   return items;
 }
@@ -1016,10 +1018,11 @@ export function parseItemSpells(ddb, character) {
         },
       },
     };
+
     items.push(parseSpell(spell, character));
   });
 
-  items = fixSpells(ddb, items);
+  if (items) fixSpells(ddb, items);
 
   return items;
 }
