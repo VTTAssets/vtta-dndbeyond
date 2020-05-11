@@ -22,7 +22,7 @@ let getArmorType = data => {
   }, 0);
 
   // get the max dex modifier (Medium Armor: 2, Heavy: 0)
-  let maxDexModifier 
+  let maxDexModifier
   switch (data.definition.type) {
     case "Heavy Armor":
       maxDexModifier = 0;
@@ -161,7 +161,7 @@ export default function parseArmor(data, character) {
     }
   };
 
-  /* 
+  /*
     "armor": {
         "type": "light",
         "value": 10,
@@ -181,10 +181,10 @@ export default function parseArmor(data, character) {
     character.flags.vtta.dndbeyond.proficiencies
   );
 
-  /* description: { 
-            value: '', 
-            chat: '', 
-            unidentified: '' 
+  /* description: {
+            value: '',
+            chat: '',
+            unidentified: ''
         }, */
   armor.data.description = {
     value: data.definition.description,

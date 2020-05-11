@@ -22,7 +22,7 @@ let getUses = data => {
   } else {
     return { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
   };
-  
+
 };
 
 /**
@@ -135,10 +135,10 @@ export default function parsePotion(data, character) {
   consumable.data.consumableType = "potion";
   consumable.data.uses = getUses(data);
 
-  /* description: { 
-        value: '', 
-        chat: '', 
-        unidentified: '' 
+  /* description: {
+        value: '',
+        chat: '',
+        unidentified: ''
     }, */
   consumable.data.description = {
     value: data.definition.description,

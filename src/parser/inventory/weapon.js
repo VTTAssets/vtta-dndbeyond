@@ -168,7 +168,7 @@ let getAbility = (weaponProperties, weaponRange, abilities) => {
 /**
  * Searches for a magical attack bonus granted by this weapon
  * @param {obj} data item data
- * @param {obj} flags 
+ * @param {obj} flags
  */
 let getMagicalBonus = (data, flags) => {
   const boni = data.definition.grantedModifiers.filter(
@@ -189,7 +189,7 @@ let getMagicalBonus = (data, flags) => {
 /**
  *
  * @param {obj} data item data
- * @param {obj} flags 
+ * @param {obj} flags
  * /* damage: { parts: [], versatile: '' }, * /
  */
 let getDamage = (data, flags) => {
@@ -259,7 +259,7 @@ let getDamage = (data, flags) => {
   if (flags.damage.parts) {
     flags.damage.parts.forEach(part => {
       parts.push(part);
-    }); 
+    });
   }
 
   const result = {
@@ -326,10 +326,10 @@ export default function parseWeapon(data, character, flags) {
     );
   }
 
-  /* description: { 
-            value: '', 
-            chat: '', 
-            unidentified: '' 
+  /* description: {
+            value: '',
+            chat: '',
+            unidentified: ''
         }, */
   weapon.data.description = {
     value: data.definition.description,

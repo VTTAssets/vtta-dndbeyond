@@ -58,10 +58,10 @@ export default function parseLoot(data, character) {
     }
   };
 
-  /* description: { 
-        value: '', 
-        chat: '', 
-        unidentified: '' 
+  /* description: {
+        value: '',
+        chat: '',
+        unidentified: ''
     }, */
   loot.data.description = {
     value: data.definition.description,
