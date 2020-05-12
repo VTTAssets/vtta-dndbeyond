@@ -317,7 +317,15 @@ let getArmorClass = (data, character) => {
   }
 
   // Generic AC bonuses like Warforfed Integrated Protection
-  utils.filterBaseModifiers(data, "bonus", "armor-class").forEach((bonus) => {
+  // item modifiers are loaded by ac calcs
+  const miscModifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.feat,
+  ];
+
+  utils.filterModifiers(miscModifiers, "bonus", "armor-class").forEach((bonus) => {
     miscACBonus += bonus.value;
   });
 

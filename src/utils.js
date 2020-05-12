@@ -67,25 +67,6 @@ let utils = {
     return !!classOptions;
   },
 
-  filterBaseModifiers: (data, type, subType = null, restriction = ["", null]) => {
-    const modifiers = [
-      data.character.modifiers.class,
-      data.character.modifiers.race,
-      data.character.modifiers.background,
-      data.character.modifiers.feat,
-      utils.getActiveItemModifiers(data),
-    ]
-      .flat()
-      .filter(
-        (modifier) =>
-          modifier.type === type &&
-          (subType !== null ? modifier.subType === subType : true) &&
-          restriction.includes(modifier.restriction)
-      );
-
-    return modifiers;
-  },
-
   getActiveItemModifiers: (data) => {
     // get items we are going to interact on
     const modifiers = data.character.inventory
@@ -100,6 +81,29 @@ let utils = {
       .flatMap((item) => item.definition.grantedModifiers);
 
     return modifiers;
+  },
+
+  filterModifiers: (modifiers, type, subType = null, restriction = ["", null]) => {
+    return modifiers
+    .flat()
+    .filter(
+      (modifier) =>
+        modifier.type === type &&
+        (subType !== null ? modifier.subType === subType : true) &&
+        restriction.includes(modifier.restriction)
+    );
+  },
+
+  filterBaseModifiers: (data, type, subType = null, restriction = ["", null]) => {
+    const modifiers = [
+      data.character.modifiers.class,
+      data.character.modifiers.race,
+      data.character.modifiers.background,
+      data.character.modifiers.feat,
+      utils.getActiveItemModifiers(data),
+    ];
+
+    return utils.filterModifiers(modifiers, type, subType, restriction);
   },
 
   calculateModifier: (val) => {
