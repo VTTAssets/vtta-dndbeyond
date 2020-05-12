@@ -131,14 +131,17 @@ let getAbilities = (data, character) => {
     const stat = data.character.stats.find((stat) => stat.id === ability.id).value || 0;
     const bonusStat = data.character.bonusStats.find((stat) => stat.id === ability.id).value || 0;
     const overrideStat = data.character.overrideStats.find((stat) => stat.id === ability.id).value || 0;
-
+    const abilityScoreMaxBonus = utils
+      .filterBaseModifiers(data, "bonus", "ability-score-maximum")
+      .filter((mod) => mod.statId === ability.id)
+      .reduce((prev, cur) => prev + cur.value, 0);
     const bonus = utils
       .filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter((mod) => mod.entityId === ability.id)
       .reduce((prev, cur) => prev + cur.value, 0);
 
     // calculate value, mod and proficiency
-    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus : overrideStat;
+    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
     result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
     result[ability.value].proficient =
       data.character.modifiers.class.find(
