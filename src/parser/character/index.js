@@ -317,8 +317,7 @@ let getArmorClass = (data, character) => {
   }
 
   // Generic AC bonuses like Warforfed Integrated Protection
-  utils.filterBaseModifiers(data, "bonus", "armor-class").forEach(
-    bonus => {
+  utils.filterBaseModifiers(data, "bonus", "armor-class").forEach((bonus) => {
     miscACBonus += bonus.value;
   });
 
@@ -327,15 +326,11 @@ let getArmorClass = (data, character) => {
   // modifier is set differently
   switch (data.character.race.fullName) {
     case "Lizardfolk":
-      baseAC = Math.max(
-        getUnarmoredAC(data.character.modifiers.race, character)
-      );
+      baseAC = Math.max(getUnarmoredAC(data.character.modifiers.race, character));
       equippedArmor.push(getBaseArmor(baseAC, "Light Armor"));
       break;
     case "Tortle":
-      baseAC = Math.max(
-        getMinimumBaseAC(data.character.modifiers.race, character)
-      );
+      baseAC = Math.max(getMinimumBaseAC(data.character.modifiers.race, character));
       equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
       break;
     default:
@@ -429,8 +424,7 @@ let getHitpoints = (data, character) => {
   const hitPointsPerLevel = utils
     .filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
-  baseHitPoints +=
-    hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
+  baseHitPoints += hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
 
   return {
     value:
@@ -477,7 +471,15 @@ let getSpeed = (data, character) => {
   }
 
   // get bonus speed mods
-  const bonusSpeed = utils.filterBaseModifiers(data, "bonus", "speed").reduce((speed, feat) => speed + feat.value, 0);
+  let restriction = ["", null];
+  // Check for equipped Heavy Armor
+  const wearingHeavy = data.character.inventory.some((item) => item.equipped && item.definition.type === "Heavy Armor");
+  // Accounts for Barbarian Class Feature - Fast Movement
+  if (!wearingHeavy) restriction.push("while you aren’t wearing heavy armor");
+
+  const bonusSpeed = utils
+    .filterBaseModifiers(data, "bonus", "speed", restriction)
+    .reduce((speed, feat) => speed + feat.value, 0);
 
   //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
@@ -1286,10 +1288,8 @@ let getSpellSlots = (data) => {
         if (["Warlock", "Blood Hunter"].includes(name)) {
           // pact casting doesn't count towards multiclass spells casting
           // we still add an entry to get cantrip info
-          const levelSpellSlots =
-            cls.definition.spellRules.levelSpellSlots[casterLevel];
-          const maxLevel =
-            levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
+          const levelSpellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
+          const maxLevel = levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
           const maxSlots = Math.max(...levelSpellSlots);
           const currentSlots = data.character.pactMagic.find((pact) => pact.level === maxLevel).used;
           spellSlots.pact = { value: maxSlots - currentSlots, max: maxSlots };
