@@ -139,9 +139,14 @@ let getAbilities = (data, character) => {
       .filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter((mod) => mod.entityId === ability.id)
       .reduce((prev, cur) => prev + cur.value, 0);
+    const setAbilities = utils
+      .filterBaseModifiers(data, "set", `${ability.long}-score`, [null, "", "if not already higher"])
+      .map((mod) => mod.value);
+    const setAbility = Math.max(...[0, ...setAbilities]);
+    const calculatedStat = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
 
     // calculate value, mod and proficiency
-    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
+    result[ability.value].value = calculatedStat > setAbility ? calculatedStat : setAbility;
     result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
     result[ability.value].proficient =
       data.character.modifiers.class.find(
@@ -243,7 +248,7 @@ let getEquippedAC = (equippedGear) => {
 // returns an array of ac values from provided array of modifiers
 let getUnarmoredAC = (modifiers, character) => {
   let unarmoredACValues = [];
-  let isUnarmored = modifiers.filter(
+  const isUnarmored = modifiers.filter(
     (modifier) => modifier.type === "set" && modifier.subType === "unarmored-armor-class" && modifier.isGranted
   );
 
@@ -288,15 +293,27 @@ let getArmoredACBonuses = (modifiers, character) => {
 let getArmorClass = (data, character) => {
   // array to assemble possible AC values
   let armorClassValues = [];
-  // get a list of equipped gear and armor
+  // get a list of equipped armor
   // we make a distinction so we can loop over armor
-  let equippedGear = data.character.inventory.filter((item) => item.equipped && item.definition.filterType !== "Armor");
   let equippedArmor = data.character.inventory.filter(
     (item) => item.equipped && item.definition.filterType === "Armor"
   );
   let baseAC = 10;
   // for things like fighters fighting style
   let miscACBonus = 0;
+  // lets get equipped gear
+  const equippedGear = data.character.inventory.filter(
+    (item) => item.equipped && item.definition.filterType !== "Armor"
+  );
+  const unarmoredACBonus = utils
+    .filterBaseModifiers(data, "bonus", "unarmored-armor-class")
+    .reduce((prev, cur) => prev + cur.value, 0);
+
+  // lets get the AC for all our non-armored gear, we'll add this later
+  const gearAC = getEquippedAC(equippedGear);
+
+  console.log("Calculated GearAC: " + gearAC);
+  console.log("Unarmoured AC Bonus:" + unarmoredACBonus);
 
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
@@ -332,24 +349,23 @@ let getArmorClass = (data, character) => {
     miscACBonus += bonus.value;
   });
 
+  console.log("Calculated MiscACBonus: " + miscACBonus);
+
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
   // modifier is set differently
   switch (data.character.race.fullName) {
     case "Lizardfolk":
       baseAC = Math.max(getUnarmoredAC(data.character.modifiers.race, character));
-      equippedArmor.push(getBaseArmor(baseAC, "Light Armor"));
+      equippedArmor.push(getBaseArmor(baseAC, "Natural Armor"));
       break;
     case "Tortle":
       baseAC = Math.max(getMinimumBaseAC(data.character.modifiers.race, character));
-      equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
+      equippedArmor.push(getBaseArmor(baseAC, "Natural Armor"));
       break;
     default:
       equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
   }
-
-  // lets get the AC for all our non-armored gear, we'll add this later
-  const gearAC = getEquippedAC(equippedGear);
 
   const shields = equippedArmor.filter(
     (shield) => shield.definition.type === "Shield" || shield.definition.armorTypeId === 4
@@ -357,6 +373,8 @@ let getArmorClass = (data, character) => {
   const armors = equippedArmor.filter(
     (shield) => shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
   );
+
+  console.log("Equipped AC Options: " + JSON.stringify(equippedArmor));
 
   // the presumption here is that you can only wear a shield and a single
   // additional 'armor' piece. in DDB it's possible to equip multiple armor
@@ -381,8 +399,15 @@ let getArmorClass = (data, character) => {
     // Unarmored Defense: Dex mod already included in calculation
 
     switch (armors[armor].definition.type) {
-      case "Heavy Armor":
+      case "Natural Armor":
       case "Unarmored Defense":
+        if (shields.length === 0) armorAC += unarmoredACBonus;
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + gearAC + miscACBonus,
+        });
+        break;
+      case "Heavy Armor":
         armorClassValues.push({
           name: armors[armor].definition.name,
           value: armorAC + gearAC + miscACBonus,

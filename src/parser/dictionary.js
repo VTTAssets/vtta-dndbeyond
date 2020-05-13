@@ -589,6 +589,7 @@ const DICTIONARY = {
       { name: "Shield", id: 4 },
       { name: "Unarmored", id: 0 },
       { name: "Unarmored Defense", id: -1 },
+      { name: "Natural Armor", id: -2 },
     ],
   },
   weapon: {
