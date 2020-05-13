@@ -139,9 +139,14 @@ let getAbilities = (data, character) => {
       .filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter((mod) => mod.entityId === ability.id)
       .reduce((prev, cur) => prev + cur.value, 0);
+    const setAbilities = utils
+      .filterBaseModifiers(data, "set", `${ability.long}-score`, [null, "", "if not already higher"])
+      .map((mod) => mod.value);
+    const setAbility = Math.max(...[0, ...setAbilities]);
+    const calculatedStat = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
 
     // calculate value, mod and proficiency
-    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
+    result[ability.value].value = calculatedStat > setAbility ? calculatedStat : setAbility;
     result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
     result[ability.value].proficient =
       data.character.modifiers.class.find(
@@ -297,8 +302,11 @@ let getArmorClass = (data, character) => {
   // for things like fighters fighting style
   let miscACBonus = 0;
   // lets get equipped gear
-  const equippedGear = data.character.inventory.filter((item) => item.equipped && item.definition.filterType !== "Armor");
-  const unarmoredACBonus = utils.filterBaseModifiers(data, "bonus", "unarmored-armor-class")
+  const equippedGear = data.character.inventory.filter(
+    (item) => item.equipped && item.definition.filterType !== "Armor"
+  );
+  const unarmoredACBonus = utils
+    .filterBaseModifiers(data, "bonus", "unarmored-armor-class")
     .reduce((prev, cur) => prev + cur.value, 0);
 
   // lets get the AC for all our non-armored gear, we'll add this later
