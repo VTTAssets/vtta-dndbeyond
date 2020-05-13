@@ -131,14 +131,22 @@ let getAbilities = (data, character) => {
     const stat = data.character.stats.find((stat) => stat.id === ability.id).value || 0;
     const bonusStat = data.character.bonusStats.find((stat) => stat.id === ability.id).value || 0;
     const overrideStat = data.character.overrideStats.find((stat) => stat.id === ability.id).value || 0;
-
+    const abilityScoreMaxBonus = utils
+      .filterBaseModifiers(data, "bonus", "ability-score-maximum")
+      .filter((mod) => mod.statId === ability.id)
+      .reduce((prev, cur) => prev + cur.value, 0);
     const bonus = utils
       .filterBaseModifiers(data, "bonus", `${ability.long}-score`)
       .filter((mod) => mod.entityId === ability.id)
       .reduce((prev, cur) => prev + cur.value, 0);
+    const setAbilities = utils
+      .filterBaseModifiers(data, "set", `${ability.long}-score`, [null, "", "if not already higher"])
+      .map((mod) => mod.value);
+    const setAbility = Math.max(...[0, ...setAbilities]);
+    const calculatedStat = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
 
     // calculate value, mod and proficiency
-    result[ability.value].value = overrideStat === 0 ? stat + bonusStat + bonus : overrideStat;
+    result[ability.value].value = calculatedStat > setAbility ? calculatedStat : setAbility;
     result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
     result[ability.value].proficient =
       data.character.modifiers.class.find(
@@ -240,7 +248,7 @@ let getEquippedAC = (equippedGear) => {
 // returns an array of ac values from provided array of modifiers
 let getUnarmoredAC = (modifiers, character) => {
   let unarmoredACValues = [];
-  let isUnarmored = modifiers.filter(
+  const isUnarmored = modifiers.filter(
     (modifier) => modifier.type === "set" && modifier.subType === "unarmored-armor-class" && modifier.isGranted
   );
 
@@ -285,15 +293,27 @@ let getArmoredACBonuses = (modifiers, character) => {
 let getArmorClass = (data, character) => {
   // array to assemble possible AC values
   let armorClassValues = [];
-  // get a list of equipped gear and armor
+  // get a list of equipped armor
   // we make a distinction so we can loop over armor
-  let equippedGear = data.character.inventory.filter((item) => item.equipped && item.definition.filterType !== "Armor");
   let equippedArmor = data.character.inventory.filter(
     (item) => item.equipped && item.definition.filterType === "Armor"
   );
   let baseAC = 10;
   // for things like fighters fighting style
   let miscACBonus = 0;
+  // lets get equipped gear
+  const equippedGear = data.character.inventory.filter(
+    (item) => item.equipped && item.definition.filterType !== "Armor"
+  );
+  const unarmoredACBonus = utils
+    .filterBaseModifiers(data, "bonus", "unarmored-armor-class")
+    .reduce((prev, cur) => prev + cur.value, 0);
+
+  // lets get the AC for all our non-armored gear, we'll add this later
+  const gearAC = getEquippedAC(equippedGear);
+
+  console.log("Calculated GearAC: " + gearAC);
+  console.log("Unarmoured AC Bonus:" + unarmoredACBonus);
 
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
@@ -317,33 +337,35 @@ let getArmorClass = (data, character) => {
   }
 
   // Generic AC bonuses like Warforfed Integrated Protection
-  utils.filterBaseModifiers(data, "bonus", "armor-class").forEach(
-    bonus => {
+  // item modifiers are loaded by ac calcs
+  const miscModifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    data.character.modifiers.background,
+    data.character.modifiers.feat,
+  ];
+
+  utils.filterModifiers(miscModifiers, "bonus", "armor-class").forEach((bonus) => {
     miscACBonus += bonus.value;
   });
+
+  console.log("Calculated MiscACBonus: " + miscACBonus);
 
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
   // modifier is set differently
   switch (data.character.race.fullName) {
     case "Lizardfolk":
-      baseAC = Math.max(
-        getUnarmoredAC(data.character.modifiers.race, character)
-      );
-      equippedArmor.push(getBaseArmor(baseAC, "Light Armor"));
+      baseAC = Math.max(getUnarmoredAC(data.character.modifiers.race, character));
+      equippedArmor.push(getBaseArmor(baseAC, "Natural Armor"));
       break;
     case "Tortle":
-      baseAC = Math.max(
-        getMinimumBaseAC(data.character.modifiers.race, character)
-      );
-      equippedArmor.push(getBaseArmor(Math.max(baseAC), "Heavy Armor"));
+      baseAC = Math.max(getMinimumBaseAC(data.character.modifiers.race, character));
+      equippedArmor.push(getBaseArmor(baseAC, "Natural Armor"));
       break;
     default:
       equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
   }
-
-  // lets get the AC for all our non-armored gear, we'll add this later
-  const gearAC = getEquippedAC(equippedGear);
 
   const shields = equippedArmor.filter(
     (shield) => shield.definition.type === "Shield" || shield.definition.armorTypeId === 4
@@ -351,6 +373,8 @@ let getArmorClass = (data, character) => {
   const armors = equippedArmor.filter(
     (shield) => shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
   );
+
+  console.log("Equipped AC Options: " + JSON.stringify(equippedArmor));
 
   // the presumption here is that you can only wear a shield and a single
   // additional 'armor' piece. in DDB it's possible to equip multiple armor
@@ -375,8 +399,15 @@ let getArmorClass = (data, character) => {
     // Unarmored Defense: Dex mod already included in calculation
 
     switch (armors[armor].definition.type) {
-      case "Heavy Armor":
+      case "Natural Armor":
       case "Unarmored Defense":
+        if (shields.length === 0) armorAC += unarmoredACBonus;
+        armorClassValues.push({
+          name: armors[armor].definition.name,
+          value: armorAC + gearAC + miscACBonus,
+        });
+        break;
+      case "Heavy Armor":
         armorClassValues.push({
           name: armors[armor].definition.name,
           value: armorAC + gearAC + miscACBonus,
@@ -429,8 +460,7 @@ let getHitpoints = (data, character) => {
   const hitPointsPerLevel = utils
     .filterBaseModifiers(data, "bonus", "hit-points-per-level")
     .reduce((prev, cur) => prev + cur.value, 0);
-  baseHitPoints +=
-    hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
+  baseHitPoints += hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
 
   return {
     value:
@@ -477,7 +507,15 @@ let getSpeed = (data, character) => {
   }
 
   // get bonus speed mods
-  const bonusSpeed = utils.filterBaseModifiers(data, "bonus", "speed").reduce((speed, feat) => speed + feat.value, 0);
+  let restriction = ["", null];
+  // Check for equipped Heavy Armor
+  const wearingHeavy = data.character.inventory.some((item) => item.equipped && item.definition.type === "Heavy Armor");
+  // Accounts for Barbarian Class Feature - Fast Movement
+  if (!wearingHeavy) restriction.push("while you aren’t wearing heavy armor");
+
+  const bonusSpeed = utils
+    .filterBaseModifiers(data, "bonus", "speed", restriction)
+    .reduce((speed, feat) => speed + feat.value, 0);
 
   //loop over speed types and add and racial bonuses and feat modifiers
   for (let type in movementTypes) {
@@ -1286,10 +1324,8 @@ let getSpellSlots = (data) => {
         if (["Warlock", "Blood Hunter"].includes(name)) {
           // pact casting doesn't count towards multiclass spells casting
           // we still add an entry to get cantrip info
-          const levelSpellSlots =
-            cls.definition.spellRules.levelSpellSlots[casterLevel];
-          const maxLevel =
-            levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
+          const levelSpellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
+          const maxLevel = levelSpellSlots.indexOf(Math.max(...levelSpellSlots)) + 1;
           const maxSlots = Math.max(...levelSpellSlots);
           const currentSlots = data.character.pactMagic.find((pact) => pact.level === maxLevel).used;
           spellSlots.pact = { value: maxSlots - currentSlots, max: maxSlots };
