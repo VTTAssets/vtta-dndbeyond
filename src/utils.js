@@ -85,13 +85,13 @@ let utils = {
 
   filterModifiers: (modifiers, type, subType = null, restriction = ["", null]) => {
     return modifiers
-    .flat()
-    .filter(
-      (modifier) =>
-        modifier.type === type &&
-        (subType !== null ? modifier.subType === subType : true) &&
-        restriction.includes(modifier.restriction)
-    );
+      .flat()
+      .filter(
+        (modifier) =>
+          modifier.type === type &&
+          (subType !== null ? modifier.subType === subType : true) &&
+          restriction.includes(modifier.restriction)
+      );
   },
 
   filterBaseModifiers: (data, type, subType = null, restriction = ["", null]) => {
@@ -450,7 +450,6 @@ let utils = {
     }
   },
 
-
   normalizeString: (str) => {
     return str.toLowerCase().replace(/\W/g, "");
   },
@@ -462,35 +461,22 @@ let utils = {
   queryCompendium: async (compendiumName, entityName) => {
     entityName = utils.normalizeString(entityName);
 
-    let compendium = game.packs.find(
-      (pack) => pack.collection === compendiumName
-    );
+    let compendium = game.packs.find((pack) => pack.collection === compendiumName);
     if (!compendium) return null;
     let index = await compendium.getIndex();
-    let entity = index.find(
-      (entity) => utils.normalizeString(entity.name) === entityName
-    );
-    return entity;
+    let entity = index.find((entity) => utils.normalizeString(entity.name) === entityName);
+    return entity ? entity : null;
   },
 
   /**
    * Creates or updates a given entity
    */
-  createCompendiumEntry: async (
-    compendiumName,
-    entity,
-    updateExistingEntry = false
-  ) => {
-    let compendium = game.packs.find(
-      (pack) => pack.collection === compendiumName
-    );
+  createCompendiumEntry: async (compendiumName, entity, updateExistingEntry = false) => {
+    let compendium = game.packs.find((pack) => pack.collection === compendiumName);
 
     if (!compendium) return null;
 
-    let existingEntry = await utils.queryCompendium(
-      compendiumName,
-      entity.name
-    );
+    let existingEntry = await utils.queryCompendium(compendiumName, entity.name);
     if (existingEntry) {
       console.log("Entry exists already:");
       console.log(existingEntry);
