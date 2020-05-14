@@ -14,8 +14,7 @@ const getFolder = async (structure, entityName, sourcebook) => {
         f.data.flags.vtta &&
         f.data.flags.vtta.dndbeyond &&
         f.data.flags.vtta.dndbeyond.sourcebook &&
-        f.data.flags.vtta.dndbeyond.sourcebook ===
-          sourcebook.abbrev.toLowerCase()
+        f.data.flags.vtta.dndbeyond.sourcebook === sourcebook.abbrev.toLowerCase()
     );
     if (folder) return folder;
     folder = await Folder.create({
@@ -85,19 +84,14 @@ const insertRollTables = (content) => {
 };
 
 const addSection = async (folderNames, section, sourcebook) => {
-  console.log(
-    "Adding section " + section.title + " at " + folderNames.join("/")
-  );
+  console.log("Adding section " + section.title + " at " + folderNames.join("/"));
 
   if (
     folderNames.length <= 3 //&&
     // section.sections &&
     // section.sections.length > 0
   ) {
-    folderNames =
-      folderNames.length > 0
-        ? folderNames.concat([section.title])
-        : [section.title];
+    folderNames = folderNames.length > 0 ? folderNames.concat([section.title]) : [section.title];
     let folder = await getFolder(folderNames, "JournalEntry", sourcebook);
 
     // main entry for this page
@@ -114,11 +108,7 @@ const addSection = async (folderNames, section, sourcebook) => {
       await addSection(folderNames, section.sections[i], sourcebook);
     }
   } else {
-    let folder = await getFolder(
-      folderNames.slice(0, 3),
-      "JournalEntry",
-      sourcebook
-    );
+    let folder = await getFolder(folderNames.slice(0, 3), "JournalEntry", sourcebook);
     // create the content for this entry alone, without subfolders
 
     let content = combineContent(section, 1);
@@ -176,6 +166,8 @@ let addPage = (body) => {
 
     // create the content by sections
     await addSection(folderNames, data.content, data.sourcebook);
+
+    resolve(true);
   });
 };
 

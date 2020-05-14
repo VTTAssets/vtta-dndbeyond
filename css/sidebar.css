@@ -1,8 +1,4 @@
-#sidebar
-  section.sidebar-directory
-  ol.directory-list
-  li.directory-item.folder
-  header {
+#sidebar section.sidebar-directory ol.directory-list li.directory-item.folder header {
   align-items: baseline;
 }
 
@@ -19,4 +15,16 @@
   line-height: 10pt;
   position: relative;
   top: -2px;
+}
+
+#sidebar section ol.directory-list li[data-type="vtta-folder"] header h3 {
+  font-size: 0.8rem;
+}
+
+#sidebar section ol.directory-list li[data-type="vtta-folder"] {
+  line-height: 36px;
+}
+
+#sidebar section ol.directory-list li[data-type="vtta-folder"] header h3 i.fas {
+  margin-right: 4px;
 }

@@ -26,9 +26,7 @@ let queryIcons = (names) => {
       reject("Tokenizer not responding");
     }, 500);
     document.addEventListener("deliverIcon", listener);
-    document.dispatchEvent(
-      new CustomEvent("queryIcons", { detail: { names: names } })
-    );
+    document.dispatchEvent(new CustomEvent("queryIcons", { detail: { names: names } }));
   });
 };
 
@@ -38,39 +36,16 @@ let queryIcons = (names) => {
  */
 
 const retrieveSpells = async (spells) => {
-  let compendiumName = game.settings.get(
-    "vtta-dndbeyond",
-    "entity-spell-compendium"
-  );
-  let compendium = game.packs.find(
-    (pack) => pack.collection === compendiumName
-  );
-  let spellResult = [];
-  if (compendium) {
-    const index = await compendium.getIndex();
-    for (let i = 0; i < spells.length; i++) {
-      let spell = undefined;
-      switch (typeof spells[i]) {
-        case "string":
-          spell = index.find((entry) => entry.name.toLowerCase() === spells[i]);
-          break;
-        case "object":
-          const spellId = spells[i].id || spells[i]._id;
-          spell = index.find((entry) => {
-            const id = entry.id || entry._id;
-            return id === spellId;
-          });
-          break;
-        default:
-          spell = undefined;
-      }
+  for (let i = 0; i < spells.length; i++) {
+    let spell = undefined;
+    let spellName = typeof spells[i] === "string" ? spells[i] : spells[i].hasOwnProperty("name") ? spells[i].name : "";
+    spell = await utils.queryCompendium(game.settings.get("vtta-dndbeyond", "entity-spell-compendium"), spellName);
 
-      if (spell) {
-        const spellId = spell.id || spell._id;
-        console.log("Querying compendium for spell with ID " + spellId);
-        spell = await compendium.getEntity(spellId);
-        spellResult.push(spell);
-      }
+    if (spell) {
+      const spellId = spell.id || spell._id;
+      console.log("Querying compendium for spell with ID " + spellId);
+      spell = await compendium.getEntity(spellId);
+      spellResult.push(spell);
     }
   }
   return spellResult;
@@ -119,17 +94,11 @@ let addNPC = (body) => {
   return new Promise(async (resolve, reject) => {
     // cleaning up after imports
     const cleanupAfterImport =
-      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") ===
-        CLEAN_ALL ||
-      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") ===
-        CLEAN_MONSTERS;
+      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_ALL ||
+      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_MONSTERS;
 
     // get the folder to add this npc into
-    let folder = await utils.getFolder(
-      body.type,
-      body.data.data.details.type,
-      body.data.data.details.race
-    );
+    let folder = await utils.getFolder(body.type, body.data.data.details.type, body.data.data.details.race);
     body.data.folder = folder.id;
 
     if (body.data.flags.vtta.dndbeyond.img) {
@@ -141,14 +110,8 @@ let addNPC = (body) => {
           .replace(/\-+/g, "-")
           .trim();
 
-      let uploadDirectory = game.settings
-        .get("vtta-dndbeyond", "image-upload-directory")
-        .replace(/^\/|\/$/g, "");
-      body.data.img = await utils.uploadImage(
-        body.data.flags.vtta.dndbeyond.img,
-        uploadDirectory,
-        filename
-      );
+      let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
+      body.data.img = await utils.uploadImage(body.data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
     }
 
     // replace icons by iconizer, if available
@@ -175,9 +138,7 @@ let addNPC = (body) => {
 
     utils.log("Importing NPC");
     // check if there is an NPC with that name in that folder already
-    let npc = folder.content
-      ? folder.content.find((actor) => actor.name === body.data.name)
-      : undefined;
+    let npc = folder.content ? folder.content.find((actor) => actor.name === body.data.name) : undefined;
     if (npc) {
       utils.log("NPC exists");
       // remove the inventory of said npc
@@ -188,15 +149,10 @@ let addNPC = (body) => {
       // update items and basic data
       await npc.update(body.data);
       utils.log("NPC updated");
-      if (
-        body.data.flags.vtta.dndbeyond.spells &&
-        body.data.flags.vtta.dndbeyond.spells.length !== 0
-      ) {
+      if (body.data.flags.vtta.dndbeyond.spells && body.data.flags.vtta.dndbeyond.spells.length !== 0) {
         utils.log("Retrieving spells:");
         utils.log(body.data.flags.vtta.dndbeyond.spells);
-        let spells = await retrieveSpells(
-          body.data.flags.vtta.dndbeyond.spells
-        );
+        let spells = await retrieveSpells(body.data.flags.vtta.dndbeyond.spells);
         spells = spells.map((spell) => spell.data);
         await npc.createEmbeddedEntity("OwnedItem", spells);
       }
@@ -209,30 +165,17 @@ let addNPC = (body) => {
     }
 
     // decide wether to save it into the compendium
-    if (
-      game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE
-    ) {
+    if (game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE) {
       // update existing (1) or overwrite (0)
-      let compendiumName = game.settings.get(
-        "vtta-dndbeyond",
-        "entity-monster-compendium"
-      );
+      let compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
       if (compendiumName && compendiumName !== "") {
         //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
-        let compendium = game.packs.find(
-          (pack) => pack.collection === compendiumName
-        );
+        let compendium = game.packs.find((pack) => pack.collection === compendiumName);
         if (compendium) {
           let index = await compendium.getIndex();
-          let entity = index.find(
-            (entity) =>
-              entity.name.toLowerCase() === body.data.name.toLowerCase()
-          );
+          let entity = index.find((entity) => entity.name.toLowerCase() === body.data.name.toLowerCase());
           if (entity) {
-            if (
-              game.settings.get("vtta-dndbeyond", "entity-import-policy") ===
-              SAVE_ALL
-            ) {
+            if (game.settings.get("vtta-dndbeyond", "entity-import-policy") === SAVE_ALL) {
               const _id = npc.data._id;
               npc.data._id = entity._id;
               await compendium.updateEntity(npc.data);

@@ -5,6 +5,36 @@ export default function (directory, html, user) {
       let folderId = $(element).attr("data-folder-id");
       let folder = game.folders.get(folderId);
       console.log(folder.data.flags);
+      const labelText =
+        folder.data.flags &&
+        folder.data.flags.vtta &&
+        folder.data.flags.vtta.dndbeyond &&
+        folder.data.flags.vtta.dndbeyond.sourcebook
+          ? folder.data.flags.vtta.dndbeyond.sourcebook
+          : null;
+      if (labelText) {
+        const label = $(`<span class="vtta-folder-label">${labelText.toUpperCase()}</span>`);
+        $(label).on("click", (event) => {
+          console.log("Emitting Socket event");
+          const data = {
+            sender: game.user.data._id,
+            action: "labelClick",
+            label: labelText,
+          };
+          console.log(data);
+          game.socket.emit("module.vtta-dndbeyond", data);
+        });
+
+        $(element).find("> header").prepend(label);
+      }
+    });
+
+  $(html)
+    .find("ol.directory-list li.directory-item.folder")
+    .each((index, element) => {
+      let folderId = $(element).attr("data-folder-id");
+      let folder = game.folders.get(folderId);
+      console.log(folder.data.flags);
       const label =
         folder.data.flags &&
         folder.data.flags.vtta &&
@@ -13,11 +43,7 @@ export default function (directory, html, user) {
           ? folder.data.flags.vtta.dndbeyond.sourcebook
           : null;
       if (label) {
-        $(element)
-          .find("> header")
-          .prepend(
-            `<span class="vtta-folder-label">${label.toUpperCase()}</span>`
-          );
+        $(element).attr("data-type", "vtta-folder");
       }
     });
 }
