@@ -1,26 +1,26 @@
 const DICTIONARY = {
   numbers: [
-    { num:1 , natural: "a" },
-    { num:1 , natural: "one" },
-    { num:2 , natural: "two" },
-    { num:3 , natural: "three" },
-    { num:4 , natural: "four" },
-    { num:5 , natural: "five" },
-    { num:6 , natural: "six" },
-    { num:7 , natural: "seven" },
-    { num:8 , natural: "eight" },
-    { num:9 , natural: "nine" },
-    { num:10 , natural: "ten" },
-    { num:11 , natural: "eleven" },
-    { num:12 , natural: "twelve" },
-    { num:13 , natural: "thirteen" },
-    { num:14 , natural: "fourteen" },
-    { num:15 , natural: "fifteen" },
-    { num:16 , natural: "sixteen" },
-    { num:17 , natural: "seventeen" },
-    { num:18 , natural: "eighteen" },
-    { num:19 , natural: "nineteen" },
-    { num:20 , natural: "twenty" },
+    { num: 1, natural: "a" },
+    { num: 1, natural: "one" },
+    { num: 2, natural: "two" },
+    { num: 3, natural: "three" },
+    { num: 4, natural: "four" },
+    { num: 5, natural: "five" },
+    { num: 6, natural: "six" },
+    { num: 7, natural: "seven" },
+    { num: 8, natural: "eight" },
+    { num: 9, natural: "nine" },
+    { num: 10, natural: "ten" },
+    { num: 11, natural: "eleven" },
+    { num: 12, natural: "twelve" },
+    { num: 13, natural: "thirteen" },
+    { num: 14, natural: "fourteen" },
+    { num: 15, natural: "fifteen" },
+    { num: 16, natural: "sixteen" },
+    { num: 17, natural: "seventeen" },
+    { num: 18, natural: "eighteen" },
+    { num: 19, natural: "nineteen" },
+    { num: 20, natural: "twenty" },
   ],
   magicitems: {
     rechargeUnits: [
@@ -559,10 +559,7 @@ const DICTIONARY = {
       { name: "hexWarrior", typeId: 29, valueTypeId: 1439493548 },
     ],
     // Supported Warlock Pact Weapon options
-    pactFeatures: [
-      "Improved Pact Weapon",
-      "Lifedrinker",
-    ]
+    pactFeatures: ["Improved Pact Weapon", "Lifedrinker"],
   },
   item: {
     characterValues: [
@@ -618,8 +615,26 @@ const DICTIONARY = {
       { name: "Versatile", value: "ver" },
     ],
   },
+  actions: {
+    activationTypes: [
+      { id: 0, value: "none" },
+      { id: 1, value: "action" },
+      { id: 2, value: "action" },
+      { id: 3, value: "bonus" },
+      { id: 4, value: "reaction" },
+      { id: 5, value: "action" },
+      { id: 6, value: "minute" },
+      { id: 7, value: "hour" },
+      { id: 8, value: "special" },
+    ],
+    damageType: [
+      { name: "bludgeoning", id: 1 },
+      { name: "piercing", id: 2 },
+      { name: "slashing", id: 3 },
+    ],
+  },
   spell: {
-    progression : [
+    progression: [
       { name: "Artificer", value: "artificer" },
       { name: "Bard", value: "full" },
       { name: "Blood Hunter", value: "pact" },
