@@ -30,7 +30,7 @@ function martialArtsDamage(ddb, action) {
 
     // set the weapon damage
     return {
-      parts: [[die + "+ @mod", damageType]],
+      parts: [[die + " + @mod", damageType]],
       versatile: "",
     };
   } else if (action.dice !== null) {
@@ -86,23 +86,64 @@ function getAttackAction(ddb, character, action) {
           condition: "",
         };
 
-    // TODO: This is not entirely correct. Should look up if it has a special reach feature
-    weapon.data.range = { value: 5, units: "ft.", long: "" };
+    if (action.range && action.range.aoeType && action.range.aoeSize) {
+      weapon.data.range = { value: null, units: "self", long: null };
+      weapon.data.target = {
+        value: action.range.aoeSize,
+        type: DICTIONARY.actions.aoeType.find((type) => type.id === action.range.aoeType).value,
+        units: "ft",
+      };
+    } else if (action.range && action.range.range) {
+      weapon.data.range = {
+        value: action.range.range,
+        units: "ft.",
+        long: action.range.long || "",
+      };
+    } else {
+      weapon.data.range = { value: 5, units: "ft.", long: "" };
+    }
 
     const isMartialArtist = ddb.character.classes.some((cls) =>
       cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
     );
-    console.warn("Martial Artit?" + isMartialArtist);
     weapon.data.ability = action.isMartialArts && isMartialArtist
       ? character.data.abilities.dex.value >= character.data.abilities.str.value
         ? "dex"
         : "str"
       : "str";
-    // TODO: we can also parse this out of the action block
-    weapon.data.actionType = "mwak";
-    weapon.data.damage = martialArtsDamage(ddb, action);
+
+    // lets see if we have a save stat for things like Dragon born Breath Weapon
+    if (action.saveStatId) {
+      const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
+      weapon.data.actionType = "save";
+      weapon.data.damage = {
+        parts: [[action.dice.diceString, damageType]],
+        versatile: "",
+      };
+      const saveStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value;
+      weapon.data.save = {
+        "ability": saveStat,
+        "dc": null,
+        "scaling": "spell"
+      };
+      const abilityModStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.abilityModifierStatId).value;
+      weapon.data.ability = abilityModStat;
+    } else {
+      weapon.data.actionType = "mwak";
+      weapon.data.damage = martialArtsDamage(ddb, action);
+    }
+
+    if (action.limitedUse && action.limitedUse.maxUses) {
+      const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
+      weapon.data.uses = {
+        value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
+        max: action.limitedUse.maxUses,
+        per: resetType ? resetType.value : "",
+      };
+    }
+
   } catch (err) {
-    utils.warn(`Unrecognized Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
+    utils.log(`Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
   }
 
   return weapon;
@@ -199,15 +240,15 @@ function getOtherActions(ddb, items) {
         unidentified: "",
       };
 
-      if (action.limitedUse && action.limitedUse.max) {
-        const resetType = DICTIONARY.resets((type) => type.id === action.limitedUse.resetType);
+      if (action.limitedUse && action.limitedUse.maxUses) {
+        const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
         feat.data.uses = {
-          value: action.limitedUse.value,
-          max: action.limitedUse.max,
+          value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
+          max: action.limitedUse.maxUses,
           per: resetType ? resetType.value : "",
         };
       }
-      console.log("Feature Parsed: " + JSON.stringify(feat));
+
       return feat;
     });
 
