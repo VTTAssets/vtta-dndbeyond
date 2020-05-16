@@ -27,7 +27,7 @@ function martialArtsDamage(ddb, action) {
           return "1";
         }
     });
-console.warn("DIE " + JSON.stringify(die));
+
     // set the weapon damage
     return {
       parts: [[die + "+ @mod", damageType]],
@@ -104,7 +104,7 @@ function getAttackAction(ddb, character, action) {
   } catch (err) {
     utils.warn(`Unrecognized Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
   }
-  console.log("Weapon Parsed: " + JSON.stringify(weapon));
+
   return weapon;
 }
 
@@ -151,15 +151,12 @@ function getUnarmedStrike(ddb, character) {
  * @param {*} character
  */
 function getAttackActions(ddb, character) {
-  const actions = [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
+  return [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
     .flat()
     .filter((action) => action.displayAsAttack && action.displayAsAttack === true)
     .map((action) => {
       return getAttackAction(ddb, character, action);
     });
-
-  console.log("Attack Actions: " + JSON.stringify(actions));
-  return actions;
 }
 
 /**
@@ -213,7 +210,7 @@ function getOtherActions(ddb, items) {
       console.log("Feature Parsed: " + JSON.stringify(feat));
       return feat;
     });
-  console.log("Other Actions: " + JSON.stringify(actions));
+
   // TODO: We maybe able to look up other entities here to get details for things like Sneak Attack
   return actions;
 }
@@ -231,7 +228,6 @@ export default function parseActions(ddb, character) {
     ...getOtherActions(ddb, actions),
   ];
 
-  console.warn(JSON.stringify(actions));
   // sort alphabetically, then by action type
   actions.sort().sort((a, b) => {
     console.log(JSON.stringify(a));
@@ -256,6 +252,6 @@ export default function parseActions(ddb, character) {
     }
   });
 
-  console.log(JSON.stringify(actions));
+  // console.log(JSON.stringify(actions));
   return actions;
 }
