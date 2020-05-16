@@ -631,6 +631,18 @@ const DICTIONARY = {
       { name: "bludgeoning", id: 1 },
       { name: "piercing", id: 2 },
       { name: "slashing", id: 3 },
+      { name: "", id: 4 },
+      { name: "acid", id: 5 },
+      { name: "cold", id: 6 },
+      { name: "fire", id: 7 },
+      { name: "lightning", id: 8 },
+      { name: "", id: 9 },
+      { name: "poison", id: 10 },
+      { name: "psychic", id: 11 },
+      { name: "", id: 12 },
+      // thunder
+      // radiant
+      // necrotic
     ],
   },
   spell: {
