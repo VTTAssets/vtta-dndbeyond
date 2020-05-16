@@ -644,6 +644,10 @@ const DICTIONARY = {
       // radiant
       // necrotic
     ],
+    aoeType: [
+      { id: 1, value: "cone" },
+      // presumably others here too! add when found
+    ]
   },
   spell: {
     progression: [
