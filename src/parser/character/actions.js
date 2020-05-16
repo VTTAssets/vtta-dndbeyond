@@ -2,29 +2,32 @@ import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
 function martialArtsDamage(ddb, action) {
-  /* damage: { parts: [], versatile: '' }, */
-  const damageType = DICTIONARY.actions.activationTypes.find((type) => type.id === action.damageTypeId).value;
+  const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
 
-  // are we dealing with martial arts?
-  if (action.isMartialArts) {
-    const classes = ddb.character.classes.filter(
-      (cls) => cls.classFeatures.find((feature) => feature.name === "Martial Arts") !== -1
+  const isMartialArtist = ddb.character.classes.some((cls) =>
+      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
     );
 
-    const die = classes.map((cls) => {
-      const feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
+  // are we dealing with martial arts?
+  if (action.isMartialArts && isMartialArtist) {
+    const die = ddb.character.classes
+      .filter((cls) =>
+        cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+      )
+      .map((cls) => {
+        const feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
 
-      if (feature && feature.levelScale && feature.levelScale.dice && feature.levelScale.dice.diceString) {
-        return feature.levelScale.dice.diceString;
-      } else if (action.dice !== null) {
-        // On some races bite is considered a martial art, damage
-        // is different and on the action itself
-        return action.dice.diceString;
-      } else {
-        return "1d4";
-      }
+        if (feature && feature.levelScale && feature.levelScale.dice && feature.levelScale.dice.diceString) {
+          return feature.levelScale.dice.diceString;
+        } else if (action.dice !== null) {
+          // On some races bite is considered a martial art, damage
+          // is different and on the action itself
+          return action.dice.diceString;
+        } else {
+          return "1";
+        }
     });
-
+console.warn("DIE " + JSON.stringify(die));
     // set the weapon damage
     return {
       parts: [[die + "+ @mod", damageType]],
@@ -85,7 +88,12 @@ function getAttackAction(ddb, character, action) {
 
     // TODO: This is not entirely correct. Should look up if it has a special reach feature
     weapon.data.range = { value: 5, units: "ft.", long: "" };
-    weapon.data.ability = action.isMartialArts
+
+    const isMartialArtist = ddb.character.classes.some((cls) =>
+      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+    );
+    console.warn("Martial Artit?" + isMartialArtist);
+    weapon.data.ability = action.isMartialArts && isMartialArtist
       ? character.data.abilities.dex.value >= character.data.abilities.str.value
         ? "dex"
         : "str"
@@ -105,7 +113,7 @@ function getAttackAction(ddb, character, action) {
  * @param {*} ddb
  */
 function getUnarmedStrike(ddb, character) {
-  const unarmedStikeMock = {
+  const unarmedStrikeMock = {
     limitedUse: null,
     name: "Unarmed Strike",
     description: null,
@@ -129,11 +137,11 @@ function getUnarmedStrike(ddb, character) {
       hasAoeSpecialDescription: false,
     },
     activation: {
-      activationTime: null,
+      activationTime: 1,
       activationType: 1,
     },
   };
-  const unarmedStrike = getAttackAction(ddb, character, unarmedStikeMock);
+  const unarmedStrike = getAttackAction(ddb, character, unarmedStrikeMock);
   return unarmedStrike;
 }
 
@@ -143,13 +151,6 @@ function getUnarmedStrike(ddb, character) {
  * @param {*} character
  */
 function getAttackActions(ddb, character) {
-  console.log(
-    JSON.stringify([ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat].flat())
-  );
-  const debug = [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
-    .flat()
-    .filter((action) => action.displayAsAttack && action.displayAsAttack === true);
-  console.log(JSON.stringify(debug));
   const actions = [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
     .flat()
     .filter((action) => action.displayAsAttack && action.displayAsAttack === true)
@@ -167,13 +168,6 @@ function getAttackActions(ddb, character) {
  * @param {*} items
  */
 function getOtherActions(ddb, items) {
-  const debug = [ddb.character.actions.race, ddb.character.actions.class, ddb.character.actions.feat].flat().filter(
-    (action) =>
-      // lets grab other actions and add, make sure we don't get attack based ones that haven't parsed
-      !action.displayAsAttack ||
-      (action.displayAsAttack === true && !items.some((attack) => attack.name === action.name))
-  );
-  console.log(JSON.stringify(debug));
   const actions = [ddb.character.actions.race, ddb.character.actions.class, ddb.character.actions.feat]
     .flat()
     .filter(
