@@ -14,17 +14,20 @@ import registerGameSettings from "./hooks/ready/registerGameSettings.js";
 
 // other hooks
 import addFolderLabel from "./hooks/renderSidebarTab/addFolderLabel.js";
-import add from "./messaging/type/add/index.js";
+import linkImages from "./hooks/renderJournalSheet/linkImages.js";
+
+// socket messaging
+import onSocketMessage from "./hooks/socket/onSocketMessage.js";
 
 // foundry is initializing
 export function init() {
   setupLogging();
-  CONFIG.debug.hooks = true;
+  CONFIG.debug.hooks = false;
   utils.log("Init");
 }
 
 // foundry is ready
-export function ready() {
+export function onceReady() {
   // register the game settings
   registerGameSettings();
 
@@ -50,6 +53,24 @@ export function ready() {
   }, 500);
 }
 
+export function onReady() {
+  game.socket.on("module.vtta-dndbeyond", (data) => {
+    console.log("Socket Message received");
+    if (data.sender === game.user.data._id) {
+      console.log("I sent this");
+      return;
+    }
+
+    const sender = game.users.get(data.sender);
+    delete data.sender;
+    onSocketMessage(sender, data);
+  });
+}
+
 export function renderSidebarTab(directory, html, user) {
   addFolderLabel(directory, html, user);
+}
+
+export function renderJournalSheet(sheet, html, data) {
+  linkImages(sheet, html, data);
 }

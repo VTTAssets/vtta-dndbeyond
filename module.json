@@ -32,7 +32,13 @@
   ],
   "systems": ["dnd5e"],
   "esmodules": ["src/index.js"],
-  "styles": ["./css/module-settings.css", "./css/default.css", "./src/character/import.css", "./css/sidebar.css"],
+  "styles": [
+    "./css/module-settings.css",
+    "./css/default.css",
+    "./src/character/import.css",
+    "./css/sidebar.css",
+    "./css/journal.css"
+  ],
   "packs": [],
   "socket": true,
   "url": "https://www.vttassets.com/asset/vtta-dndbeyond",

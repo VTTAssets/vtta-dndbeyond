@@ -17,7 +17,7 @@ export default function (directory, html, user) {
         $(label).on("click", (event) => {
           console.log("Emitting Socket event");
           const data = {
-            sender: game.user.data._id,
+            senderId: game.user.data._id,
             action: "labelClick",
             label: labelText,
           };

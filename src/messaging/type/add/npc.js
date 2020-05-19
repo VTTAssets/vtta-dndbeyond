@@ -34,21 +34,22 @@ let queryIcons = (names) => {
  *
  * @param {[string]} spells Array of Strings or
  */
-
 const retrieveSpells = async (spells) => {
+  let result = [];
+  let compendiumName = game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
+  const GET_ENTITY = true;
   for (let i = 0; i < spells.length; i++) {
-    let spell = undefined;
     let spellName = typeof spells[i] === "string" ? spells[i] : spells[i].hasOwnProperty("name") ? spells[i].name : "";
-    spell = await utils.queryCompendium(game.settings.get("vtta-dndbeyond", "entity-spell-compendium"), spellName);
+    const spell = await utils.queryCompendium(compendiumName, spellName, GET_ENTITY);
 
     if (spell) {
-      const spellId = spell.id || spell._id;
-      console.log("Querying compendium for spell with ID " + spellId);
-      spell = await compendium.getEntity(spellId);
-      spellResult.push(spell);
+      // const spellId = spell.id || spell._id;
+      // console.log("Querying compendium for spell with ID " + spellId);
+      // spell = await compendium.getEntity(spellId);
+      result.push(spell);
     }
   }
-  return spellResult;
+  return result;
 };
 
 // we are creating the NPC here not temporary

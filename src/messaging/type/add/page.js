@@ -1,3 +1,5 @@
+import utils from "../../../utils.js";
+
 const SAVE_ALL = 0;
 const SAVE_NEW = 1;
 const SAVE_NONE = 2;
@@ -42,16 +44,6 @@ const getFolder = async (structure, entityName, sourcebook) => {
   return parent;
 };
 
-const combineContent = (section, depth = 1) => {
-  let content = depth !== 1 ? `<h${depth}>${section.title}</h${depth}>` : "";
-  content += insertRollTables(section.content.join(""));
-
-  for (let subSection of section.sections) {
-    content += combineContent(subSection, depth + 1);
-  }
-  return content;
-};
-
 const insertRollTables = (content) => {
   let orig = $("<div>" + content + "</div>");
   let processed = [];
@@ -83,50 +75,71 @@ const insertRollTables = (content) => {
   return $(orig).html();
 };
 
-const addSection = async (folderNames, section, sourcebook) => {
-  console.log("Adding section " + section.title + " at " + folderNames.join("/"));
+const addJournalEntries = async (data) => {
+  // create the primary folder for all content
+  let folder = await getFolder([data.title], "JournalEntry", data.book);
+  let entry = await JournalEntry.create({
+    folder: folder._id,
+    name: data.title,
+    content: insertRollTables(data.content),
+    img: null,
+  });
 
-  if (
-    folderNames.length <= 3 //&&
-    // section.sections &&
-    // section.sections.length > 0
-  ) {
-    folderNames = folderNames.length > 0 ? folderNames.concat([section.title]) : [section.title];
-    let folder = await getFolder(folderNames, "JournalEntry", sourcebook);
-
-    // main entry for this page
-    let content = insertRollTables(section.content.join(""));
-    let entry = await JournalEntry.create({
-      folder: folder._id,
-      name: section.title,
-      content: content, //section.content.join(""),
-      img: section.img ? section.img : null,
-    });
-
-    // create the subsections
-    for (let i = 0; i < section.sections.length; i++) {
-      await addSection(folderNames, section.sections[i], sourcebook);
+  // create sub-entries for all scenes
+  for (let scene of data.scenes) {
+    folder = await getFolder([data.title, scene.name], "JournalEntry", data.book);
+    for (let entry of scene.entries) {
+      entry = await JournalEntry.create({
+        folder: folder._id,
+        name: entry.name,
+        content: insertRollTables(entry.content), //section.content.join(""),
+        img: null,
+      });
     }
-  } else {
-    let folder = await getFolder(folderNames.slice(0, 3), "JournalEntry", sourcebook);
-    // create the content for this entry alone, without subfolders
-
-    let content = combineContent(section, 1);
-    let entry = await JournalEntry.create({
-      folder: folder._id,
-      name: section.title,
-      content: content,
-      img: section.img ? section.img : null,
-    });
   }
 };
 
-const addRollTables = async (content, sourcebook) => {
-  //folderName, rollTables, sourcebook) => {
-  const folderName = content.title;
-  const rollTables = content.rollTables;
+const addScenes = async (data) => {
+  let uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
+  let folder = await getFolder([data.book.name], "Scene", data.book);
 
-  let folder = await getFolder([folderName], "RollTable", sourcebook);
+  // check if the scene already exists
+  for (let scene of data.scenes) {
+    let existing = game.scenes.entities.find((s) => s.name === scene.name && s.folder === folder._id);
+    if (existing) {
+      ui.notifications.info("Scene " + scene.name + " does exist already, skipping");
+    } else {
+      const EXTENSION = scene.src.split(".").pop();
+      const baseFilename = scene.src.split("/").pop();
+
+      // get img and thumb from the proxy
+      let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename + "." + EXTENSION);
+      let thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb." + EXTENSION);
+      existing = await Scene.create({
+        name: scene.name,
+        img: src,
+        thumb: thumb,
+        width: scene.width,
+        height: scene.height,
+        backgroundColor: scene.backgroundColor,
+      });
+
+      if (scene.walls && scene.walls.length > 0) {
+        await existing.createEmbeddedEntity("Wall", scene.walls);
+      }
+      if (scene.lights && scene.lights.length > 0) {
+        await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+      }
+    }
+  }
+};
+
+const addRollTables = async (data) => {
+  //folderName, rollTables, sourcebook) => {
+  const folderName = data.title;
+  const rollTables = data.rollTables;
+
+  let folder = await getFolder([folderName], "RollTable", data.book);
   let tables = [];
   for (let data of rollTables) {
     console.log(data);
@@ -157,16 +170,12 @@ let addPage = (body) => {
     let folderNames = []; //[body.data.module.name];
 
     let rollTables = [];
-    if (data.content.rollTables && data.content.rollTables.length > 0) {
-      rollTables = await addRollTables(data.content, data.sourcebook);
-      //   data.content.title,
-      //   data.content.rollTables
-      // );
+    if (data.rollTables && data.rollTables.length > 0) {
+      rollTables = await addRollTables(data);
     }
-
-    // create the content by sections
-    await addSection(folderNames, data.content, data.sourcebook);
-
+    // add all Journal Entries
+    await addJournalEntries(data);
+    await addScenes(data);
     resolve(true);
   });
 };
