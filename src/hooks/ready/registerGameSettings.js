@@ -28,6 +28,16 @@ export default function () {
     default: "",
   });
 
+  game.settings.register("vtta-dndbeyond", "scene-upload-directory", {
+    name: "vtta-dndbeyond.scene-upload-directory.name",
+    hint: "vtta-dndbeyond.scene-upload-directory.hint",
+    scope: "world",
+    config: true,
+    // type: String,
+    type: Azzu.SettingsTypes.DirectoryPicker,
+    default: "",
+  });
+
   game.settings.register("vtta-dndbeyond", "entity-import-policy", {
     name: "vtta-dndbeyond.entity-import-policy.name",
     hint: "vtta-dndbeyond.entity-import-policy.hint",
@@ -114,18 +124,14 @@ export default function () {
     type: Boolean,
     default: true,
   });
-  game.settings.register(
-    "vtta-dndbeyond",
-    "character-update-policy-equipment",
-    {
-      name: "vtta-dndbeyond.character-update-policy-equipment.name",
-      hint: "vtta-dndbeyond.character-update-policy-equipment.hint",
-      scope: "player",
-      config: false,
-      type: Boolean,
-      default: true,
-    }
-  );
+  game.settings.register("vtta-dndbeyond", "character-update-policy-equipment", {
+    name: "vtta-dndbeyond.character-update-policy-equipment.name",
+    hint: "vtta-dndbeyond.character-update-policy-equipment.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
+  });
   game.settings.register(
     "vtta-dndbeyond",
     "character-update-policy-inventory", // = consumable, tool & loot

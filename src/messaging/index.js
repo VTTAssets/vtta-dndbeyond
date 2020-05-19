@@ -35,18 +35,19 @@ class EventPort {
             };
           }
           let result = await query(body);
-          document.dispatchEvent(
-            new CustomEvent(head.id, {
-              detail: {
-                head: {
-                  id: head.id,
-                  type: body.type,
-                  code: 200,
-                },
-                body: result,
+          console.log("Dispatching result");
+          let message = {
+            detail: {
+              head: {
+                id: head.id,
+                type: body.type,
+                code: 200,
               },
-            })
-          );
+              body: result,
+            },
+          };
+          console.log(message);
+          document.dispatchEvent(new CustomEvent(head.id, message));
         } catch (error) {
           console.log(error);
           document.dispatchEvent(
