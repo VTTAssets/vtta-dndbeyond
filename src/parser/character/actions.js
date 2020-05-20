@@ -1,225 +1,298 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
-export default function parseActions(ddb, character) {
-  let items = [];
+function martialArtsDamage(ddb, action) {
+  const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
 
-  let actions = [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.background]
-    .filter((action) => action !== undefined)
-    .flat()
-    .filter((action) => action.displayAsAttack === true);
+  const isMartialArtist = ddb.character.classes.some((cls) =>
+      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+    );
 
-  actions.forEach((action) => {
-    let weapon = null;
-    switch (action.name) {
-      case "Unarmed Strike":
-      case "Hooves":
-      case "Talon":
-      case "Bite":
-        weapon = {
-          name: action.name,
-          type: "weapon",
-          data: JSON.parse(utils.getTemplate("weapon")),
-        };
-        weapon.flags = {
-          vtta: {
-            dndbeyond: {
-              type: "Martial Arts",
-            },
-          },
-        };
+  // are we dealing with martial arts?
+  if (action.isMartialArts && isMartialArtist) {
+    const die = ddb.character.classes
+      .filter((cls) =>
+        cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+      )
+      .map((cls) => {
+        const feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
 
-        // Unarmed Strikes are always proficient
-        weapon.data.proficient = 1;
-
-        // description
-        weapon.data.description = {
-          value: action.description,
-          chat: action.description,
-          unidentified: "",
-        };
-
-        weapon.data.equipped = true;
-
-        /* rarity: '', */
-        weapon.data.rarity = "common";
-
-        /* identified: true, */
-        weapon.data.identified = true;
-
-        /* activation: { type: '', cost: 0, condition: '' }, */
-        weapon.data.activation = { type: "action", cost: 1, condition: "" };
-
-        // This is not entirely correct. Should look up if it has a special reach feature
-        weapon.data.range = { value: 5, units: "ft.", long: "" };
-
-        /* ability: null, */
-        weapon.data.ability = action.isMartialArts
-          ? character.data.abilities.dex.value >= character.data.abilities.str.value
-            ? "dex"
-            : "str"
-          : "str";
-
-        /* actionType: null, */
-        weapon.data.actionType = "mwak";
-
-        /* damage: { parts: [], versatile: '' }, */
-        // are we dealing with martial arts?
-        if (action.isMartialArts) {
-          let classes = ddb.character.classes.filter(
-            (cls) => cls.classFeatures.find((feature) => feature.name === "Martial Arts") !== -1
-          );
-
-          let die = classes.map((cls) => {
-            let feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
-
-            if (feature && feature.levelScale && feature.levelScale.dice && feature.levelScale.dice.diceString) {
-              return feature.levelScale.dice.diceString;
-            } else if (action.dice !== null) {
-              // On some races bite is considered a martial art, damage
-              // is different and on the action itself
-              return action.dice.diceString;
-            } else {
-              return "1d4";
-            }
-          });
-
-          // set the weapon damage
-          weapon.data.damage = {
-            parts: [[die + "+ @mod", "bludgeoning"]],
-            versatile: "",
-          };
+        if (feature && feature.levelScale && feature.levelScale.dice && feature.levelScale.dice.diceString) {
+          return feature.levelScale.dice.diceString;
         } else if (action.dice !== null) {
-          // The Lizardfolk jaws have a different base damage, its' detailed in
-          // dice so lets capture that for actions if it exists
-          weapon.data.damage = {
-            parts: [[action.dice.diceString + " + @mod", "bludgeoning"]],
-            versatile: "",
-          };
+          // On some races bite is considered a martial art, damage
+          // is different and on the action itself
+          return action.dice.diceString;
         } else {
-          // default to basics
-          weapon.data.damage = {
-            parts: [["1d4 + @mod", "bludgeoning"]],
-            versatile: "",
-          };
+          return "1";
         }
+    });
 
-        items.push(weapon);
-        break;
+    // set the weapon damage
+    return {
+      parts: [[die + " + @mod", damageType]],
+      versatile: "",
+    };
+  } else if (action.dice !== null) {
+    // The Lizardfolk jaws have a different base damage, its' detailed in
+    // dice so lets capture that for actions if it exists
+    return {
+      parts: [[action.dice.diceString + " + @mod", damageType]],
+      versatile: "",
+    };
+  } else {
+    // default to basics
+    return {
+      parts: [["1 + @mod", damageType]],
+      versatile: "",
+    };
+  }
+}
 
-      default:
-        utils.log(`Unrecognized Action: ${action.name}`, "extension");
-    }
-  });
-
-  // check if we don't have an unarmed strike item now
-  if (items.find((item) => item.name === "Unarmed Strike") === undefined) {
-    let weapon = {
-      name: "Unarmed Strike",
+function getAttackAction(ddb, character, action) {
+  let weapon = null;
+  try {
+    weapon = {
+      name: action.name,
       type: "weapon",
       data: JSON.parse(utils.getTemplate("weapon")),
     };
-    weapon.flags = {
-      vtta: {
-        dndbeyond: {
-          type: "Martial Arts",
+
+    if (action.isMartialArts) {
+      weapon.flags = {
+        vtta: {
+          dndbeyond: {
+            type: "Martial Arts",
+          },
         },
-      },
-    };
+      };
+    }
 
-    // Unarmed Strikes are always proficient
-    weapon.data.proficient = 1;
-
-    // description
+    weapon.data.proficient = action.isProficient ? 1 : 0;
     weapon.data.description = {
-      value:
-        "Instead of using a weapon to make a melee weapon attack, you can use an unarmed strike: a punch, kick, head-butt, or similar forceful blow (none of which count as weapons). On a hit, an unarmed strike deals bludgeoning damage equal to 1 + your Strength modifier. You are proficient with your unarmed strikes.",
-      chat:
-        "Instead of using a weapon to make a melee weapon attack, you can use an unarmed strike: a punch, kick, head-butt, or similar forceful blow (none of which count as weapons). On a hit, an unarmed strike deals bludgeoning damage equal to 1 + your Strength modifier. You are proficient with your unarmed strikes.",
+      value: action.snippet ? action.snippet : "",
+      chat: action.snippet ? action.snippet : "",
       unidentified: "",
     };
-
     weapon.data.equipped = true;
-
-    /* rarity: '', */
     weapon.data.rarity = "common";
-
-    /* identified: true, */
     weapon.data.identified = true;
+    const actionType = DICTIONARY.actions.activationTypes.find((type) => type.id === action.activation.activationType);
+    weapon.data.activation = !actionType
+      ? {}
+      : {
+          type: actionType.value,
+          cost: action.activation.activationTime || 1,
+          condition: "",
+        };
 
-    /* activation: { type: '', cost: 0, condition: '' }, */
-    weapon.data.activation = { type: "action", cost: 1, condition: "" };
+    if (action.range && action.range.aoeType && action.range.aoeSize) {
+      weapon.data.range = { value: null, units: "self", long: null };
+      weapon.data.target = {
+        value: action.range.aoeSize,
+        type: DICTIONARY.actions.aoeType.find((type) => type.id === action.range.aoeType).value,
+        units: "ft",
+      };
+    } else if (action.range && action.range.range) {
+      weapon.data.range = {
+        value: action.range.range,
+        units: "ft.",
+        long: action.range.long || "",
+      };
+    } else {
+      weapon.data.range = { value: 5, units: "ft.", long: "" };
+    }
 
-    // This is not entirely correct. Should look up if it has a special reach feature
-    weapon.data.range = { value: 5, units: "ft.", long: "" };
+    const isMartialArtist = ddb.character.classes.some((cls) =>
+      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+    );
+    weapon.data.ability = action.isMartialArts && isMartialArtist
+      ? character.data.abilities.dex.value >= character.data.abilities.str.value
+        ? "dex"
+        : "str"
+      : "str";
 
-    /* ability: null, */
-    weapon.data.ability = "str";
+    // lets see if we have a save stat for things like Dragon born Breath Weapon
+    if (action.saveStatId) {
+      const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
+      weapon.data.actionType = "save";
+      weapon.data.damage = {
+        parts: [[action.dice.diceString, damageType]],
+        versatile: "",
+      };
+      const saveStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value;
+      weapon.data.save = {
+        "ability": saveStat,
+        "dc": null,
+        "scaling": "spell"
+      };
+      const abilityModStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.abilityModifierStatId).value;
+      weapon.data.ability = abilityModStat;
+    } else {
+      weapon.data.actionType = "mwak";
+      weapon.data.damage = martialArtsDamage(ddb, action);
+    }
 
-    /* actionType: null, */
-    weapon.data.actionType = "mwak";
-
-    // set the weapon damage
-    weapon.data.damage = {
-      parts: [["1 + @mod", "bludgeoning"]],
-      versatile: "",
-    };
-
-    items.push(weapon);
-  }
-
-  // check limited use actions, too
-  actions = [ddb.character.actions.race, ddb.character.actions.class, ddb.character.actions.feat]
-    .flat()
-    .filter((action) => action.limitedUse && action.limitedUse.maxUses)
-    .map((action) => {
-      const activationType = DICTIONARY.spell.activationTypes.find(
-        (type) => type.activationType === action.activation.activationType
-      );
-      const activation = !activationType
-        ? {}
-        : {
-            type: activationType.value,
-            cost: action.activation.activationTime,
-            condition: "",
-          };
-
-      return {
-        name: action.name,
-        description: action.snippet ? action.snippet : "",
-        activation: activation,
+    if (action.limitedUse && action.limitedUse.maxUses) {
+      const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
+      weapon.data.uses = {
         value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
         max: action.limitedUse.maxUses,
-        sr: action.limitedUse.resetType === 1,
-        lr: action.limitedUse.resetType === 1 || action.limitedUse.resetType === 2,
+        per: resetType ? resetType.value : "",
       };
-    })
-    // sort by maxUses, I guess one wants to track the most uses first, because it's used more often
-    .sort((a, b) => {
-      if (a.max > b.max) return -1;
-      if (a.max < b.max) return 1;
-      return 0;
+    }
+
+  } catch (err) {
+    utils.log(`Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
+  }
+
+  return weapon;
+}
+
+/**
+ * Everyone has an Unarmed Strike
+ * @param {*} ddb
+ */
+function getUnarmedStrike(ddb, character) {
+  const unarmedStrikeMock = {
+    limitedUse: null,
+    name: "Unarmed Strike",
+    description: null,
+    snippet:
+      "Instead of using a weapon to make a melee weapon attack, you can use an unarmed strike: a punch, kick, head-butt, or similar forceful blow (none of which count as weapons). On a hit, an unarmed strike deals bludgeoning damage equal to 1 + your Strength modifier. You are proficient with your unarmed strikes.",
+    abilityModifierStatId: null,
+    attackTypeRange: 1,
+    actionType: 1,
+    attackSubtype: 3,
+    dice: null,
+    value: 1,
+    damageTypeId: 1,
+    isMartialArts: true,
+    isProficient: true,
+    displayAsAttack: true,
+    range: {
+      range: null,
+      longRange: null,
+      aoeType: null,
+      aoeSize: null,
+      hasAoeSpecialDescription: false,
+    },
+    activation: {
+      activationTime: 1,
+      activationType: 1,
+    },
+  };
+  const unarmedStrike = getAttackAction(ddb, character, unarmedStrikeMock);
+  return unarmedStrike;
+}
+
+/**
+ * Try and parse attack actions - this will at the moment only really support basic melee attacks
+ * @param {*} ddb
+ * @param {*} character
+ */
+function getAttackActions(ddb, character) {
+  return [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
+    .flat()
+    .filter((action) => action.displayAsAttack && action.displayAsAttack === true)
+    .map((action) => {
+      return getAttackAction(ddb, character, action);
+    });
+}
+
+/**
+ * Lets Parse remaining actions
+ * @param {*} ddb
+ * @param {*} items
+ */
+function getOtherActions(ddb, items) {
+  const actions = [ddb.character.actions.race, ddb.character.actions.class, ddb.character.actions.feat]
+    .flat()
+    .filter(
+      (action) =>
+        // lets grab other actions and add, make sure we don't get attack based ones that haven't parsed
+        !action.displayAsAttack ||
+        (action.displayAsAttack === true && !items.some((attack) => attack.name === action.name))
+    )
+    .map((action) => {
+      let feat = {
+        name: action.name,
+        type: "feat",
+        data: JSON.parse(utils.getTemplate("feat")),
+      };
+      if (action.activation) {
+        const actionType = DICTIONARY.actions.activationTypes.find(
+          (type) => type.id === action.activation.activationType
+        );
+        const activation = !actionType
+          ? {}
+          : {
+              type: actionType.value,
+              cost: action.activation.activationTime || 1,
+              condition: "",
+            };
+        feat.data.activation = activation;
+      }
+
+      feat.data.description = {
+        value: action.snippet ? action.snippet : "",
+        chat: action.snippet ? action.snippet : "",
+        unidentified: "",
+      };
+
+      if (action.limitedUse && action.limitedUse.maxUses) {
+        const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
+        feat.data.uses = {
+          value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
+          max: action.limitedUse.maxUses,
+          per: resetType ? resetType.value : "",
+        };
+      }
+
+      return feat;
     });
 
-  // the first three are already included in the resources tab, so we do not include them again
-  // actions = actions.slice(3, actions.length);
-  actions.forEach((action) => {
-    let feat = {
-      name: action.name,
-      type: "feat",
-      data: JSON.parse(utils.getTemplate("feat")),
-    };
+  // TODO: We maybe able to look up other entities here to get details for things like Sneak Attack
+  return actions;
+}
 
-    feat.data.description.value = action.description;
-    feat.data.activation = action.activation;
-    feat.data.uses = {
-      value: action.value,
-      max: action.max,
-      per: action.sr ? "sr" : action.lr ? "lr" : "",
-    };
+export default function parseActions(ddb, character) {
+  let actions = [
+    // Get Attack Actions that we know about, typically natural attacks etc
+    ...getAttackActions(ddb, character),
+    // Everyone has an Unarmed Strike
+    getUnarmedStrike(ddb, character),
+  ];
+  actions = [
+    ...actions,
+    // Try and parse other relevant actions
+    ...getOtherActions(ddb, actions),
+  ];
 
-    items.push(feat);
+  // sort alphabetically, then by action type
+  actions.sort().sort((a, b) => {
+    console.log(JSON.stringify(a));
+    if (!a.data.activation.activationType) {
+      return 1;
+    } else if (!b.data.activation.activationType) {
+      return -1;
+    } else {
+      const aActionTypeID = DICTIONARY.actions.activationTypes.find(
+        (type) => type.value === a.data.activation.activationType
+      ).id;
+      const bActionTypeID = DICTIONARY.actions.activationTypes.find(
+        (type) => type.value === b.data.activation.activationType
+      ).id;
+      if (aActionTypeID > bActionTypeID) {
+        return 1;
+      } else if (aActionTypeID < bActionTypeID) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
   });
 
-  return items;
+  // console.log(JSON.stringify(actions));
+  return actions;
 }
