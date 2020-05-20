@@ -51,6 +51,7 @@ export default function parseClasses(ddb, character) {
     }
 
     item.data.hitDice = `d${characterClass.definition.hitDice}`;
+    item.data.hitDiceUsed = characterClass.hitDiceUsed;
 
     // There class object supports skills granted by the class.
     // Lets find and add them for future compatibility.
