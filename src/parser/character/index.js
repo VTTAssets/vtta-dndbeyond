@@ -162,11 +162,7 @@ let getAbilities = (data, character) => {
 let getHitDice = (data, character) => {
   let used = data.character.classes.reduce((prev, cls) => prev + cls.hitDiceUsed, 0);
   let total = data.character.classes.reduce((prev, cls) => prev + cls.level, 0);
-  return {
-    value: total - used,
-    min: 1,
-    max: total,
-  };
+  return total - used;
 };
 
 let getDeathSaves = (data, character) => {
