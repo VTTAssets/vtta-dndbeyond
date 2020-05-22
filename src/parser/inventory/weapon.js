@@ -271,7 +271,7 @@ let getDamage = (data, flags) => {
 };
 
 let getActionType = data => {
-  if (data.definition.attackType = 1) {
+  if (data.definition.attackType === 1) {
     return "mwak";
   } else {
     return "rwak";
