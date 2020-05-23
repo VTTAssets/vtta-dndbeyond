@@ -1,5 +1,4 @@
-import SettingsExtender from "./settings-extender.js";
-SettingsExtender();
+import DirectoryPicker from "../../lib/DirectoryPicker.js";
 
 export default function () {
   const actorCompendiums = game.packs
@@ -23,8 +22,7 @@ export default function () {
     hint: "vtta-dndbeyond.image-upload-directory.hint",
     scope: "world",
     config: true,
-    // type: String,
-    type: Azzu.SettingsTypes.DirectoryPicker,
+    type: DirectoryPicker.Directory,
     default: "",
   });
 
@@ -33,8 +31,7 @@ export default function () {
     hint: "vtta-dndbeyond.scene-upload-directory.hint",
     scope: "world",
     config: true,
-    // type: String,
-    type: Azzu.SettingsTypes.DirectoryPicker,
+    type: DirectoryPicker.Directory,
     default: "",
   });
 
