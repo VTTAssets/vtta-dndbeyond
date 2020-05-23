@@ -328,54 +328,6 @@ let utils = {
 
         let result = await DirectoryPicker.uploadToPath(path, file);
         resolve(result.path);
-
-        // /**
-        //  * Extract the datasource from the path
-        //  * "[s3:bucketname] path"
-        //  * "[data] path"
-        //  * "[core] path"
-        //  * @param {string} val A reference to the target path coming from settingsextender (patched)
-        //  */
-        // const getDataSource = (val) => {
-        //   let source = "data";
-        //   let path = val;
-
-        //   // check if we are using the patched settings extender
-        //   let matches = val.trim().match(/\[(.+)\]\s*(.+)/);
-        //   if (matches) {
-        //     // we do
-        //     source = matches[1];
-        //     // get bucket information, if S3 is used
-        //     const [s3Source, bucket] = source.split(":");
-        //     if (bucket !== undefined) {
-        //       return {
-        //         source: s3Source,
-        //         bucket: bucket,
-        //         path: matches[2],
-        //       };
-        //     } else {
-        //       return {
-        //         source: source,
-        //         bucket: null,
-        //         path: matches[2],
-        //       };
-        //     }
-        //   } else {
-        //     return {
-        //       source: source,
-        //       path: path,
-        //     };
-        //   }
-        // };
-
-        // const target = getDataSource(path);
-        // let result = await FilePicker.upload(
-        //   target.source,
-        //   target.path,
-        //   file,
-        //   target.bucket ? { bucket: target.bucket } : {}
-        // );
-        // resolve(result.path);
       });
     }
 
