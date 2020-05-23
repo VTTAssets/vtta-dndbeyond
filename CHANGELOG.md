@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0] Adventure, Ho!
+
+This release is a major milestone for vtta-dndbeyond. Against all odds, I finally managed to get the latest Chrome extension version audited by Google... and not only that, but this time, it passed the review. It was like wrestling with the gods, and the gods didn't play fair, to be honest. I am looking forward to battling through the next update /s
+
+But alas, it is here! And with numerous fixes to monster imports in general, a revamped UI, one really big hit: Adventure Module import. You can import whole pages within a D&D Beyond licensed adventure into Foundry VTT with a single click, that means that preparing has just become a whole lot less time-consuming (disclaimer: You still need to read through the module in advance ;)). While importing the data as Journal Entries is available for everyone to enjoy, the automatic import of scenes, alongside with custom scene thumbnails, adjustments to grids\* and walling/lighting\*\* is a benefit that my Patreons are having for themselves.
+
+**Note:** \* grid and \*\* lightening/walls is an ongoing effort that will start after release. You can see the state of each map on the top of the Adventure Module page:
+
+- An outlined star means: The scene is detected and it has (mostly, see "Known Issues" below) the scene descriptions declared, which are imported as single JournalEntries for quick and easy dragging onto the scene
+- A half-filled star means that additionally, the map is sized to match the Foundry grid
+- A fully-filled star states complete support including walling and lighting
+
+### Fixed
+
+- More robust parsing of monster blocks, including homebrew-monsters (still with limitations)
+- Fixed multiple spells that were unable to parse
+
+### Added
+
+- Adventure Module import as
+  - JournalEntries and RollTables, whereas the Tables within the JournalEntries will be replaced by a link to the respective RollTable
+  - Scenes (Patreon-only)
+- Character rolls with D&D Beyonds new 3D die: You need the character sheet open on D&D Beyond and an Actor with the same name as said character needs to belong to you and needs to be on the currently active scene. Currently, all rolls will simply be transferred over to Foundry, I will work on improvements on that in the future
+- JournalEntries containing images include a hover-button that shows all connected players said image, lifting the restriction of being able to show just one single image per JournalEntry to the players
+- Ability to "Alias-Roll" monsters:
+  - Drag the same monster on a scene.
+  - Double-click each token and rename each to a different name.
+  - Reload the D&D Beyond Monster's page to see a dropdown array next to the monster's name. Change the alias of the monster to let the players see, which Night Hag of the Coven actually curses the poor paladin.
+
 ## [2.2.0] Storage Galore
 
 This Release adds some improvements regarding storage integration: While testing was a bit cumbersome because of my inability to setup S3 reliably, I **think** I made some progress in supporting both S3 and hopefully the assets library of The Forge natively. This required a
