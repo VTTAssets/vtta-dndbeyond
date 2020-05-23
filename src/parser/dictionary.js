@@ -653,6 +653,7 @@ const DICTIONARY = {
     progression: [
       { name: "Artificer", value: "artificer" },
       { name: "Bard", value: "full" },
+      { name: "Barbarian", value: "none" },
       { name: "Blood Hunter", value: "pact" },
       { name: "Blood Hunter (archived)", value: "pact" },
       { name: "Cleric", value: "full" },
