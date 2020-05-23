@@ -122,6 +122,7 @@ const addScenes = async (data) => {
         width: scene.width,
         height: scene.height,
         backgroundColor: scene.backgroundColor,
+        folder: folder._id,
       });
 
       if (scene.walls && scene.walls.length > 0) {
