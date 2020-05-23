@@ -106,6 +106,17 @@ let utils = {
     return utils.filterModifiers(modifiers, type, subType, restriction);
   },
 
+  findClassByFeatureId: (data, featureId) => {
+    const cls = data.character.classes.find((cls) => {
+      let classFeatures = cls.classFeatures;
+      if (cls.subclassDefinition && cls.subclassDefinition.classFeatures) {
+        classFeatures = classFeatures.concat(cls.subclassDefinition.classFeatures);
+      }
+      return classFeatures.find((feature) => feature.id === featureId) !== undefined;
+    });
+    return cls;
+  },
+
   calculateModifier: (val) => {
     return Math.floor((val - 10) / 2);
   },

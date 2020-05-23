@@ -453,10 +453,20 @@ let getHitpoints = (data, character) => {
   const removedHitPoints = data.character.removedHitPoints || 0;
   const temporaryHitPoints = data.character.temporaryHitPoints || 0;
 
-  const hitPointsPerLevel = utils
-    .filterBaseModifiers(data, "bonus", "hit-points-per-level")
-    .reduce((prev, cur) => prev + cur.value, 0);
-  baseHitPoints += hitPointsPerLevel * character.flags.vtta.dndbeyond.totalLevels;
+  // get all hit points features
+  const bonusHitpointsFeatures = utils.filterBaseModifiers(data, "bonus", "hit-points-per-level");
+
+  // map them to individual classes
+  const bonusHitpointsByClass = bonusHitpointsFeatures.map((bonus) => {
+    const cls = utils.findClassByFeature(data, bonus.componentId);
+    return cls.level * bonus.value;
+  });
+
+  // sum up the bonus HP per class level
+  const totalBonusHitpointsByClass = bonusHitpointsByClass.reduce((prev, cur) => prev + cur, 0);
+
+  // add the result to the base hitpoints
+  baseHitPoints += totalBonusHitpointsByClass;
 
   return {
     value:
