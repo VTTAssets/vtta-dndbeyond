@@ -458,14 +458,18 @@ let utils = {
    * Queries a compendium for a given entity name
    * @returns the index entries of all matches, otherwise an empty array
    */
-  queryCompendium: async (compendiumName, entityName) => {
+  queryCompendium: async (compendiumName, entityName, getEntity = false) => {
     entityName = utils.normalizeString(entityName);
 
     let compendium = game.packs.find((pack) => pack.collection === compendiumName);
     if (!compendium) return null;
     let index = await compendium.getIndex();
-    let entity = index.find((entity) => utils.normalizeString(entity.name) === entityName);
-    return entity ? entity : null;
+    let id = index.find((entity) => utils.normalizeString(entity.name) === entityName);
+    if (id && getEntity) {
+      let entity = await compendium.getEntity(id._id);
+      return entity;
+    }
+    return id ? id : null;
   },
 
   /**
