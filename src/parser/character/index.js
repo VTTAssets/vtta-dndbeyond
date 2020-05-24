@@ -458,7 +458,7 @@ let getHitpoints = (data, character) => {
 
   // map them to individual classes
   const bonusHitpointsByClass = bonusHitpointsFeatures.map((bonus) => {
-    const cls = utils.findClassByFeature(data, bonus.componentId);
+    const cls = utils.findClassByFeatureId(data, bonus.componentId);
     return cls.level * bonus.value;
   });
 
