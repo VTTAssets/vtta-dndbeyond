@@ -1188,7 +1188,7 @@ let getWeaponProficiencies = (data, character) => {
 
   return {
     value: [...new Set(values)],
-    custom: [...new Set(custom)].join(", "),
+    custom: [...new Set(custom)].join("; "),
   };
 };
 
