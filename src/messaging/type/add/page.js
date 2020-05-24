@@ -107,6 +107,24 @@ const addScenes = async (data) => {
         height: scene.height,
         backgroundColor: scene.backgroundColor,
       });
+
+      // remove existing walls, add from import
+      if (scene.walls && scene.walls.length > 0) {
+        await existing.deleteEmbeddedEntity(
+          "Wall",
+          existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
+        );
+        await existing.createEmbeddedEntity("Wall", scene.walls);
+      }
+
+      // remove existing lights, add from import
+      if (scene.lights && scene.lights.length > 0) {
+        await existing.deleteEmbeddedEntity(
+          "AmbientLight",
+          existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
+        );
+        await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+      }
     } else {
       //const EXTENSION = scene.src.split(".").pop();
       const [baseFilename, EXTENSION] = scene.src.split("/").pop().split(".");
