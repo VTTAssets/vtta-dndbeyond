@@ -5,7 +5,7 @@
   "vtta-dndbeyond.scene-upload-directory.name": "Scene upload directory",
   "vtta-dndbeyond.scene-upload-directory.hint": "Specificies the scene upload location on the server.",
   "vtta-dndbeyond.entity-import-policy.name": "Compendium import policy (GM only)",
-  "vtta-dndbeyond.entity-import-policy.hint": "Defines if imported items should be saved into the compendiums below, and under which circumstances. Important note: Please use a world-specific compendium or a designated sharing module (like https://www.vttassets.com/asset/shared) as a target to avoid data loss on updating.",
+  "vtta-dndbeyond.entity-import-policy.hint": "Defines if imported items should be saved into the compendiums below, and under which circumstances.",
   "vtta-dndbeyond.entity-import-policy.0": "Save all entities, overwrite existing ones",
   "vtta-dndbeyond.entity-import-policy.1": "Save new entities only, do not overwrite existing ones",
   "vtta-dndbeyond.entity-import-policy.2": "Do not save the entities at all",

@@ -4,7 +4,6 @@ export default function (directory, html, user) {
     .each((index, element) => {
       let folderId = $(element).attr("data-folder-id");
       let folder = game.folders.get(folderId);
-      console.log(folder.data.flags);
       const labelText =
         folder.data.flags &&
         folder.data.flags.vtta &&
@@ -15,13 +14,11 @@ export default function (directory, html, user) {
       if (labelText) {
         const label = $(`<span class="vtta-folder-label">${labelText.toUpperCase()}</span>`);
         $(label).on("click", (event) => {
-          console.log("Emitting Socket event");
           const data = {
             senderId: game.user.data._id,
             action: "labelClick",
             label: labelText,
           };
-          console.log(data);
           game.socket.emit("module.vtta-dndbeyond", data);
         });
 
@@ -34,7 +31,6 @@ export default function (directory, html, user) {
     .each((index, element) => {
       let folderId = $(element).attr("data-folder-id");
       let folder = game.folders.get(folderId);
-      console.log(folder.data.flags);
       const label =
         folder.data.flags &&
         folder.data.flags.vtta &&
