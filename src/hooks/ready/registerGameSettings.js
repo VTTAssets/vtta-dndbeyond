@@ -15,15 +15,13 @@ export default function () {
       return choices;
     }, {});
 
-  console.log(itemCompendiums);
-
   game.settings.register("vtta-dndbeyond", "image-upload-directory", {
     name: "vtta-dndbeyond.image-upload-directory.name",
     hint: "vtta-dndbeyond.image-upload-directory.hint",
     scope: "world",
     config: true,
     type: DirectoryPicker.Directory,
-    default: "",
+    default: "[data] ",
   });
 
   game.settings.register("vtta-dndbeyond", "scene-upload-directory", {
@@ -32,7 +30,7 @@ export default function () {
     scope: "world",
     config: true,
     type: DirectoryPicker.Directory,
-    default: "",
+    default: "[data] ",
   });
 
   game.settings.register("vtta-dndbeyond", "entity-import-policy", {

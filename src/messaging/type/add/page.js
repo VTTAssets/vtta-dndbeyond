@@ -37,7 +37,6 @@ const getFolder = async (structure, entityName, sourcebook) => {
 
   let parent = null;
   for (let i = 0; i < structure.length; i++) {
-    console.log("FOLDER: " + structure[i]);
     parent = await getOrCreateFolder(parent, structure[i], sourcebook);
   }
 
@@ -51,7 +50,6 @@ const insertRollTables = (content) => {
     .find('div[data-type="rolltable"]')
     .html(function () {
       let rollTableId = $(this).attr("data-id");
-      console.log("Found RollTable ID: " + rollTableId);
       if (rollTableId) {
         if (processed.includes(rollTableId)) $(this).remove();
         else {
@@ -64,14 +62,10 @@ const insertRollTables = (content) => {
               t.data.flags.vtta.dndbeyond.rollTableId === rollTableId
           );
           const replacement = `<div class="rolltable"><span class="rolltable-head">Roll Table: </span><span class="rolltable-link">@RollTable[${rollTable._id}]{${rollTable.name}}</span></div>`;
-          console.log("Replacing: " + this);
-          console.log("   + with: " + replacement);
-          //$(div).replaceWith(replacement);
           return replacement;
         }
       }
     });
-  console.log($(orig).html());
   return $(orig).html();
 };
 
@@ -101,20 +95,43 @@ const addJournalEntries = async (data) => {
 
 const addScenes = async (data) => {
   let uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
-  let folder = await getFolder([data.book.name], "Scene", data.book);
+  let folder = await getFolder([data.book.name, data.title], "Scene", data.book);
 
   // check if the scene already exists
   for (let scene of data.scenes) {
-    let existing = game.scenes.entities.find((s) => s.name === scene.name && s.folder === folder._id);
+    let existing = game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
     if (existing) {
-      ui.notifications.info("Scene " + scene.name + " does exist already, skipping");
+      console.log("Scene " + scene.name + " does exist already, updating...");
+      await existing.update({
+        width: scene.width,
+        height: scene.height,
+        backgroundColor: scene.backgroundColor,
+      });
+
+      // remove existing walls, add from import
+      if (scene.walls && scene.walls.length > 0) {
+        await existing.deleteEmbeddedEntity(
+          "Wall",
+          existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
+        );
+        await existing.createEmbeddedEntity("Wall", scene.walls);
+      }
+
+      // remove existing lights, add from import
+      if (scene.lights && scene.lights.length > 0) {
+        await existing.deleteEmbeddedEntity(
+          "AmbientLight",
+          existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
+        );
+        await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+      }
     } else {
-      const EXTENSION = scene.src.split(".").pop();
-      const baseFilename = scene.src.split("/").pop();
+      //const EXTENSION = scene.src.split(".").pop();
+      const [baseFilename, EXTENSION] = scene.src.split("/").pop().split(".");
 
       // get img and thumb from the proxy
-      let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename + "." + EXTENSION);
-      let thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb." + EXTENSION);
+      let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);
+      let thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb");
       existing = await Scene.create({
         name: scene.name,
         img: src,

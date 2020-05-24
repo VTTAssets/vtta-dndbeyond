@@ -39,25 +39,31 @@ class DirectoryPicker extends FilePicker {
 
   // parses the string back to something the FilePicker can understand as an option
   static parse(str) {
-    let source;
-    let matches = str.trim().match(/\[(.+)\]\s*(.+)/);
+    let matches = str.match(/\[(.+)\]\s*(.+)/);
     if (matches) {
-      source = matches[1];
+      let source = matches[1];
+      const current = matches[2].trim();
       const [s3, bucket] = source.split(":");
       if (bucket !== undefined) {
         return {
           activeSource: s3,
           bucket: bucket,
-          current: matches[2],
+          current: current,
         };
       } else {
         return {
           activeSource: s3,
           bucket: null,
-          current: matches[2],
+          current: current,
         };
       }
     }
+    // failsave, try it at least
+    return {
+      activeSource: "data",
+      bucket: null,
+      current: str,
+    };
   }
 
   // Adds a FilePicker-Simulator-Button next to the input fields

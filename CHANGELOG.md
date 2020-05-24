@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.2] Hotfixes
+
+### Added
+
+- Scene imports now go into a respective subfolder relating to the adventure module page
+- Remove excessive filename extensions on the uploaded map files
+
+### Changed
+
+- Default upload directories for avatar and scene upload now default to the base data directory
+- Removed a wording in the english language file that referenced to the shared module, which is now in the user's responsitiblity to create and maintain. Since vtta-dndbeyond now creates the necessary world-specific compendiums automatically, this is not a real necessity, while still a nice-to-have
+- Imported scenes that already exist will received an update on their base-specifics (size, grid, alignment, walls, lights), but do not re-upload the image automatically. In order to trigger a complete fresh start, delete the scene and re-import
+ 
 ## [3.0.0] Adventure, Ho!
 
 This release is a major milestone for vtta-dndbeyond. Against all odds, I finally managed to get the latest Chrome extension version audited by Google... and not only that, but this time, it passed the review. It was like wrestling with the gods, and the gods didn't play fair, to be honest. I am looking forward to battling through the next update /s

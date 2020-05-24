@@ -339,7 +339,10 @@ let utils = {
 
     // prepare filenames
     let filename = baseFilename;
-    let ext = url.split(".").pop().split(/\#|\?/)[0];
+    let ext = url
+      .split(".")
+      .pop()
+      .split(/\#|\?|\&/)[0];
 
     // uploading the character avatar and token
     try {
