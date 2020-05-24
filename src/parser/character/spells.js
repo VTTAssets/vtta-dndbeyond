@@ -182,6 +182,38 @@ let getDuration = (data) => {
 };
 
 /**
+ * Does the spell target creatures?
+ * @param {*} data
+ */
+let doesTargetCreature = (data) => {
+  const creature = /a creature you|creature( that)? you can see|interrupt a creature|would strike a creature|creature of your choice|creature or object within range|cause a creature|creature must be within range/gi;
+  const creaturesRange = /(humanoid|monster|creature|target)(s)? (or loose object )?(of your choice )?(that )?(you can see )?within range/gi;
+  return data.definition.description.match(creature) || data.definition.description.match(creaturesRange);
+};
+
+/**
+ * Get Target Values
+ * Uses regex magic to try and determine the number of creatures affected
+ * @param {*} data
+ */
+let getTargetValues = (data) => {
+  const numCreatures = /(?!At Higher Levels.*)(\w*) (falling )?(willing )?(creature|target|monster|celestial|fiend|fey|corpse(s)? of|humanoid)(?!.*you have animated)/gim;
+  const targets = [...data.definition.description.matchAll(numCreatures)];
+  const targetValues = targets
+    .filter((target) => {
+      const matches = DICTIONARY.numbers.filter((n) => n.natural === target[1].toLowerCase());
+      return Array.isArray(matches) && !!matches.length;
+    })
+    .map((target) => DICTIONARY.numbers.find((n) => n.natural === target[1].toLowerCase()).num);
+
+  if (Array.isArray(targetValues) && !!targetValues.length) {
+    return Math.max(...targetValues);
+  } else {
+    return null;
+  }
+};
+
+/**
  * Spell targets
  */
 let getTarget = (data) => {
@@ -199,21 +231,11 @@ let getTarget = (data) => {
   let units = null;
   let value = null;
 
-  const creature = /a creature you|creature( that)? you can see|interrupt a creature|would strike a creature|creature of your choice|creature or object within range|cause a creature|creature must be within range/gi;
-  const creaturesRange = /(humanoid|monster|creature|target)(s)? (or loose object )?(of your choice )?(that )?(you can see )?within range/gi;
-  const creatures = data.definition.description.match(creature) || data.definition.description.match(creaturesRange);
+  // does the spell target a creature?
+  const creatures = doesTargetCreature(data);
 
   if (creatures) {
-    const numCreatures = /(?!At Higher Levels.*)(\w*) (falling )?(willing )?(creature|target|monster|celestial|fiend|fey|corpse(s)? of|humanoid)(?!.*you have animated)/gim;
-    const targets = [...data.definition.description.matchAll(numCreatures)];
-    const targetValues = targets
-      .filter((target) => {
-        const matches = DICTIONARY.numbers.filter((n) => n.natural === target[1].toLowerCase());
-        return Array.isArray(matches) && !!matches.length;
-      })
-      .map((target) => DICTIONARY.numbers.find((n) => n.natural === target[1].toLowerCase()).num);
-
-    if (Array.isArray(targetValues) && !!targetValues.length) value = Math.max(...targetValues);
+    value = getTargetValues(data);
   }
 
   switch (data.definition.range.origin) {
@@ -403,6 +425,71 @@ let getSave = (data) => {
   }
 };
 
+/**
+ * Get the scaling type for a spell mod
+ * This is complex logic and is broken out to help simplify
+ * @param {*} name
+ * @param {*} mod
+ */
+let getScaleType = (name, mod) => {
+  // scaleTypes:
+  // SPELLSCALE - typical spells that scale
+  // SPELLLEVEL - these spells have benefits that come in at particular levels e.g. bestow curse, hex. typically  duration changes
+  // CHARACTERLEVEL - typical cantrip based levelling, some expections (eldritch blast)
+  let scaleType = null;
+  const modScaleType = mod.atHigherLevels.scaleType;
+  const isHigherLevelDefinitions =
+    mod.atHigherLevels.higherLevelDefinitions &&
+    Array.isArray(mod.atHigherLevels.higherLevelDefinitions) &&
+    mod.atHigherLevels.higherLevelDefinitions.length >= 1;
+
+  if (isHigherLevelDefinitions && modScaleType === "spellscale") {
+    const definition = mod.atHigherLevels.higherLevelDefinitions[0];
+    if (definition) {
+      scaleType = modScaleType;
+    } else {
+      console.warn("No definition found for " + name);
+    }
+  } else if (modScaleType === "spellscale") {
+    // lets handle cases where there is a spellscale type but no damage
+    // increase/ higherleveldefinitins e.g. chain lighting
+    // these type of spells typically increase targets so we set the
+    // scaling to null as we don't want to increase damage when upcast.
+    // this also deals with cases like Ice Knife where the upscale damage
+    // is in one of the two mods provided.
+    // we are capturing this else because we don't want to trigger
+    // an update to scaleType or a warning.
+  } else if (modScaleType === "characterlevel") {
+    // lets handle odd cantrips like Eldritch Blast
+    // (in fact this might be the only case)
+    if (mod.atHigherLevels.higherLevelDefinitions.length === 0) {
+      // if this array is empty it does not contain levelling information
+      // the only case found is Eldritch Blast.
+      // this does have some info around multiple beams in
+      // data.atHigherLevels but we ignore this. we will set the scaling
+      // to null as each beam is best modelled by "casting" the cantrip again/
+      // pressing the attack/damage buttons in FVTT
+      scaleType = null;
+    } else {
+      scaleType = modScaleType;
+    }
+  } else if (modScaleType === "spelllevel") {
+    // spells that have particular level associated benefits
+    // these seem to be duration increases or target increases for
+    // the most part we can't handle these in FVTT right now (we could
+    // in theory create a new spell at a higher level).
+    // some duration upcasting (like bestow curse) affects concentration
+    // for now we will do nothing with these spells.
+    // examples include: hex, shadowblade, magic weapon, bestow curse
+    scaleType = modScaleType;
+  } else {
+    console.warn(name + " parse failed: " + JSON.stringify(modScaleType));
+    scaleType = modScaleType; // if this is new/unknow will use default
+  }
+
+  return scaleType;
+};
+
 let getSpellScaling = (data) => {
   let baseDamage = "";
   let scaleDamage = "";
@@ -433,7 +520,6 @@ let getSpellScaling = (data) => {
           // SPELLLEVEL - these spells have benefits that come in at particular levels e.g. bestow curse, hex. typically  duration changes
           // CHARACTERLEVEL - typical cantrip based levelling, some expections (eldritch blast)
 
-          let modScaleType = mod.atHigherLevels.scaleType;
           // mod.atHigherLevels.higherLevelDefinitions contains info about the
           // spells damage die at higher levels, but we can't use this for cantrips as
           // FVTT use a formula to work out the scaling (ddb has a fixed value structure)
@@ -443,7 +529,7 @@ let getSpellScaling = (data) => {
             mod.atHigherLevels.higherLevelDefinitions.length >= 1;
 
           // lets handle normal spell leveling first
-          if (isHigherLevelDefinitions && modScaleType === "spellscale") {
+          if (isHigherLevelDefinitions && mod.atHigherLevels.scaleType === "spellscale") {
             const definition = mod.atHigherLevels.higherLevelDefinitions[0];
             if (definition) {
               const modScaleDamage =
@@ -468,47 +554,12 @@ let getSpellScaling = (data) => {
               if (!existingMatch || modMatch[1] > existingMatch[1]) {
                 scaleDamage = modScaleDamage;
               }
-              // finally update scaleType
-              scaleType = modScaleType;
             } else {
               console.warn("No definition found for " + data.definition.name);
             }
-          } else if (modScaleType === "spellscale") {
-            // lets handle cases where there is a spellscale type but no damage
-            // increase/ higherleveldefinitins e.g. chain lighting
-            // these type of spells typically increase targets so we set the
-            // scaling to null as we don't want to increase damage when upcast.
-            // this also deals with cases like Ice Knife where the upscale damage
-            // is in one of the two mods provided.
-            // we are capturing this else because we don't want to trigger
-            // an update to scaleType or a warning.
-          } else if (modScaleType === "characterlevel") {
-            // lets handle odd cantrips like Eldritch Blast
-            // (in fact this might be the only case)
-            if (mod.atHigherLevels.higherLevelDefinitions.length === 0) {
-              // if this array is empty it does not contain levelling information
-              // the only case found is Eldritch Blast.
-              // this does have some info around multiple beams in
-              // data.atHigherLevels but we ignore this. we will set the scaling
-              // to null as each beam is best modelled by "casting" the cantrip again/
-              // pressing the attack/damage buttons in FVTT
-              scaleType = null;
-            } else {
-              scaleType = modScaleType;
-            }
-          } else if (modScaleType === "spelllevel") {
-            // spells that have particular level associated benefits
-            // these seem to be duration increases or target increases for
-            // the most part we can't handle these in FVTT right now (we could
-            // in theory create a new spell at a higher level).
-            // some duration upcasting (like bestow curse) affects concentration
-            // for now we will do nothing with these spells.
-            // examples include: hex, shadowblade, magic weapon, bestow curse
-            scaleType = modScaleType;
-          } else {
-            console.warn(data.definition.name + " parse failed: " + JSON.stringify(modScaleType));
-            scaleType = modScaleType; // if this is new/unknow will use default
           }
+
+          scaleType = getScaleType(data.definition.name, mod);
         }
       });
   }

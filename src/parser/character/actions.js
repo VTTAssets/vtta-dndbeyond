@@ -1,18 +1,18 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
+function isMartialArtists(classes) {
+  return classes.some((cls) => cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts"));
+}
+
 function martialArtsDamage(ddb, action) {
   const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
 
-  const isMartialArtist = ddb.character.classes.some((cls) =>
-      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
-    );
-
   // are we dealing with martial arts?
-  if (action.isMartialArts && isMartialArtist) {
+  if (action.isMartialArts && isMartialArtists(ddb.character.classes)) {
     const die = ddb.character.classes
       .filter((cls) =>
-        cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
+        isMartialArtists([cls])
       )
       .map((cls) => {
         const feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
@@ -49,15 +49,51 @@ function martialArtsDamage(ddb, action) {
   }
 }
 
-function getAttackAction(ddb, character, action) {
-  let weapon = null;
-  try {
-    weapon = {
-      name: action.name,
-      type: "weapon",
-      data: JSON.parse(utils.getTemplate("weapon")),
+function getLimitedUse(action) {
+  if (action.limitedUse && action.limitedUse.maxUses) {
+    const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
+    return {
+      value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
+      max: action.limitedUse.maxUses,
+      per: resetType ? resetType.value : "",
     };
+  } else {
+    return {};
+  }
+}
 
+function getDescription(action) {
+  return {
+    value: action.snippet ? action.snippet : "",
+    chat: action.snippet ? action.snippet : "",
+    unidentified: "",
+  };
+}
+
+function getActivation(action) {
+  if (action.activation) {
+    const actionType = DICTIONARY.actions.activationTypes.find(
+      (type) => type.id === action.activation.activationType
+    );
+    const activation = !actionType
+      ? {}
+      : {
+          type: actionType.value,
+          cost: action.activation.activationTime || 1,
+          condition: "",
+        };
+    return activation;
+  }
+  return {};
+}
+
+function getAttackAction(ddb, character, action) {
+  let weapon = {
+    name: action.name,
+    type: "weapon",
+    data: JSON.parse(utils.getTemplate("weapon")),
+  };
+  try {
     if (action.isMartialArts) {
       weapon.flags = {
         vtta: {
@@ -69,22 +105,11 @@ function getAttackAction(ddb, character, action) {
     }
 
     weapon.data.proficient = action.isProficient ? 1 : 0;
-    weapon.data.description = {
-      value: action.snippet ? action.snippet : "",
-      chat: action.snippet ? action.snippet : "",
-      unidentified: "",
-    };
+    weapon.data.description = getDescription(action);
     weapon.data.equipped = true;
     weapon.data.rarity = "common";
     weapon.data.identified = true;
-    const actionType = DICTIONARY.actions.activationTypes.find((type) => type.id === action.activation.activationType);
-    weapon.data.activation = !actionType
-      ? {}
-      : {
-          type: actionType.value,
-          cost: action.activation.activationTime || 1,
-          condition: "",
-        };
+    weapon.data.activation = getActivation(action);
 
     if (action.range && action.range.aoeType && action.range.aoeSize) {
       weapon.data.range = { value: null, units: "self", long: null };
@@ -103,10 +128,7 @@ function getAttackAction(ddb, character, action) {
       weapon.data.range = { value: 5, units: "ft.", long: "" };
     }
 
-    const isMartialArtist = ddb.character.classes.some((cls) =>
-      cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts")
-    );
-    weapon.data.ability = action.isMartialArts && isMartialArtist
+    weapon.data.ability = action.isMartialArts && isMartialArtists(ddb.character.classes)
       ? character.data.abilities.dex.value >= character.data.abilities.str.value
         ? "dex"
         : "str"
@@ -120,27 +142,18 @@ function getAttackAction(ddb, character, action) {
         parts: [[action.dice.diceString, damageType]],
         versatile: "",
       };
-      const saveStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value;
       weapon.data.save = {
-        "ability": saveStat,
+        "ability": DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value,
         "dc": null,
         "scaling": "spell"
       };
-      const abilityModStat = DICTIONARY.character.abilities.find((stat) => stat.id === action.abilityModifierStatId).value;
-      weapon.data.ability = abilityModStat;
+      weapon.data.ability = DICTIONARY.character.abilities.find((stat) => stat.id === action.abilityModifierStatId).value;
     } else {
       weapon.data.actionType = "mwak";
       weapon.data.damage = martialArtsDamage(ddb, action);
     }
 
-    if (action.limitedUse && action.limitedUse.maxUses) {
-      const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
-      weapon.data.uses = {
-        value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
-        max: action.limitedUse.maxUses,
-        per: resetType ? resetType.value : "",
-      };
-    }
+    weapon.data.uses = getLimitedUse(action);
 
   } catch (err) {
     utils.log(`Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
@@ -220,34 +233,9 @@ function getOtherActions(ddb, items) {
         type: "feat",
         data: JSON.parse(utils.getTemplate("feat")),
       };
-      if (action.activation) {
-        const actionType = DICTIONARY.actions.activationTypes.find(
-          (type) => type.id === action.activation.activationType
-        );
-        const activation = !actionType
-          ? {}
-          : {
-              type: actionType.value,
-              cost: action.activation.activationTime || 1,
-              condition: "",
-            };
-        feat.data.activation = activation;
-      }
-
-      feat.data.description = {
-        value: action.snippet ? action.snippet : "",
-        chat: action.snippet ? action.snippet : "",
-        unidentified: "",
-      };
-
-      if (action.limitedUse && action.limitedUse.maxUses) {
-        const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
-        feat.data.uses = {
-          value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
-          max: action.limitedUse.maxUses,
-          per: resetType ? resetType.value : "",
-        };
-      }
+      feat.data.activation = getActivation(action);
+      feat.data.description = getDescription(action);
+      feat.data.uses = getLimitedUse(action);
 
       return feat;
     });
