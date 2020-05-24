@@ -126,8 +126,14 @@ const addScenes = async (data) => {
         await existing.createEmbeddedEntity("AmbientLight", scene.lights);
       }
     } else {
-      //const EXTENSION = scene.src.split(".").pop();
-      const [baseFilename, EXTENSION] = scene.src.split("/").pop().split(".");
+      const EXTENSION = scene.src.split(".").pop();
+      const baseFilename = scene.name
+        .replace(/’s/, "s")
+        .replace(/'s/, "s")
+        .replace(/\W/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/_$/, "")
+        .toLowerCase();
 
       // get img and thumb from the proxy
       let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);

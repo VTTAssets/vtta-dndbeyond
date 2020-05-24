@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.3] Hotfix
+
+- Scene images renamed to reflect the scene name to avoid overwriting similar existing images
+
 ## [3.0.2] Hotfixes
 
 ### Added
