@@ -699,6 +699,8 @@ const DICTIONARY = {
   },
   sources: [
     { id: null, name: "System Reference Document (SRD)" },
+    { id: 1, name: "Players Handbook" },
+    { id: 2, name: "Players Handbook" },
     { id: 3, name: "Dungeon Master's Guide" },
     { id: 6, name: "Curse of Strahd" },
     { id: 7, name: "Hoard of the Dragon Queen" },
@@ -707,11 +709,14 @@ const DICTIONARY = {
     { id: 10, name: "Princes of the Apocalypse" },
     { id: 11, name: "Rise of Tiamat" },
     { id: 12, name: "Storm King's Thunder" },
+    { id: 13, name: "Sword Coast Adventurer's Guide" },
     { id: 15, name: "Volo's Guide to Monsters" },
     { id: 16, name: "The Sunless Citadel" },
     { id: 21, name: "Against the Giants" },
     { id: 22, name: "Tomb of Horrors" },
     { id: 25, name: "Tomb of Annihilation" },
+    { id: 27, name: "Xanathar's Guide to Everything" },
+    { id: 29, name: "Unearthed Arcana" },
     { id: 33, name: "Xanathar's Guide to Everything" },
     { id: 35, name: "Waterdeep Dragon Heist" },
     { id: 36, name: "Waterdeep Dungeon of the Mad Mage" },
@@ -721,6 +726,12 @@ const DICTIONARY = {
     { id: 40, name: "Lost Laboratory of Kwalish" },
     { id: 44, name: "Acquisitions Incorporated" },
     { id: 48, name: "Baldur's Gate: Descent into Avernus" },
+    { id: 49, name: "Eberron: Rising from the Last War" },
+    { id: 59, name: "Explorer's Guide to Wildemount" },
+    //
+    // { id: n, name: "One Grung Above" },
+    // { id: n, name: "The Tortle Package" },
+    // { id: n, name: "Monster Manual" },
   ],
 };
 

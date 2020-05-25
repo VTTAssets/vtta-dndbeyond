@@ -2,22 +2,27 @@ import DICTIONARY from '../dictionary.js';
 import utils from '../../utils.js';
 
 /**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
+ * Fetches the sources and pages for class and subclass
+ * @param {obj} data item
  */
-let getSource = (data) => {
-  console.warn("Getting source "+ JSON.stringify(data));
-  let source = "";
-  if (data.definition.sourceId) {
-    const sourceLookup = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
-    console.log("sourceLookup"+ JSON.stringify(sourceLookup));
-    if (sourceLookup) {
-      source = data.definition.sourcePageNumber
-        ? `${sourceLookup.name} pg. ${data.definition.sourcePageNumber}`
-        : sourceLookup.name;
+let getSources = (data) => {
+  const classSource = utils.getSource(data.definition);
+
+  let sources = classSource.name;
+  if (classSource.page) sources += ` (pg. ${classSource.page})`;
+
+  if (data.subclassDefinition) {
+    const subclassSource = utils.getSource(data.subclassDefinition);
+    console.warn(JSON.stringify(subclassSource));
+    if (subclassSource.name && classSource.name !== subclassSource.name) {
+      sources += `, ${subclassSource.name}`;
+    }
+    if (subclassSource.page && classSource.page !== subclassSource.page) {
+      sources += ` (pg. ${subclassSource.page})`;
     }
   }
-  return source;
+
+  return sources;
 };
 
 export default function parseClasses(ddb) {
@@ -36,7 +41,7 @@ export default function parseClasses(ddb) {
       unidentified: false,
     };
     item.data.levels = characterClass.level;
-    item.data.source = getSource(characterClass);
+    item.data.source = getSources(characterClass);
 
     if (
       characterClass.subclassDefinition &&
