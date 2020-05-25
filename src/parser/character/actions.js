@@ -259,7 +259,6 @@ export default function parseActions(ddb, character) {
 
   // sort alphabetically, then by action type
   actions.sort().sort((a, b) => {
-    console.log(JSON.stringify(a));
     if (!a.data.activation.activationType) {
       return 1;
     } else if (!b.data.activation.activationType) {
