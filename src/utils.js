@@ -73,7 +73,7 @@ let utils = {
    * Gets the sourcebook for a subset of dndbeyond sources
    * @param {obj} definition item definition
    */
-  getSource: (definition) => {
+  getSourceData: (definition) => {
     let source = {
       name: null,
       page: null,
@@ -88,8 +88,22 @@ let utils = {
       .filter((source) => source.id === definition.sourceId)
       .map((source) => source.name);
     }
+
     // add a page num if available
     if (definition.sourcePageNumber) source.page = definition.sourcePageNumber;
+
+    return source;
+  },
+
+  /**
+   * Fetches the sources and pages for a definition
+   * @param {obj} data item
+   */
+  parseSource: (definition) => {
+    const sourceData = utils.getSourceData(definition);
+
+    let source = sourceData.name;
+    if (sourceData.page) source += ` (pg. ${sourceData.page})`;
 
     return source;
   },

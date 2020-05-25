@@ -83,24 +83,6 @@ let getProficient = (data, proficiencies) => {
 };
 
 /**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
- */
-let getSource = data => {
-  if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(
-      source => source.id === data.definition.sourceId
-    );
-    if (source) {
-      return data.definition.sourcePageNumber
-        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
-        : source.name;
-    }
-  }
-  return "";
-};
-
-/**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = data => {
@@ -193,7 +175,7 @@ export default function parseArmor(data, character) {
   };
 
   /* source: '', */
-  armor.data.source = getSource(data);
+  armor.data.source = utils.parseSource(data.definition);
 
   /* quantity: 1, */
   armor.data.quantity = data.quantity ? data.quantity : 1;

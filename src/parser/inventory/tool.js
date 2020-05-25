@@ -15,24 +15,6 @@ let getProficient = (data, proficiencies) => {
 };
 
 /**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
- */
-let getSource = data => {
-  if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(
-      source => source.id === data.definition.sourceId
-    );
-    if (source) {
-      return data.definition.sourcePageNumber
-        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
-        : source.name;
-    }
-  }
-  return "";
-};
-
-/**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = data => {
@@ -116,7 +98,7 @@ export default function parseTool(data, character) {
     : 0; // note: here, proficiency is not a bool, but a number (0, 0.5, 1, 2) based on not/jack of all trades/proficient/expert.
 
   /* source: '', */
-  tool.data.source = getSource(data);
+  tool.data.source = utils.parseSource(data.definition);
 
   /* quantity: 1, */
   tool.data.quantity = data.quantity ? data.quantity : 1;

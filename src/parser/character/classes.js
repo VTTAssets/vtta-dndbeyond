@@ -6,14 +6,13 @@ import utils from '../../utils.js';
  * @param {obj} data item
  */
 let getSources = (data) => {
-  const classSource = utils.getSource(data.definition);
+  const classSource = utils.getSourceData(data.definition);
 
   let sources = classSource.name;
   if (classSource.page) sources += ` (pg. ${classSource.page})`;
 
   if (data.subclassDefinition) {
-    const subclassSource = utils.getSource(data.subclassDefinition);
-    console.warn(JSON.stringify(subclassSource));
+    const subclassSource = utils.getSourceData(data.subclassDefinition);
     if (subclassSource.name && classSource.name !== subclassSource.name) {
       sources += `, ${subclassSource.name}`;
     }
