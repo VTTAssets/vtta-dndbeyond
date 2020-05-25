@@ -1,16 +1,6 @@
 import utils from "../../utils.js";
 import DICTIONARY from "../dictionary.js";
 
-let getSource = (data) => {
-  if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
-    if (source) {
-      return data.definition.sourcePageNumber ? `${source.name} pg. ${data.definition.sourcePageNumber}` : source.name;
-    }
-  }
-  return "";
-};
-
 /**
  * Searches for selected options if a given feature provides choices to the user
  * @param {string} type character property: "class", "race" etc.
@@ -151,7 +141,7 @@ export default function parseFeatures(ddb) {
       unidentified: feat.definition.description,
     };
 
-    item.data.source = getSource(feat);
+    item.data.source = utils.parseSource(feat.definition);
 
     items.push(item);
   });
@@ -175,7 +165,7 @@ export default function parseFeatures(ddb) {
         unidentified: feat.definition.description,
       };
 
-      item.data.source = getSource(feat);
+      item.data.source = utils.parseSource(feat.definition);
 
       items.push(item);
     });

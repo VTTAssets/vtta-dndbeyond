@@ -1,13 +1,4 @@
-import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
-
-/**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
- */
-let getSource = (data) => {
-  return "Custom Item";
-};
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
@@ -62,7 +53,7 @@ export default function parseCustomItem(data, character) {
   };
 
   /* source: '', */
-  customItem.data.source = getSource(data);
+  customItem.data.source = "Custom item";
 
   /* quantity: 1, */
   customItem.data.quantity = data.definition.quantity

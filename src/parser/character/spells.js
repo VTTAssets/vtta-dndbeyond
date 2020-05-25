@@ -126,20 +126,6 @@ let getUses = (data) => {
 };
 
 /**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
- */
-let getSource = (data) => {
-  if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
-    if (source) {
-      return data.definition.sourcePageNumber ? `${source.name} pg. ${data.definition.sourcePageNumber}` : source.name;
-    }
-  }
-  return "";
-};
-
-/**
  * Gets the activation information of this spell
  */
 let getActivation = (data) => {
@@ -794,7 +780,7 @@ let parseSpell = (data, character) => {
     unidentified: data.definition.type,
   };
 
-  spell.data.source = getSource(data);
+  spell.data.source = utils.parseSource(data.definition);
 
   spell.data.activation = getActivation(data);
 

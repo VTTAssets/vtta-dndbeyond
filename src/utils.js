@@ -1,5 +1,6 @@
 import { DND5E } from "../../../systems/dnd5e/module/config.js";
 import DirectoryPicker from "./lib/DirectoryPicker.js";
+import DICTIONARY from './parser/dictionary.js';
 
 let utils = {
   debug: () => {
@@ -66,6 +67,45 @@ let utils = {
       .flat()
       .find((option) => option.definition.name === optionName);
     return !!classOptions;
+  },
+
+  /**
+   * Gets the sourcebook for a subset of dndbeyond sources
+   * @param {obj} definition item definition
+   */
+  getSourceData: (definition) => {
+    let source = {
+      name: null,
+      page: null,
+    };
+    if (definition.sourceIds) {
+      source.name = DICTIONARY.sources
+      .filter((source) => definition.sourceIds.includes(source.id))
+      .map((source) => source.name)
+      .join();
+    } else if (definition.sourceId) {
+      source.name = DICTIONARY.sources
+      .filter((source) => source.id === definition.sourceId)
+      .map((source) => source.name);
+    }
+
+    // add a page num if available
+    if (definition.sourcePageNumber) source.page = definition.sourcePageNumber;
+
+    return source;
+  },
+
+  /**
+   * Fetches the sources and pages for a definition
+   * @param {obj} data item
+   */
+  parseSource: (definition) => {
+    const sourceData = utils.getSourceData(definition);
+
+    let source = sourceData.name;
+    if (sourceData.page) source += ` (pg. ${sourceData.page})`;
+
+    return source;
   },
 
   getActiveItemModifiers: (data) => {

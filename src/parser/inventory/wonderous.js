@@ -2,24 +2,6 @@ import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
 /**
- * Gets the sourcebook for a subset of dndbeyond sources
- * @param {obj} data Item data
- */
-let getSource = data => {
-  if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(
-      source => source.id === data.definition.sourceId
-    );
-    if (source) {
-      return data.definition.sourcePageNumber
-        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
-        : source.name;
-    }
-  }
-  return "";
-};
-
-/**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = data => {
@@ -113,7 +95,7 @@ export default function parseWonderous(data, character) {
   };
 
   /* source: '', */
-  item.data.source = getSource(data);
+  item.data.source = utils.parseSource(data.definition);
 
   /* quantity: 1, */
   item.data.quantity = data.quantity ? data.quantity : 1;
