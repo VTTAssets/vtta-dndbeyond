@@ -5,24 +5,25 @@ import utils from '../../utils.js';
  * Gets the sourcebook for a subset of dndbeyond sources
  * @param {obj} data Item data
  */
-let getSource = data => {
+let getSource = (data) => {
+  console.warn("Getting source "+ JSON.stringify(data));
+  let source = "";
   if (data.definition.sourceId) {
-    let source = DICTIONARY.sources.find(
-      source => source.id === data.definition.sourceId
-    );
-    if (source) {
-      return data.definition.sourcePageNumber
-        ? `${source.name} pg. ${data.definition.sourcePageNumber}`
-        : source.name;
+    const sourceLookup = DICTIONARY.sources.find((source) => source.id === data.definition.sourceId);
+    console.log("sourceLookup"+ JSON.stringify(sourceLookup));
+    if (sourceLookup) {
+      source = data.definition.sourcePageNumber
+        ? `${sourceLookup.name} pg. ${data.definition.sourcePageNumber}`
+        : sourceLookup.name;
     }
   }
-  return '';
+  return source;
 };
 
-export default function parseClasses(ddb, character) {
+export default function parseClasses(ddb) {
   let items = [];
 
-  ddb.character.classes.forEach(characterClass => {
+  ddb.character.classes.forEach((characterClass) => {
     let item = {
       name: characterClass.definition.name,
       type: 'class',
@@ -55,32 +56,43 @@ export default function parseClasses(ddb, character) {
 
     // There class object supports skills granted by the class.
     // Lets find and add them for future compatibility.
-    const classIds =  characterClass.definition.classFeatures
-      .map(feature => feature.id)
-      .concat((!!characterClass.subclassDefinition) ?
-        characterClass.subclassDefinition.classFeatures.map(feature => feature.id) :
-        []);
+    const classIds = characterClass.definition.classFeatures
+      .map((feature) => feature.id)
+      .concat((characterClass.subclassDefinition)
+        ? characterClass.subclassDefinition.classFeatures.map((feature) => feature.id)
+        : []);
 
-    const profs = DICTIONARY.character.skills.map(skill => {
-      return ddb.character.modifiers.class
-      .filter(mod =>
-        mod.friendlySubtypeName === skill.label &&
-        classIds.includes(mod.componentId))
-      .map(f => skill.name);
-    }).flat();
+    // const profs = DICTIONARY.character.skills.map((skill) => {
+    //   return ddb.character.modifiers.class
+    //   .filter((mod) =>
+    //     mod.friendlySubtypeName === skill.label &&
+    //     classIds.includes(mod.componentId))
+    //   .map((f) => skill.name);
+    // }).flat();
+
+    const profs = DICTIONARY.character.skills
+      .filter((skill) =>
+        ddb.character.modifiers.class
+          .filter((mod) =>
+            mod.friendlySubtypeName === skill.label &&
+            classIds.includes(mod.componentId)
+          )
+      )
+      .map((skill) => skill.name);
+
 
     item.data.skills = {
       value: profs
-    }
+    };
 
     const castSpells = (characterClass.definition.canCastSpells ||
       (characterClass.subclassDefinition && characterClass.subclassDefinition.canCastSpells));
 
     if (castSpells) {
       item.data.spellcasting = DICTIONARY.spell.progression.find(
-        cls => cls.name === characterClass.definition.name).value;
+        (cls) => cls.name === characterClass.definition.name).value;
     } else {
-      item.data.spellcasting = ""
+      item.data.spellcasting = "";
     }
 
     items.push(item);
