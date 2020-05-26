@@ -240,7 +240,7 @@ function getOtherActions(ddb, items) {
       return feat;
     });
 
-  // TODO: We maybe able to look up other entities here to get details for things like Sneak Attack
+  // FUTURE ENHANCEMENT: We maybe able to look up other entities here to get details for things like Sneak Attack
   return actions;
 }
 
