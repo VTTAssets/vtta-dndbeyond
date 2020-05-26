@@ -47,6 +47,21 @@ export default function () {
     ],
   });
 
+  game.settings.register("vtta-dndbeyond", "entity-cleanup-policy", {
+    name: "vtta-dndbeyond.entity-cleanup-policy.name",
+    hint: "vtta-dndbeyond.entity-cleanup-policy.hint",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 0,
+    choices: [
+      "vtta-dndbeyond.entity-cleanup-policy.0",
+      "vtta-dndbeyond.entity-cleanup-policy.1",
+      "vtta-dndbeyond.entity-cleanup-policy.2",
+      "vtta-dndbeyond.entity-cleanup-policy.3",
+    ],
+  });
+
   game.settings.register("vtta-dndbeyond", "entity-item-compendium", {
     name: "vtta-dndbeyond.entity-item-compendium.name",
     hint: "vtta-dndbeyond.entity-item-compendium.hint",
@@ -75,21 +90,6 @@ export default function () {
     type: String,
     isSelect: true,
     choices: actorCompendiums,
-  });
-
-  game.settings.register("vtta-dndbeyond", "entity-cleanup-policy", {
-    name: "vtta-dndbeyond.entity-cleanup-policy.name",
-    hint: "vtta-dndbeyond.entity-cleanup-policy.hint",
-    scope: "world",
-    config: true,
-    type: Number,
-    default: 0,
-    choices: [
-      "vtta-dndbeyond.entity-cleanup-policy.0",
-      "vtta-dndbeyond.entity-cleanup-policy.1",
-      "vtta-dndbeyond.entity-cleanup-policy.2",
-      "vtta-dndbeyond.entity-cleanup-policy.3",
-    ],
   });
 
   /** Character update settings, stored per user and non-configurable in the settings screen */
