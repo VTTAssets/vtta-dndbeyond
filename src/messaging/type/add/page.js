@@ -102,11 +102,18 @@ const addScenes = async (data) => {
     let existing = game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
     if (existing) {
       console.log("Scene " + scene.name + " does exist already, updating...");
-      await existing.update({
+      let update = {
         width: scene.width,
         height: scene.height,
         backgroundColor: scene.backgroundColor,
-      });
+      };
+      if (scene.shiftX) update.shiftX = scene.shiftX;
+      if (scene.shiftY) update.shiftY = scene.shiftY;
+      if (scene.grid) update.grid = scene.grid;
+      if (scene.gridDistance) update.gridDistance = scene.gridDistance;
+      if (scene.gridType) update.gridType = scene.gridType;
+      if (scene.globalLight) update.globalLight = scene.globalLight;
+      await existing.update(update);
 
       // remove existing walls, add from import
       if (scene.walls && scene.walls.length > 0) {
@@ -138,15 +145,23 @@ const addScenes = async (data) => {
       // get img and thumb from the proxy
       let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);
       let thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb");
-      existing = await Scene.create({
+      let createData = {
         name: scene.name,
         img: src,
         thumb: thumb,
+        folder: folder._id,
         width: scene.width,
         height: scene.height,
         backgroundColor: scene.backgroundColor,
-        folder: folder._id,
-      });
+        globalLight: scene.globalLight ? scene.globalLight : true,
+      };
+      if (scene.shiftX) createData.shiftX = scene.shiftX;
+      if (scene.shiftY) createData.shiftY = scene.shiftY;
+      if (scene.grid) createData.grid = scene.grid;
+      if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
+      if (scene.gridType) createData.gridType = scene.gridType;
+
+      existing = await Scene.create(createData);
 
       if (scene.walls && scene.walls.length > 0) {
         await existing.createEmbeddedEntity("Wall", scene.walls);
