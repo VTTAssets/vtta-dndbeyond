@@ -114,14 +114,6 @@ const DICTIONARY = {
       { id: 4, type: "fly" },
       { id: 5, type: "swim" },
     ],
-    actorSizes: [
-      { name: "Tiny", value: "tiny" },
-      { name: "Small", value: "sm" },
-      { name: "Medium", value: "med" },
-      { name: "Large", value: "lg" },
-      { name: "Huge", value: "huge" },
-      { name: "Gargantuan", value: "grg" },
-    ],
     languages: [
       { name: "Common", value: "common" },
       { name: "Aarakocra", value: "aarakocra" },
