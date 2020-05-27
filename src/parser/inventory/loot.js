@@ -1,29 +1,28 @@
-import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = (data) => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
 let getEquipped = (data) => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
-export default function parseLoot(data, character) {
+export default function parseLoot(data) {
   /**
    * MAIN parseLoot
    */
@@ -34,21 +33,21 @@ export default function parseLoot(data, character) {
     flags: {
       vtta: {
         dndbeyond: {
-          type: data.definition.type
-        }
-      }
-    }
+          type: data.definition.type,
+        },
+      },
+    },
   };
 
   // description: {
   //     value: '',
   //     chat: '',
   //     unidentified: ''
-  // }, 
+  // },
   loot.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   /* source: '', */

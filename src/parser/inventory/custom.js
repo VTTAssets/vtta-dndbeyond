@@ -4,25 +4,25 @@ import utils from "../../utils.js";
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = (data) => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
 let getEquipped = (data) => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
-export default function parseCustomItem(data, character) {
+export default function parseCustomItem(data) {
   /**
    * MAIN parseCustomItem
    */
@@ -39,9 +39,7 @@ export default function parseCustomItem(data, character) {
     },
   };
 
-  let description = data.definition.description
-    ? data.definition.description
-    : "";
+  let description = data.definition.description ? data.definition.description : "";
   description = data.definition.notes
     ? description + `<p><blockquote>${data.definition.notes}</blockquote></p>`
     : description;
@@ -56,9 +54,7 @@ export default function parseCustomItem(data, character) {
   customItem.data.source = "Custom item";
 
   /* quantity: 1, */
-  customItem.data.quantity = data.definition.quantity
-    ? data.definition.quantity
-    : 1;
+  customItem.data.quantity = data.definition.quantity ? data.definition.quantity : 1;
 
   /* weight */
   // loot.data.weight = data.definition.weight ? data.definition.weight : 0;
@@ -70,10 +66,10 @@ export default function parseCustomItem(data, character) {
   customItem.data.price = data.definition.cost ? data.definition.cost : 0;
 
   /* attuned: false, */
-  customItem.data.attuned = false;
+  customItem.data.attuned = getAttuned(data);
 
   /* equipped: false, */
-  customItem.data.equipped = false;
+  customItem.data.equipped = getEquipped(data);
 
   /* identified: true, */
   customItem.data.identified = true;

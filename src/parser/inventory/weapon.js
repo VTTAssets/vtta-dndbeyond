@@ -8,9 +8,7 @@ import utils from "../../utils.js";
  */
 let getWeaponType = (data) => {
   let entry = DICTIONARY.weapon.weaponType.find(
-    (type) =>
-      type.categoryId === data.definition.categoryId &&
-      type.attackType === data.definition.attackType
+    (type) => type.categoryId === data.definition.categoryId && type.attackType === data.definition.attackType
   );
 
   return entry !== undefined ? entry.value : "simpleM";
@@ -23,13 +21,8 @@ let getWeaponType = (data) => {
 let getProperties = (data) => {
   let result = {};
   DICTIONARY.weapon.properties.forEach((property) => {
-    if (
-      data.definition.properties &&
-      Array.isArray(data.definition.properties)
-    ) {
-      result[property.value] =
-        data.definition.properties.find((prop) => prop.name === property.name) !==
-        undefined;
+    if (data.definition.properties && Array.isArray(data.definition.properties)) {
+      result[property.value] = data.definition.properties.find((prop) => prop.name === property.name) !== undefined;
     }
   });
   return result;
@@ -43,43 +36,38 @@ let getProperties = (data) => {
  */
 let getProficient = (data, weaponType, proficiencies) => {
   // if it's a simple weapon and the character is proficient in simple weapons:
-  if (
-    proficiencies.find((proficiency) => proficiency.name === "Simple Weapons") &&
-    weaponType.indexOf("simple") !== -1
-  )
+  if (proficiencies.find((proficiency) => proficiency.name === "Simple Weapons") && weaponType.indexOf("simple") !== -1) {
     return true;
-  if (
+  } else if (
     proficiencies.find((proficiency) => proficiency.name === "Martial Weapons") &&
     weaponType.indexOf("martial") !== -1
-  )
+  ) {
     return true;
-  return (
-    proficiencies.find(
-      (proficiency) => proficiency.name === data.definition.type
-    ) !== undefined
-  );
+  } else {
+    return proficiencies.find((proficiency) => proficiency.name === data.definition.type) !== undefined;
+  }
 };
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
 let getAttuned = (data) => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
 let getEquipped = (data) => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
 /**
@@ -90,7 +78,7 @@ let getRange = (data) => {
   return {
     value: data.definition.range ? data.definition.range : 5,
     long: data.definition.longRange ? data.definition.longRange : 5,
-    units: "ft."
+    units: "ft.",
   };
 };
 
@@ -98,23 +86,21 @@ let getRange = (data) => {
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null }
  */
-let getUses = (data) => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null) {
-    let resetType = DICTIONARY.resets.find(
-      (reset) => reset.id == data.limitedUse.resetType
-    );
-    return {
-      max: data.limitedUse.maxUses,
-      value: data.limitedUse.numberUsed
-        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-        : data.limitedUse.maxUses,
-      per: resetType.value,
-      description: data.limitedUse.resetTypeDescription,
-    };
-  } else {
-    return { value: 0, max: 0, per: null };
-  }
-};
+// let getUses = (data) => {
+//   if (data.limitedUse !== undefined && data.limitedUse !== null) {
+//     let resetType = DICTIONARY.resets.find((reset) => reset.id == data.limitedUse.resetType);
+//     return {
+//       max: data.limitedUse.maxUses,
+//       value: data.limitedUse.numberUsed
+//         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+//         : data.limitedUse.maxUses,
+//       per: resetType.value,
+//       description: data.limitedUse.resetTypeDescription,
+//     };
+//   } else {
+//     return { value: 0, max: 0, per: null };
+//   }
+// };
 
 /**
  * Gets the ability which the to hit modifier is baed on
@@ -154,11 +140,7 @@ let getAbility = (weaponProperties, weaponRange, abilities) => {
  */
 let getMagicalBonus = (data, flags) => {
   const boni = data.definition.grantedModifiers.filter(
-    (mod) =>
-      mod.type === "bonus" &&
-      mod.subType === "magic" &&
-      mod.value &&
-      mod.value !== 0
+    (mod) => mod.type === "bonus" && mod.subType === "magic" && mod.value && mod.value !== 0
   );
   const bonus = boni.reduce((prev, cur) => prev + cur.value, 0);
   if (flags.classFeatures.includes("Improved Pact Weapon") && bonus === 0) {
@@ -180,59 +162,46 @@ let getDamage = (data, flags) => {
   // flags are only added for melee attacks
   const greatWeaponFighting = flags.classFeatures.includes("greatWeaponFighting") ? "r<=2" : "";
   const dueling = flags.classFeatures.includes("dueling") ? " + 2" : "";
-  const versatile = data.definition.properties.filter(
-    (property) => property.name === "Versatile"
-  ).map((versatile) => {
-    if (versatile && versatile.notes) {
-      return utils.parseDiceString(
-        versatile.notes + `+ ${magicalDamageBonus}`,
-        greatWeaponFighting
-        ).diceString + " + @mod";
-    } else {
-      return "";
-    }
-  })[0];
-  const twoHanded = data.definition.properties.find(
-    (property) => property.name === "Two-Handed"
-  );
+  const versatile = data.definition.properties
+    .filter((property) => property.name === "Versatile")
+    .map((versatile) => {
+      if (versatile && versatile.notes) {
+        return (
+          utils.parseDiceString(versatile.notes + `+ ${magicalDamageBonus}`, greatWeaponFighting).diceString + " + @mod"
+        );
+      } else {
+        return "";
+      }
+    })[0];
+  const twoHanded = data.definition.properties.find((property) => property.name === "Two-Handed");
 
   let parts = [];
 
   // first damage part
   // blowguns and other weapons rely on ammunition that provides the damage parts
-  if (
-    data.definition.damage &&
-    data.definition.damage.diceString &&
-    data.definition.damageType
-  ) {
+  if (data.definition.damage && data.definition.damage.diceString && data.definition.damageType) {
     // if we have greatweapon fighting style and this is two handed, add the roll tweak
     // else if we have duelling we add the bonus here (assumption- if you have dueling
     // you're going to use it! (DDB also makes this assumption))
-    const fightingStyleMod = (twoHanded) ? greatWeaponFighting : dueling;
+    const fightingStyleMod = twoHanded ? greatWeaponFighting : dueling;
     // if there is a magical damage bonus, it probably should only be included into the first damage part.
     parts.push([
-      utils.parseDiceString(
-        data.definition.damage.diceString + `+ ${magicalDamageBonus}`,
-        fightingStyleMod
-      ).diceString + " + @mod",
-      utils.findInConfig("damageTypes", data.definition.damageType)
+      utils.parseDiceString(data.definition.damage.diceString + `+ ${magicalDamageBonus}`, fightingStyleMod)
+        .diceString + " + @mod",
+      utils.findInConfig("damageTypes", data.definition.damageType),
     ]);
   }
 
   // additional damage parts
   // Note: For the time being, restricted additional bonus parts are not included in the damage
   data.definition.grantedModifiers
-    .filter(
-      (mod) =>
-      mod.type === "damage" &&
-      (!mod.restriction || (!!mod.restriction && mod.restriction === ""))
-    )
+    .filter((mod) => mod.type === "damage" && (!mod.restriction || (!!mod.restriction && mod.restriction === "")))
     .forEach((mod) => {
       if (mod.dice) {
         parts.push([mod.dice.diceString, mod.subType]);
       } else if (mod.value) {
-          parts.push([mod.value, mod.subType]);
-        }
+        parts.push([mod.value, mod.subType]);
+      }
     });
 
   // add damage modifiers from other sources like improved divine smite
@@ -244,7 +213,7 @@ let getDamage = (data, flags) => {
 
   const result = {
     parts: parts,
-    versatile: versatile
+    versatile: versatile,
   };
 
   return result;
@@ -272,9 +241,9 @@ export default function parseWeapon(data, character, flags) {
           type: data.definition.type,
           damage: flags.damage,
           classFeatures: flags.classFeatures,
-        }
-      }
-    }
+        },
+      },
+    },
   };
 
   /* weaponType: { value: 'simpleM' }, */
@@ -292,29 +261,25 @@ export default function parseWeapon(data, character, flags) {
   //        thr: false,
   //        two: true,
   //        ver: false
-  //    } 
+  //    }
   weapon.data.properties = getProperties(data);
 
   /* proficient: true, */
   if (flags.classFeatures.includes("pactWeapon")) {
     weapon.data.proficient = true;
   } else {
-    weapon.data.proficient = getProficient(
-      data,
-      weapon.data.weaponType,
-      character.flags.vtta.dndbeyond.proficiencies
-    );
+    weapon.data.proficient = getProficient(data, weapon.data.weaponType, character.flags.vtta.dndbeyond.proficiencies);
   }
 
   // description: {
   //        value: '',
   //        chat: '',
   //        unidentified: ''
-  //    }, 
+  //    },
   weapon.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   /* source: '', */
@@ -327,7 +292,7 @@ export default function parseWeapon(data, character, flags) {
   const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   const totalWeight = data.definition.weight ? data.definition.weight : 0;
 
-  weapon.data.weight = (totalWeight / bundleSize);
+  weapon.data.weight = totalWeight / bundleSize;
 
   /* price */
   weapon.data.price = data.definition.cost ? data.definition.cost : 0;
@@ -356,15 +321,13 @@ export default function parseWeapon(data, character, flags) {
   /* range: { value: null, long: null, units: '' }, */
   weapon.data.range = getRange(data);
 
+  // we don't parse this because the weapon then becomes a limited use item.
+  // this field is normally reserved on weapons for magic effects. so we handle it there.
   /* uses: { value: 0, max: 0, per: null }, */
   // weapon.data.uses = getUses(data);
 
   /* ability: null, */
-  weapon.data.ability = getAbility(
-    weapon.data.properties,
-    weapon.data.range,
-    character.data.abilities
-  );
+  weapon.data.ability = getAbility(weapon.data.properties, weapon.data.range, character.data.abilities);
   // warlocks can use cha for their Hex weapon
   if (flags.classFeatures.includes("hexWarrior")) {
     if (character.data.abilities.cha.value >= character.data.abilities[weapon.data.ability].value) {
@@ -390,20 +353,20 @@ export default function parseWeapon(data, character, flags) {
   // if using better rolls lets add some useful QOL information.
   // marks context as magical attack and makes alt click a versatile damage click
   weapon.flags.betterRolls5e = {
-    "quickDamage": {
-        "context": {
-            "0": (getMagicalBonus(data, flags) > 0) ? "Magical" : ""
-        },
-        "value": {
-            "0": true
-        },
-        "altValue": {
-            "0": true
-        }
+    quickDamage: {
+      context: {
+        "0": getMagicalBonus(data, flags) > 0 ? "Magical" : "",
+      },
+      value: {
+        "0": true,
+      },
+      altValue: {
+        "0": true,
+      },
     },
-    "quickVersatile": {
-        "altValue": true
-    }
+    quickVersatile: {
+      altValue: true,
+    },
   };
 
   /* formula: '', */

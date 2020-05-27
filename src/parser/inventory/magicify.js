@@ -1,11 +1,11 @@
-// 
+//
 // Attempts to parse information from ddb about items to build a magicitems
 // compatible set of metadata.
-// 
+//
 // https://gitlab.com/riccisi/foundryvtt-magic-items/
-// 
+//
 // Wand of Entangle Target example
-// 
+//
 // flags": {
 // "magicitems": {
 //       "enabled": true,
@@ -31,22 +31,21 @@
 //           }
 //       }
 // }
-// 
-// 
-// 
+//
+//
+//
 import DICTIONARY from "../dictionary.js";
 
 const MAGICITEMS = {};
-MAGICITEMS.DAILY = 'r1';
-MAGICITEMS.SHORT_REST = 'r4';
-MAGICITEMS.LONG_REST = 'r5';
-MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM = 'c1';
-MAGICITEMS.CHARGE_TYPE_PER_SPELL = 'c2';
-MAGICITEMS.NUMERIC_RECHARGE = 't1';
-MAGICITEMS.FORMULA_RECHARGE = 't2';
-MAGICITEMS.DestroyCheckAlways = 'd1';
-MAGICITEMS.DestroyCheck1D20 = 'd2';
-
+MAGICITEMS.DAILY = "r1";
+MAGICITEMS.SHORT_REST = "r4";
+MAGICITEMS.LONG_REST = "r5";
+MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM = "c1";
+MAGICITEMS.CHARGE_TYPE_PER_SPELL = "c2";
+MAGICITEMS.NUMERIC_RECHARGE = "t1";
+MAGICITEMS.FORMULA_RECHARGE = "t2";
+MAGICITEMS.DestroyCheckAlways = "d1";
+MAGICITEMS.DestroyCheck1D20 = "d2";
 
 function getRechargeFormula(description, maxCharges) {
   if (description === "") {
@@ -62,9 +61,9 @@ function getRechargeFormula(description, maxCharges) {
 
   if (match && match[1]) {
     match = match[1];
-  } else if (match = chargeMatchFixed.exec(description)) {
+  } else if (match === chargeMatchFixed.exec(description)) {
     match = match[1];
-  } else if (match = chargeMatchLastDitch.exec(description)) {
+  } else if (match === chargeMatchLastDitch.exec(description)) {
     match = match[1];
   } else if (description.search(chargeNextDawn) !== -1) {
     match = maxCharges;
@@ -87,9 +86,7 @@ function getPerSpell(useDescription, itemDescription) {
   let perSpell = /each ([A-z]*|\n*) per/i;
   let match = perSpell.exec(useDescription);
   if (match) {
-    match = DICTIONARY.magicitems.nums.find(
-      (num) => num.id == match[1]
-    ).value;
+    match = DICTIONARY.magicitems.nums.find((num) => num.id == match[1]).value;
   } else {
     match = false;
   }
@@ -116,8 +113,7 @@ function checkD20Destroy(description) {
 
 // returns the default magicitem flags
 function buildMagicItemSpell(chargeType, itemSpell) {
-  let consumption = (chargeType == MAGICITEMS.CHARGE_TYPE_PER_SPELL) 
-    ? 1 : itemSpell.data.level;
+  let consumption = chargeType == MAGICITEMS.CHARGE_TYPE_PER_SPELL ? 1 : itemSpell.data.level;
   let castLevel = itemSpell.data.level;
   let upcast = itemSpell.data.level;
 
@@ -125,8 +121,10 @@ function buildMagicItemSpell(chargeType, itemSpell) {
   if (itemSpell.flags.vtta.dndbeyond.spellLimitedUse) {
     const limitedUse = itemSpell.flags.vtta.dndbeyond.spellLimitedUse;
 
-    if (chargeType == MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM &&
-    !!limitedUse.minNumberConsumed && itemSpell.data.level !== 0
+    if (
+      chargeType == MAGICITEMS.CHARGE_TYPE_WHOLE_ITEM &&
+      !!limitedUse.minNumberConsumed &&
+      itemSpell.data.level !== 0
     ) {
       consumption = limitedUse.minNumberConsumed;
       if (limitedUse.maxNumberConsumed) {
@@ -148,7 +146,7 @@ function buildMagicItemSpell(chargeType, itemSpell) {
     level: castLevel,
     consumption: consumption,
     upcast: upcast,
-    upcastCost: 1
+    upcastCost: 1,
   };
 }
 
@@ -173,12 +171,12 @@ function createDefaultItem() {
     rechargeable: false,
     recharge: 0, // recharge amount/formula
     rechargeType: MAGICITEMS.FORMULA_RECHARGE, // t1 fixed amount, t2 formula
-    rechargeUnit: '', // r1 daily, r2 dawn, r3 sunset, r4vshort rest, r5 long rest
-    destroy: false, // destroy on depleted? 
+    rechargeUnit: "", // r1 daily, r2 dawn, r3 sunset, r4vshort rest, r5 long rest
+    destroy: false, // destroy on depleted?
     destroyCheck: MAGICITEMS.DestroyCheckAlways, // d1 always, 1d20
     spells: {},
     feats: {},
-    tables: {}
+    tables: {},
   };
 }
 
@@ -202,9 +200,7 @@ export default function parseMagicItem(data, character, item, itemSpells) {
         magicItem.chargeType = MAGICITEMS.CHARGE_TYPE_PER_SPELL;
       } else {
         magicItem.charges = data.limitedUse.maxUses;
-        magicItem.recharge = getRechargeFormula(
-          data.limitedUse.resetTypeDescription, magicItem.charges
-        );
+        magicItem.recharge = getRechargeFormula(data.limitedUse.resetTypeDescription, magicItem.charges);
 
         if (data.limitedUse.resetType) {
           magicItem.rechargeUnit = DICTIONARY.magicitems.rechargeUnits.find(
@@ -221,10 +217,9 @@ export default function parseMagicItem(data, character, item, itemSpells) {
     magicItem.spells = getItemSpells(data.definition.id, magicItem.chargeType, itemSpells);
 
     return magicItem;
-    
   } else {
     return {
-      enabled: false
+      enabled: false,
     };
   }
 }
