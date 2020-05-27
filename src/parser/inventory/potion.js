@@ -5,10 +5,10 @@ import utils from "../../utils.js";
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
+let getUses = (data) => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null) {
     let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
+      (reset) => reset.id == data.limitedUse.resetType
     );
     return {
       max: data.limitedUse.maxUses,
@@ -21,14 +21,14 @@ let getUses = data => {
     };
   } else {
     return { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
-  };
+  }
 
 };
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -39,7 +39,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -47,7 +47,7 @@ let getEquipped = data => {
     return data.equipped;
 };
 
-let getActionType = data => {
+let getActionType = (data) => {
   if (data.definition.tags.includes("Healing")) {
     return "heal";
   }
@@ -65,7 +65,7 @@ let getDamage = (data, actionType) => {
       // healing potion
       // we only get the first matching modifier
       let healingModifier = data.definition.grantedModifiers.find(
-        mod => mod.type === "bonus" && mod.subType === "hit-points"
+        (mod) => mod.type === "bonus" && mod.subType === "hit-points"
       );
       if (healingModifier) {
         return {
@@ -79,7 +79,7 @@ let getDamage = (data, actionType) => {
     case "rsak":
       // damage potion
       let damageModifier = data.definition.grantedModifiers.find(
-        mod => mod.type === "damage" && mod.dice
+        (mod) => mod.type === "damage" && mod.dice
       );
       if (damageModifier) {
         return {
@@ -117,11 +117,11 @@ export default function parsePotion(data, character) {
   consumable.data.consumableType = "potion";
   consumable.data.uses = getUses(data);
 
-  /* description: {
-        value: '',
-        chat: '',
-        unidentified: ''
-    }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // }, 
   consumable.data.description = {
     value: data.definition.description,
     chat: data.definition.description,

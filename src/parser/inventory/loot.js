@@ -4,7 +4,7 @@ import utils from "../../utils.js";
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -15,7 +15,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -40,11 +40,11 @@ export default function parseLoot(data, character) {
     }
   };
 
-  /* description: {
-        value: '',
-        chat: '',
-        unidentified: ''
-    }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // }, 
   loot.data.description = {
     value: data.definition.description,
     chat: data.definition.description,

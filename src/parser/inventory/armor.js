@@ -5,10 +5,10 @@ import utils from "../../utils.js";
  * Supported Types only: Simple/Martial Melee/Ranged and Ammunition (Firearms in D&DBeyond)
  * @param {obj} data item data
  */
-let getArmorType = data => {
+let getArmorType = (data) => {
   // get the generic armor type
   const entry = DICTIONARY.equipment.armorType.find(
-    type => type.name === data.definition.type
+    (type) => type.name === data.definition.type
   );
 
   // get the armor class
@@ -22,7 +22,7 @@ let getArmorType = data => {
   }, 0);
 
   // get the max dex modifier (Medium Armor: 2, Heavy: 0)
-  let maxDexModifier
+  let maxDexModifier;
   switch (data.definition.type) {
     case "Heavy Armor":
       maxDexModifier = 0;
@@ -46,7 +46,7 @@ let getArmorType = data => {
  * Gets the strength requirement to wear this armor, if any
  * @param {obj} data Item data
  */
-let getStrength = data => {
+let getStrength = (data) => {
   return data.definition.strengthRequirement !== null
     ? data.definition.strengthRequirement
     : 0;
@@ -55,7 +55,7 @@ let getStrength = data => {
 /**
  * Wearing this armor can give a disadvantage on stealth checks
  */
-let getStealthPenalty = data => {
+let getStealthPenalty = (data) => {
   return data.definition.stealthCheck === 2;
 };
 
@@ -68,14 +68,14 @@ let getProficient = (data, proficiencies) => {
   // Proficiency in armor category (Light Armor, Shield)
   if (
     proficiencies.find(
-      proficiency => proficiency.name === data.definition.type
+      (proficiency) => proficiency.name === data.definition.type
     ) !== -1
   )
     return true;
   // Specific proficiency
   if (
     proficiencies.find(
-      proficiency => proficiency.name === data.definition.baseArmorName
+      (proficiency) => proficiency.name === data.definition.baseArmorName
     ) !== -1
   )
     return true;
@@ -85,7 +85,7 @@ let getProficient = (data, proficiencies) => {
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -96,7 +96,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -108,10 +108,10 @@ let getEquipped = data => {
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null }
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
+let getUses = (data) => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null) {
     let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
+      (reset) => reset.id == data.limitedUse.resetType
     );
     return {
       max: data.limitedUse.maxUses,
@@ -123,7 +123,7 @@ let getUses = data => {
     };
   } else {
     return { value: 0, max: 0, per: null };
-  };
+  }
 };
 
 export default function parseArmor(data, character) {
@@ -143,12 +143,12 @@ export default function parseArmor(data, character) {
     }
   };
 
-  /*
-    "armor": {
-        "type": "light",
-        "value": 10,
-        "dex": null
-    } */
+  // 
+  // "armor": {
+  //     "type": "light",
+  //     "value": 10,
+  //     "dex": null
+  // } 
   armor.data.armor = getArmorType(data);
 
   /* "strength": 0 */
@@ -163,11 +163,11 @@ export default function parseArmor(data, character) {
     character.flags.vtta.dndbeyond.proficiencies
   );
 
-  /* description: {
-            value: '',
-            chat: '',
-            unidentified: ''
-        }, */
+  // description: {
+  //        value: '',
+  //        chat: '',
+  //        unidentified: ''
+  //    }, 
   armor.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
@@ -200,7 +200,7 @@ export default function parseArmor(data, character) {
   /* identified: true, */
   armor.data.identified = true;
 
-  //armor.data.uses = getUses(data);
+  // armor.data.uses = getUses(data);
 
   return armor;
 }

@@ -6,10 +6,10 @@ import utils from "../../utils.js";
  * Supported Types only: Simple/Martial Melee/Ranged and Ammunition (Firearms in D&DBeyond)
  * @param {obj} data item data
  */
-let getWeaponType = data => {
+let getWeaponType = (data) => {
   let weaponBehavior = data.definition.weaponBehaviors[0];
   let entry = DICTIONARY.weapon.weaponType.find(
-    type =>
+    (type) =>
       type.categoryId === weaponBehavior.categoryId &&
       type.attackType === weaponBehavior.attackType
   );
@@ -21,13 +21,13 @@ let getWeaponType = data => {
  * Gets the weapons's properties (Finesse, Reach, Heavy etc.)
  * @param {obj} data Item data
  */
-let getProperties = data => {
+let getProperties = (data) => {
   let weaponBehavior = data.definition.weaponBehaviors[0];
   let result = {};
-  DICTIONARY.weapon.properties.forEach(property => {
+  DICTIONARY.weapon.properties.forEach((property) => {
     if (weaponBehavior.properties && Array.isArray(weaponBehavior.properties)) {
       result[property.value] =
-        weaponBehavior.properties.find(prop => prop.name === property.name) !==
+        weaponBehavior.properties.find((prop) => prop.name === property.name) !==
         undefined;
     }
   });
@@ -43,18 +43,18 @@ let getProperties = data => {
 let getProficient = (data, weaponType, proficiencies) => {
   // if it's a simple weapon and the character is proficient in simple weapons:
   if (
-    proficiencies.find(proficiency => proficiency.name === "Simple Weapons") &&
+    proficiencies.find((proficiency) => proficiency.name === "Simple Weapons") &&
     weaponType.indexOf("simple") !== -1
   )
     return true;
   if (
-    proficiencies.find(proficiency => proficiency.name === "Martial Weapons") &&
+    proficiencies.find((proficiency) => proficiency.name === "Martial Weapons") &&
     weaponType.indexOf("martial") !== -1
   )
     return true;
   return (
     proficiencies.find(
-      proficiency => proficiency.name === data.definition.type
+      (proficiency) => proficiency.name === data.definition.type
     ) !== undefined
   );
 };
@@ -62,7 +62,7 @@ let getProficient = (data, weaponType, proficiencies) => {
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -73,7 +73,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -84,7 +84,7 @@ let getEquipped = data => {
 /**
  * Gets the range(s) of a given weapon
  */
-let getRange = data => {
+let getRange = (data) => {
   // range: { value: null, long: null, units: '' },
   let weaponBehavior = data.definition.weaponBehaviors[0];
   return {
@@ -98,10 +98,10 @@ let getRange = data => {
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null }
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
+let getUses = (data) => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null) {
     let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
+      (reset) => reset.id == data.limitedUse.resetType
     );
     return {
       max: data.limitedUse.maxUses,
@@ -113,7 +113,7 @@ let getUses = data => {
     };
   } else {
     return { value: 0, max: 0, per: null };
-  };
+  }
 };
 
 /**
@@ -151,9 +151,9 @@ let getAbility = (weaponProperties, weaponRange, abilities) => {
  * Searches for a magical attack bonus granted by this weapon
  * @param {obj} data item data
  */
-let getMagicalBonus = data => {
+let getMagicalBonus = (data) => {
   let boni = data.definition.grantedModifiers.filter(
-    mod =>
+    (mod) =>
       mod.type === "bonus" &&
       mod.subType === "magic" &&
       mod.value &&
@@ -172,7 +172,7 @@ let getMagicalBonus = data => {
 let getDamage = (data, magicalDamageBonus) => {
   let weaponBehavior = data.definition.weaponBehaviors[0];
   let versatile = weaponBehavior.properties.find(
-    property => property.name === "Versatile"
+    (property) => property.name === "Versatile"
   );
   if (versatile && versatile.notes) {
     versatile = utils.parseDiceString(
@@ -201,19 +201,17 @@ let getDamage = (data, magicalDamageBonus) => {
 
   // additional damage parts
   data.definition.grantedModifiers
-    .filter(mod => mod.type === "damage")
-    .forEach(mod => {
+    .filter((mod) => mod.type === "damage")
+    .forEach((mod) => {
       if (mod.dice) {
         parts.push([mod.dice.diceString, mod.subType]);
-      } else {
-        if (mod.value) {
+      } else if (mod.value) {
           parts.push([mod.value, mod.subType]);
         }
-      }
     });
 
   let result = {
-    //label: utils.parseDiceString(parts.map(part => part[0]).join(' + ')).diceString,
+    // label: utils.parseDiceString(parts.map(part => part[0]).join(' + ')).diceString,
     parts: parts,
     versatile: versatile
   };
@@ -241,19 +239,19 @@ export default function parseStaff(data, character) {
 
   /* weaponType: { value: 'simpleM' }, */
   weapon.data.weaponType = getWeaponType(data);
-  /* properties: {
-            amm: false,
-            fin: false,
-            hvy: true,
-            lgt: false,
-            rel: false,
-            fir: false,
-            rch: true,
-            spc: false,
-            thr: false,
-            two: true,
-            ver: false
-        } */
+  // properties: {
+  //        amm: false,
+  //        fin: false,
+  //        hvy: true,
+  //        lgt: false,
+  //        rel: false,
+  //        fir: false,
+  //        rch: true,
+  //        spc: false,
+  //        thr: false,
+  //        two: true,
+  //        ver: false
+  //    } 
   weapon.data.properties = getProperties(data);
 
   /* proficient: true, */
@@ -263,11 +261,11 @@ export default function parseStaff(data, character) {
     character.flags.vtta.dndbeyond.proficiencies
   );
 
-  /* description: {
-            value: '',
-            chat: '',
-            unidentified: ''
-        }, */
+  // description: {
+  //        value: '',
+  //        chat: '',
+  //        unidentified: ''
+  //    }, 
   weapon.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
@@ -313,7 +311,7 @@ export default function parseStaff(data, character) {
   weapon.data.range = getRange(data);
 
   /* uses: { value: 0, max: 0, per: null }, */
-  //weapon.data.uses = getUses(data);
+  // weapon.data.uses = getUses(data);
 
   /* ability: null, */
   weapon.data.ability = getAbility(

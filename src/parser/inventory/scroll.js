@@ -4,7 +4,7 @@ import utils from "../../utils.js";
 /**
  * Gets Limited uses information, if any
  */
-let getUses = data => {
+let getUses = (data) => {
   // uses: { value: 0, max: 0, per: null }
   if (data.limitedUse) {
     return {
@@ -25,7 +25,7 @@ let getUses = data => {
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -36,7 +36,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -44,7 +44,7 @@ let getEquipped = data => {
     return data.equipped;
 };
 
-let getActionType = data => {
+let getActionType = (data) => {
   return "other";
 };
 
@@ -69,11 +69,11 @@ export default function parseScroll(data, character) {
   consumable.data.consumableType = "scroll";
   consumable.data.uses = getUses(data);
 
-  /* description: {
-        value: '',
-        chat: '',
-        unidentified: ''
-    }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // }, 
   consumable.data.description = {
     value: data.definition.description,
     chat: data.definition.description,

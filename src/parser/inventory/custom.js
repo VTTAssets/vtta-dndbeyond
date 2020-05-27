@@ -61,10 +61,10 @@ export default function parseCustomItem(data, character) {
     : 1;
 
   /* weight */
-  //loot.data.weight = data.definition.weight ? data.definition.weight : 0;
+  // loot.data.weight = data.definition.weight ? data.definition.weight : 0;
   let bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   let totalWeight = data.definition.weight ? data.definition.weight : 0;
-  customItem.data.weight = totalWeight / bundleSize; //;* (loot.data.quantity / bundleSize);
+  customItem.data.weight = totalWeight / bundleSize; // ;* (loot.data.quantity / bundleSize);
 
   /* price */
   customItem.data.price = data.definition.cost ? data.definition.cost : 0;

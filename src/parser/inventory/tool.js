@@ -9,7 +9,7 @@ import utils from "../../utils.js";
 let getProficient = (data, proficiencies) => {
   return (
     proficiencies.find(
-      proficiency => proficiency.name === data.definition.name
+      (proficiency) => proficiency.name === data.definition.name
     ) !== undefined
   );
 };
@@ -17,7 +17,7 @@ let getProficient = (data, proficiencies) => {
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
+let getAttuned = (data) => {
   if (
     data.definition.canAttune !== undefined &&
     data.definition.canAttune === true
@@ -28,7 +28,7 @@ let getAttuned = data => {
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
+let getEquipped = (data) => {
   if (
     data.definition.canEquip !== undefined &&
     data.definition.canEquip === true
@@ -40,10 +40,10 @@ let getEquipped = data => {
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null }
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
+let getUses = (data) => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null) {
     let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
+      (reset) => reset.id == data.limitedUse.resetType
     );
     return {
       max: data.limitedUse.maxUses,
@@ -54,7 +54,7 @@ let getUses = data => {
     };
   } else {
     return { value: 0, max: 0, per: null };
-  };
+  }
 };
 
 export default function parseTool(data, character) {
@@ -78,11 +78,11 @@ export default function parseTool(data, character) {
   // well. How should I know how YOU are using those tools. By pure intellect? Or with your hands?
   tool.data.ability = "dex";
 
-  /* description: {
-       value: '',
-       chat: '',
-       unidentified: ''
-   }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // }, 
   tool.data.description = {
     value: data.definition.description,
     chat: data.definition.description,

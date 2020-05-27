@@ -126,11 +126,9 @@ let getExtraDamage = (ddb, restrictions) => {
     .map((mod) => {
       if (mod.dice) {
         return [mod.dice.diceString, mod.subType];
-      } else {
-        if (mod.value) {
+      } else if (mod.value) {
           return [mod.value, mod.subType];
         }
-      }
     });
 };
 
