@@ -1,10 +1,9 @@
-import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
 /**
  * Gets Limited uses information, if any
  */
-let getUses = data => {
+let getUses = (data) => {
   // uses: { value: 0, max: 0, per: null }
   if (data.limitedUse) {
     return {
@@ -25,30 +24,26 @@ let getUses = data => {
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+let getAttuned = (data) => {
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+let getEquipped = (data) => {
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
-let getActionType = data => {
-  return "other";
-};
-
-export default function parseScroll(data, character) {
+export default function parseScroll(data) {
   /**
    * MAIN parseWeapon
    */
@@ -59,25 +54,25 @@ export default function parseScroll(data, character) {
     flags: {
       vtta: {
         dndbeyond: {
-          type: data.definition.type
-        }
-      }
-    }
+          type: data.definition.type,
+        },
+      },
+    },
   };
 
   // "consumableType": "potion",
   consumable.data.consumableType = "scroll";
   consumable.data.uses = getUses(data);
 
-  /* description: {
-        value: '',
-        chat: '',
-        unidentified: ''
-    }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // },
   consumable.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   /* source: '', */
@@ -89,7 +84,7 @@ export default function parseScroll(data, character) {
   /* weight */
   const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   const totalWeight = data.definition.weight ? data.definition.weight : 0;
-  consumable.data.weight = (totalWeight / bundleSize);
+  consumable.data.weight = totalWeight / bundleSize;
 
   /* price */
   consumable.data.price = data.definition.cost ? data.definition.cost : 0;
@@ -118,7 +113,7 @@ export default function parseScroll(data, character) {
   /* range: { value: null, long: null, units: '' }, */
   // we leave that as is
 
-  consumable.data.actionType = getActionType(data);
+  consumable.data.actionType = "other";
 
   // Trying to find the spell name for this scroll
 

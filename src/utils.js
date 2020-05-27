@@ -147,6 +147,34 @@ let utils = {
     return utils.filterModifiers(modifiers, type, subType, restriction);
   },
 
+  /**
+   * Checks the list of modifiers provided for a matching bonus type
+   * and returns a sum of it's value. May include a dice string.
+   * @param {*} modifiers
+   * @param {*} character
+   * @param {*} bonusSubType
+   */
+  getModifierSum: (modifiers, character) => {
+    let sum = 0;
+    let diceString = "";
+    modifiers.forEach((bonus) => {
+      if (bonus.statId !== null) {
+        const ability = DICTIONARY.character.abilities.find((ability) => ability.id === bonus.statId);
+        sum += character.data.abilities[ability.value].mod;
+      } else if (bonus.dice) {
+        const mod = bonus.dice.diceString;
+        diceString += diceString === "" ? mod : " + " + mod;
+      } else {
+        sum += bonus.value;
+      }
+    });
+    if (diceString !== "") {
+      sum = sum + " + " + diceString;
+    }
+
+    return sum;
+  },
+
   findClassByFeatureId: (data, featureId) => {
     const cls = data.character.classes.find((cls) => {
       let classFeatures = cls.classFeatures;

@@ -5,11 +5,9 @@ import utils from "../../utils.js";
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
-    let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
-    );
+let getUses = (data) => {
+  if (data.limitedUse !== undefined && data.limitedUse !== null) {
+    let resetType = DICTIONARY.resets.find((reset) => reset.id == data.limitedUse.resetType);
     return {
       max: data.limitedUse.maxUses,
       value: data.limitedUse.numberUsed
@@ -21,82 +19,67 @@ let getUses = data => {
     };
   } else {
     return { value: 0, max: 0, per: null, autoUse: false, autoDestroy: false };
-  };
-
+  }
 };
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+let getAttuned = (data) => {
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+let getEquipped = (data) => {
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
-let getActionType = data => {
+let getActionType = (data) => {
   if (data.definition.tags.includes("Healing")) {
     return "heal";
-  }
-  if (data.definition.tags.includes("Damage")) {
+  } else if (data.definition.tags.includes("Damage")) {
     // ranged spell attack. This is a good guess
     return "rsak";
+  } else {
+    return "other";
   }
-  return "other";
 };
 
 let getDamage = (data, actionType) => {
+  let damage = { parts: [], versatile: "" };
   // is this a damage potion
   switch (actionType) {
-    case "heal":
+    case "heal": {
       // healing potion
       // we only get the first matching modifier
-      let healingModifier = data.definition.grantedModifiers.find(
-        mod => mod.type === "bonus" && mod.subType === "hit-points"
+      const healingModifier = data.definition.grantedModifiers.find(
+        (mod) => mod.type === "bonus" && mod.subType === "hit-points"
       );
-      if (healingModifier) {
-        return {
-          parts: [[healingModifier.dice.diceString, "healing"]],
-          versatile: ""
-        };
-      } else {
-        return { parts: [], versatile: "" };
-      }
+      if (healingModifier) damage.parts = [[healingModifier.dice.diceString, "healing"]];
       break;
-    case "rsak":
+    }
+    case "rsak": {
       // damage potion
-      let damageModifier = data.definition.grantedModifiers.find(
-        mod => mod.type === "damage" && mod.dice
-      );
-      if (damageModifier) {
-        return {
-          parts: [[damageModifier.dice.diceString, damageModifier.subType]],
-          versatile: ""
-        };
-      } else {
-        return { parts: [], versatile: "" };
-      }
+      const damageModifier = data.definition.grantedModifiers.find((mod) => mod.type === "damage" && mod.dice);
+      if (damageModifier) damage.parts = [[damageModifier.dice.diceString, damageModifier.subType]];
       break;
-    default:
-      // anything else we don't support
-      return { parts: [], versatile: "" };
+    }
+    // no default
   }
+  return damage;
 };
 
-export default function parsePotion(data, character) {
+export default function parsePotion(data) {
   /**
    * MAIN parseWeapon
    */
@@ -107,25 +90,25 @@ export default function parsePotion(data, character) {
     flags: {
       vtta: {
         dndbeyond: {
-          type: data.definition.type
-        }
-      }
-    }
+          type: data.definition.type,
+        },
+      },
+    },
   };
 
   // "consumableType": "potion",
   consumable.data.consumableType = "potion";
   consumable.data.uses = getUses(data);
 
-  /* description: {
-        value: '',
-        chat: '',
-        unidentified: ''
-    }, */
+  // description: {
+  //     value: '',
+  //     chat: '',
+  //     unidentified: ''
+  // },
   consumable.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   /* source: '', */
@@ -137,7 +120,7 @@ export default function parsePotion(data, character) {
   /* weight */
   const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   const totalWeight = data.definition.weight ? data.definition.weight : 0;
-  consumable.data.weight = (totalWeight / bundleSize);
+  consumable.data.weight = totalWeight / bundleSize;
 
   /* price */
   consumable.data.price = data.definition.cost ? data.definition.cost : 0;

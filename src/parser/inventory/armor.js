@@ -5,11 +5,9 @@ import utils from "../../utils.js";
  * Supported Types only: Simple/Martial Melee/Ranged and Ammunition (Firearms in D&DBeyond)
  * @param {obj} data item data
  */
-let getArmorType = data => {
+let getArmorType = (data) => {
   // get the generic armor type
-  const entry = DICTIONARY.equipment.armorType.find(
-    type => type.name === data.definition.type
-  );
+  const entry = DICTIONARY.equipment.armorType.find((type) => type.name === data.definition.type);
 
   // get the armor class
   const baseArmorClass = data.definition.armorClass;
@@ -22,7 +20,7 @@ let getArmorType = data => {
   }, 0);
 
   // get the max dex modifier (Medium Armor: 2, Heavy: 0)
-  let maxDexModifier
+  let maxDexModifier;
   switch (data.definition.type) {
     case "Heavy Armor":
       maxDexModifier = 0;
@@ -34,11 +32,10 @@ let getArmorType = data => {
       maxDexModifier = "";
   }
 
-
   return {
     type: entry !== undefined ? entry.value : "medium",
     value: baseArmorClass + bonusArmorClass,
-    dex: maxDexModifier
+    dex: maxDexModifier,
   };
 };
 
@@ -46,16 +43,14 @@ let getArmorType = data => {
  * Gets the strength requirement to wear this armor, if any
  * @param {obj} data Item data
  */
-let getStrength = data => {
-  return data.definition.strengthRequirement !== null
-    ? data.definition.strengthRequirement
-    : 0;
+let getStrength = (data) => {
+  return data.definition.strengthRequirement !== null ? data.definition.strengthRequirement : 0;
 };
 
 /**
  * Wearing this armor can give a disadvantage on stealth checks
  */
-let getStealthPenalty = data => {
+let getStealthPenalty = (data) => {
   return data.definition.stealthCheck === 2;
 };
 
@@ -66,65 +61,55 @@ let getStealthPenalty = data => {
  */
 let getProficient = (data, proficiencies) => {
   // Proficiency in armor category (Light Armor, Shield)
-  if (
-    proficiencies.find(
-      proficiency => proficiency.name === data.definition.type
-    ) !== -1
-  )
-    return true;
+  if (proficiencies.find((proficiency) => proficiency.name === data.definition.type) !== -1) return true;
   // Specific proficiency
-  if (
-    proficiencies.find(
-      proficiency => proficiency.name === data.definition.baseArmorName
-    ) !== -1
-  )
-    return true;
+  if (proficiencies.find((proficiency) => proficiency.name === data.definition.baseArmorName) !== -1) return true;
   return false;
 };
 
 /**
  * Checks if the character can attune to an item and if yes, if he is attuned to it.
  */
-let getAttuned = data => {
-  if (
-    data.definition.canAttune !== undefined &&
-    data.definition.canAttune === true
-  )
+let getAttuned = (data) => {
+  if (data.definition.canAttune !== undefined && data.definition.canAttune === true) {
     return data.isAttuned;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Checks if the character can equip an item and if yes, if he is has it currently equipped.
  */
-let getEquipped = data => {
-  if (
-    data.definition.canEquip !== undefined &&
-    data.definition.canEquip === true
-  )
+let getEquipped = (data) => {
+  if (data.definition.canEquip !== undefined && data.definition.canEquip === true) {
     return data.equipped;
+  } else {
+    return false;
+  }
 };
 
 /**
  * Gets Limited uses information, if any
  * uses: { value: 0, max: 0, per: null }
  */
-let getUses = data => {
-  if (data.limitedUse !== undefined && data.limitedUse !== null){
-    let resetType = DICTIONARY.resets.find(
-      reset => reset.id == data.limitedUse.resetType
-    );
-    return {
-      max: data.limitedUse.maxUses,
-      value: data.limitedUse.numberUsed
-        ? data.limitedUse.maxUses - data.limitedUse.numberUsed
-        : data.limitedUse.maxUses,
-      per: resetType.value,
-      description: data.limitedUse.resetTypeDescription,
-    };
-  } else {
-    return { value: 0, max: 0, per: null };
-  };
-};
+// let getUses = (data) => {
+//   if (data.limitedUse !== undefined && data.limitedUse !== null) {
+//     let resetType = DICTIONARY.resets.find(
+//       (reset) => reset.id == data.limitedUse.resetType
+//     );
+//     return {
+//       max: data.limitedUse.maxUses,
+//       value: data.limitedUse.numberUsed
+//         ? data.limitedUse.maxUses - data.limitedUse.numberUsed
+//         : data.limitedUse.maxUses,
+//       per: resetType.value,
+//       description: data.limitedUse.resetTypeDescription,
+//     };
+//   } else {
+//     return { value: 0, max: 0, per: null };
+//   }
+// };
 
 export default function parseArmor(data, character) {
   /**
@@ -137,18 +122,18 @@ export default function parseArmor(data, character) {
     flags: {
       vtta: {
         dndbeyond: {
-          type: data.definition.type
-        }
-      }
-    }
+          type: data.definition.type,
+        },
+      },
+    },
   };
 
-  /*
-    "armor": {
-        "type": "light",
-        "value": 10,
-        "dex": null
-    } */
+  //
+  // "armor": {
+  //     "type": "light",
+  //     "value": 10,
+  //     "dex": null
+  // }
   armor.data.armor = getArmorType(data);
 
   /* "strength": 0 */
@@ -158,20 +143,17 @@ export default function parseArmor(data, character) {
   armor.data.stealth = getStealthPenalty(data);
 
   /* proficient: true, */
-  armor.data.proficient = getProficient(
-    data,
-    character.flags.vtta.dndbeyond.proficiencies
-  );
+  armor.data.proficient = getProficient(data, character.flags.vtta.dndbeyond.proficiencies);
 
-  /* description: {
-            value: '',
-            chat: '',
-            unidentified: ''
-        }, */
+  // description: {
+  //        value: '',
+  //        chat: '',
+  //        unidentified: ''
+  //    },
   armor.data.description = {
     value: data.definition.description,
     chat: data.definition.description,
-    unidentified: data.definition.type
+    unidentified: data.definition.type,
   };
 
   /* source: '', */
@@ -183,7 +165,7 @@ export default function parseArmor(data, character) {
   /* weight */
   const bundleSize = data.definition.bundleSize ? data.definition.bundleSize : 1;
   const totalWeight = data.definition.weight ? data.definition.weight : 0;
-  armor.data.weight = (totalWeight / bundleSize);
+  armor.data.weight = totalWeight / bundleSize;
 
   /* price */
   armor.data.price = data.definition.cost ? data.definition.cost : 0;
@@ -200,7 +182,9 @@ export default function parseArmor(data, character) {
   /* identified: true, */
   armor.data.identified = true;
 
-  //armor.data.uses = getUses(data);
+  // we don't parse this because the weapon then becomes a limited use item.
+  // this field is normally reserved on weapons for magic effects. so we handle it there.
+  // armor.data.uses = getUses(data);
 
   return armor;
 }

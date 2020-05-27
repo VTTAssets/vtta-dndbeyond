@@ -25,95 +25,6 @@ import utils from "../../utils.js";
 // magicitems support
 import parseMagicItem from "./magicify.js";
 
-let parseItem = (ddb, data, character) => {
-  // is it a weapon?
-  if (data.definition.filterType) {
-    switch (data.definition.filterType) {
-      case "Weapon":
-        let flags = {
-          damage: {
-            parts: [],
-          },
-          classFeatures: [],
-        };
-        // Some features, notably hexblade abilities we scrape out here
-        flags.classFeatures = getWarlockFeatures(ddb, data.id);
-
-        if (flags.classFeatures.includes("Lifedrinker")) {
-          flags.damage.parts.push(["@mod", "necrotic"]);
-        }
-
-        if (data.definition.type === "Ammunition") {
-          return parseAmmunition(data, character);
-        } else {
-          // for melee attacks get extras
-          if (data.definition.attackType === 1) {
-            // get improved divine smite etc for melee attacks
-            const extraDamage = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
-
-            if (!!extraDamage.length > 0) {
-              flags.damage.parts = flags.damage.parts.concat(extraDamage);
-            }
-            // do we have great weapon fighting?
-            if (utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting")) {
-              flags.classFeatures.push("greatWeaponFighting");
-            }
-            // do we have dueling fighting style?
-            if (utils.hasChosenCharacterOption(ddb, "Dueling")) {
-              flags.classFeatures.push("Dueling");
-            }
-          }
-
-          // ranged fighting style is added as a global modifier elsewhere
-          // as is defensive style
-          return parseWeapon(data, character, flags);
-        }
-        break;
-      case "Armor":
-        return parseArmor(data, character);
-        break;
-      case "Wondrous item":
-      case "Ring":
-      case "Wand":
-      case "Rod":
-        return parseWonderous(data, character);
-        break;
-      case "Staff":
-        return parseStaff(data, character);
-        break;
-      case "Potion":
-        return parsePotion(data, character);
-        break;
-      case "Scroll":
-        return parseScroll(data, character);
-        break;
-      case "Other Gear":
-        switch (data.definition.subType) {
-          case 'Potion':
-            return parsePotion(data, character);
-            break;
-          case 'Tool':
-            return parseTool(data, character);
-            break;
-          default:
-            return parseLoot(data, character);
-        }
-        break;
-      default:
-        return parseLoot(data, character);
-        break;
-    }
-  } else {
-    // try parsing it as a custom item
-    return parseCustomItem(data, character);
-  }
-  utils.log(
-    `Unknown item: ${data.definition.name}, ${data.definition.type}/${data.definition.filterType}`,
-    "character"
-  );
-  return {};
-};
-
 /**
  * We get extra damage to a weapon attack here, for example Improved
  * Divine Smite
@@ -121,17 +32,15 @@ let parseItem = (ddb, data, character) => {
  * @param {*} restrictions (array)
  */
 let getExtraDamage = (ddb, restrictions) => {
-  return utils
-    .filterBaseModifiers(ddb, "damage", null, restrictions)
-    .map((mod) => {
-      if (mod.dice) {
-        return [mod.dice.diceString, mod.subType];
-      } else {
-        if (mod.value) {
-          return [mod.value, mod.subType];
-        }
-      }
-    });
+  return utils.filterBaseModifiers(ddb, "damage", null, restrictions).map((mod) => {
+    if (mod.dice) {
+      return [mod.dice.diceString, mod.subType];
+    } else if (mod.value) {
+      return [mod.value, mod.subType];
+    } else {
+      return [null, null];
+    }
+  });
 };
 
 let getWarlockFeatures = (ddb, weaponId) => {
@@ -142,17 +51,13 @@ let getWarlockFeatures = (ddb, weaponId) => {
         charValue.value &&
         charValue.valueId === weaponId &&
         DICTIONARY.character.characterValuesLookup.find(
-          (entry) =>
-            entry.typeId === charValue.typeId &&
-            entry.valueTypeId === charValue.valueTypeId
+          (entry) => entry.typeId === charValue.typeId && entry.valueTypeId === charValue.valueTypeId
         )
     )
     .map(
       (charValue) =>
         DICTIONARY.character.characterValuesLookup.find(
-          (entry) =>
-            entry.typeId === charValue.typeId &&
-            entry.valueTypeId === charValue.valueTypeId
+          (entry) => entry.typeId === charValue.typeId && entry.valueTypeId === charValue.valueTypeId
         ).name
     );
 
@@ -169,6 +74,107 @@ let getWarlockFeatures = (ddb, weaponId) => {
   return warlockFeatures.concat(pactFeatures);
 };
 
+let getWeaponFlags = (ddb, data) => {
+  let flags = {
+    damage: {
+      parts: [],
+    },
+    classFeatures: [],
+  };
+  // Some features, notably hexblade abilities we scrape out here
+  flags.classFeatures = getWarlockFeatures(ddb, data.id);
+
+  if (flags.classFeatures.includes("Lifedrinker")) {
+    flags.damage.parts.push(["@mod", "necrotic"]);
+  }
+
+  // for melee attacks get extras
+  if (data.definition.attackType === 1) {
+    // get improved divine smite etc for melee attacks
+    const extraDamage = getExtraDamage(ddb, ["Melee Weapon Attacks"]);
+
+    if (!!extraDamage.length > 0) {
+      flags.damage.parts = flags.damage.parts.concat(extraDamage);
+    }
+    // do we have great weapon fighting?
+    if (utils.hasChosenCharacterOption(ddb, "Great Weapon Fighting")) {
+      flags.classFeatures.push("greatWeaponFighting");
+    }
+    // do we have dueling fighting style?
+    if (utils.hasChosenCharacterOption(ddb, "Dueling")) {
+      flags.classFeatures.push("Dueling");
+    }
+  }
+  // ranged fighting style is added as a global modifier elsewhere
+  // as is defensive style
+
+  return flags;
+};
+
+let parseItem = (ddb, data, character) => {
+  try {
+    // is it a weapon?
+    let item = {};
+    if (data.definition.filterType) {
+      switch (data.definition.filterType) {
+        case "Weapon": {
+          if (data.definition.type === "Ammunition") {
+            item = parseAmmunition(data, character);
+          } else {
+            const flags = getWeaponFlags(ddb, data, character);
+            item = parseWeapon(data, character, flags);
+          }
+          break;
+        }
+        case "Armor":
+          item = parseArmor(data, character);
+          break;
+        case "Wondrous item":
+        case "Ring":
+        case "Wand":
+        case "Rod":
+          item = parseWonderous(data);
+          break;
+        case "Staff":
+          item = parseStaff(data, character);
+          break;
+        case "Potion":
+          item = parsePotion(data);
+          break;
+        case "Scroll":
+          item = parseScroll(data);
+          break;
+        case "Other Gear": {
+          switch (data.definition.subType) {
+            case "Potion":
+              item = parsePotion(data);
+              break;
+            case "Tool":
+              item = parseTool(data, character);
+              break;
+            default:
+              item = parseLoot(data);
+          }
+          break;
+        }
+        default:
+          item = parseLoot(data, character);
+          break;
+      }
+    } else {
+      // try parsing it as a custom item
+      item = parseCustomItem(data);
+    }
+    return item;
+  } catch (err) {
+    utils.log(
+      `Unable to parse item: ${data.definition.name}, ${data.definition.type}/${data.definition.filterType}. ${err.message}`,
+      "character"
+    );
+    return {};
+  }
+};
+
 export default function getInventory(ddb, character, itemSpells) {
   let items = [];
   // first, check custom name, price or weight
@@ -177,12 +183,9 @@ export default function getInventory(ddb, character, itemSpells) {
     let item = ddb.character.inventory.find((item) => item.id === cv.valueId);
     if (item) {
       // check if this property is in the list of supported ones, based on our DICT
-      let property = DICTIONARY.item.characterValues.find(
-        (entry) => entry.typeId === cv.typeId
-      );
+      let property = DICTIONARY.item.characterValues.find((entry) => entry.typeId === cv.typeId);
       // overwrite the name, weight or price with the custom value
-      if (property && cv.value.length !== 0)
-        item.definition[property.value] = cv.value;
+      if (property && cv.value.length !== 0) item.definition[property.value] = cv.value;
     }
   });
 
@@ -197,12 +200,7 @@ export default function getInventory(ddb, character, itemSpells) {
   for (let entry of ddb.character.inventory.concat(customItems)) {
     var item = Object.assign({}, parseItem(ddb, entry, character));
     if (item) {
-      item.flags.magicitems = parseMagicItem(
-        entry,
-        character,
-        item,
-        itemSpells
-      );
+      item.flags.magicitems = parseMagicItem(entry, character, item, itemSpells);
       items.push(item);
     }
   }

@@ -1,5 +1,4 @@
 import utils from "../../utils.js";
-import DICTIONARY from "../dictionary.js";
 
 /**
  * Searches for selected options if a given feature provides choices to the user
@@ -38,10 +37,9 @@ let getChoice = (ddb, type, feat) => {
       const option = choice.options.find((opt) => opt.id === choice.optionValue);
       if (option) return option;
     }
-
-    // we could not determine if there are any choices left
-    return undefined;
   }
+  // we could not determine if there are any choices left
+  return undefined;
 };
 
 export default function parseFeatures(ddb) {
