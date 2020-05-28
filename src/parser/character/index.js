@@ -806,7 +806,7 @@ let getBiography = (data) => {
 let getSkills = (data, character) => {
   let result = {};
   DICTIONARY.character.skills.forEach((skill) => {
-    let modifiers = [
+    const modifiers = [
       data.character.modifiers.class,
       data.character.modifiers.race,
       utils.getActiveItemModifiers(data),
@@ -844,8 +844,9 @@ let getSkills = (data, character) => {
       : Math.floor(2 * character.data.attributes.prof * proficient);
 
     // Skill bonuses e.g. items
+    // These no longer seems to be picked up in recent versions of the DND5e module
     const skillBonus = utils
-      .filterBaseModifiers(data, "bonus", skill.label.toLowerCase())
+      .filterBaseModifiers(data, "bonus", skill.subType)
       .map((skl) => skl.value)
       .reduce((a, b) => a + b, 0);
 
@@ -992,7 +993,8 @@ let getBonusAbilities = (data, character) => {
   ];
 
   bonusLookup.forEach((b) => {
-    result[b.fvttType] = utils.getModifierSum(utils.filterBaseModifiers(data, "bonus", b.ddbSubType), character);
+    const bonus = utils.getModifierSum(utils.filterBaseModifiers(data, "bonus", b.ddbSubType), character);
+    result[b.fvttType] = (bonus === 0) ? "" : bonus;
   });
   return result;
 };
