@@ -1,4 +1,4 @@
-function linkImages(directory, html, user) {
+function linkImages(html) {
   if (!game.user.isGM) return;
 
   // mark all images
@@ -6,7 +6,7 @@ function linkImages(directory, html, user) {
     .find('div[data-edit="content"] img')
     .each((index, element) => {
       const showPlayersButton = $("<a class='vtta-button'><i class='fas fa-eye'></i>&nbsp;Show Players</a>");
-      $(showPlayersButton).click((event) => {
+      $(showPlayersButton).click(() => {
         const src = $(element).attr("src");
         console.log("Showing players image: " + src);
         game.socket.emit("module.vtta-dndbeyond", { sender: game.user.data._id, action: "showImage", src: src });
@@ -16,10 +16,10 @@ function linkImages(directory, html, user) {
       // show the button on mouseenter of the image
       $(element)
         .parent()
-        .mouseenter(function () {
+        .mouseenter(function Hovering() {
           console.log("Hovering");
           $(this).append(showPlayersButton);
-          $(showPlayersButton).click((event) => {
+          $(showPlayersButton).click(() => {
             const src = $(element).attr("src");
             console.log("Showing players image: " + src);
             game.socket.emit("module.vtta-dndbeyond", { sender: game.user.data._id, action: "showImage", src: src });
@@ -27,7 +27,7 @@ function linkImages(directory, html, user) {
         });
       $(element)
         .parent()
-        .mouseleave(function () {
+        .mouseleave(function Unhovering() {
           console.log("Unhovering");
           $(this).find("a").remove();
         });
