@@ -1,58 +1,108 @@
 import utils from "../../../utils.js";
 
-const SAVE_ALL = 0;
-const SAVE_NEW = 1;
-const SAVE_NONE = 2;
+// const SAVE_ALL = 0;
+// const SAVE_NEW = 1;
+// const SAVE_NONE = 2;
 
-const getFolder = async (structure, entityName, sourcebook) => {
-  const getOrCreateFolder = async (root, folderName, sourcebook) => {
-    const baseColor = "#98020a";
-    const rootId = root !== null && root.id !== null ? root.id : null;
-    let folder = game.folders.entities.find(
-      (f) =>
-        f.data.type === entityName &&
-        f.data.name === folderName &&
-        f.data.parent === rootId &&
-        f.data.flags.vtta &&
-        f.data.flags.vtta.dndbeyond &&
-        f.data.flags.vtta.dndbeyond.sourcebook &&
-        f.data.flags.vtta.dndbeyond.sourcebook === sourcebook.abbrev.toLowerCase()
-    );
-    if (folder) return folder;
-    folder = await Folder.create({
-      name: folderName,
-      type: entityName,
-      color: baseColor,
-      parent: rootId,
-      flags: {
-        vtta: {
-          dndbeyond: {
-            sourcebook: sourcebook.abbrev.toLowerCase(),
-          },
+const FOLDER_BASE_COLOR = "#98020a"; // DDB red
+
+/**
+ * Creates a folder
+ * @param {*} rootId
+ * @param {*} folderName
+ * @param {*} sourcebook
+ * @param {*} entityName
+ */
+const createFolder = async (rootId, folderName, sourcebook, entityName) => {
+  const folder = await Folder.create({
+    name: folderName,
+    type: entityName,
+    color: FOLDER_BASE_COLOR,
+    parent: rootId,
+    flags: {
+      vtta: {
+        dndbeyond: {
+          sourcebook: sourcebook.abbrev.toLowerCase(),
         },
       },
-    });
-    return folder;
-  };
+    },
+  });
 
-  let parent = null;
-  for (let i = 0; i < structure.length; i++) {
-    parent = await getOrCreateFolder(parent, structure[i], sourcebook);
-  }
-
-  return parent;
+  return folder;
 };
+
+/**
+ * Finds a folder
+ * @param {*} rootId
+ * @param {*} folderName
+ * @param {*} sourcebook
+ * @param {*} entityName
+ */
+const findFolder = async (rootId, folderName, sourcebook, entityName) => {
+  // try and get the folder
+  const folder = await game.folders.entities.find(
+    (f) =>
+      f.data.type === entityName &&
+      f.data.name === folderName &&
+      f.data.parent === rootId &&
+      f.data.flags.vtta &&
+      f.data.flags.vtta.dndbeyond &&
+      f.data.flags.vtta.dndbeyond.sourcebook &&
+      f.data.flags.vtta.dndbeyond.sourcebook === sourcebook.abbrev.toLowerCase()
+  );
+  return folder;
+};
+
+/**
+ * Checks to see if folder exists or creates it
+ * @param {*} rootId
+ * @param {*} folderName
+ * @param {*} sourcebook
+ * @param {*} entityName
+ */
+const getOrCreateFolder = async (rootId, folderName, sourcebook, entityName) => {
+  // try and get the folder
+  const folder = await findFolder(rootId, folderName, sourcebook, entityName);
+
+  if (folder) {
+    return folder._id;
+  } else {
+    const newFolder = await createFolder(rootId, folderName, sourcebook, entityName);
+    return newFolder._id;
+  }
+};
+
+/**
+ * Returns the folder object for the provided details
+ * It will create any required folder structures
+ * @param {*} structure
+ * @param {*} entityName
+ * @param {*} sourcebook
+ */
+const getFolder = async (structure, entityName, sourcebook) => {
+  // use reduce to loop over folder structure to create and retrieve the correct
+  // parentId to use to lookup the folder
+  const parentId = await structure.reduce(async (acc, current) => {
+    const accum = await acc;
+    return getOrCreateFolder(accum, current, sourcebook, entityName);
+  }, Promise.resolve(null));
+
+  const folder = await game.folders.entities.find((folder) => folder._id === parentId);
+  return folder;
+};
+
 
 const insertRollTables = (content) => {
   let orig = $("<div>" + content + "</div>");
   let processed = [];
   $(orig)
     .find('div[data-type="rolltable"]')
-    .html(function () {
+    .html(/* @this HTMLElement */function () {
       let rollTableId = $(this).attr("data-id");
       if (rollTableId) {
-        if (processed.includes(rollTableId)) $(this).remove();
-        else {
+        if (processed.includes(rollTableId)) {
+          $(this).remove();
+        } else {
           processed.push(rollTableId);
           let rollTable = game.tables.entities.find(
             (t) =>
@@ -65,30 +115,36 @@ const insertRollTables = (content) => {
           return replacement;
         }
       }
+      return undefined;
     });
   return $(orig).html();
 };
 
-const addJournalEntries = async (data) => {
-  // create the primary folder for all content
-  let folder = await getFolder([data.title], "JournalEntry", data.book);
-  let entry = await JournalEntry.create({
+const addJournalEntry = async (structure, sourcebook, name, content) => {
+  const folder = await getFolder(structure, "JournalEntry", sourcebook);
+  const entry = await JournalEntry.create({
     folder: folder._id,
-    name: data.title,
-    content: insertRollTables(data.content),
+    name: name,
+    content: insertRollTables(content),
     img: null,
   });
+  return entry;
+};
+
+const addJournalEntries = async (data) => {
+  // create the folders for all content before we import
+  await Promise.all(data.scenes.map(async (scene) => {
+    const structure = [data.title, scene.name];
+    return getFolder(structure, "JournalEntry", data.book);
+  }));
+
+  // add main journal entry
+  addJournalEntry([data.title], data.book, data.title, data.content);
 
   // create sub-entries for all scenes
   for (let scene of data.scenes) {
-    folder = await getFolder([data.title, scene.name], "JournalEntry", data.book);
     for (let entry of scene.entries) {
-      entry = await JournalEntry.create({
-        folder: folder._id,
-        name: entry.name,
-        content: insertRollTables(entry.content), // section.content.join(""),
-        img: null,
-      });
+      addJournalEntry([data.title, scene.name], data.book, entry.name, entry.content);
     }
   }
 };
