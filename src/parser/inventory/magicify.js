@@ -57,14 +57,17 @@ function getRechargeFormula(description, maxCharges) {
   let chargeMatchLastDitch = /(\dd\d* \+ \d)/i;
   let chargeNextDawn = /can't be used this way again until the next/i;
 
-  let match = chargeMatchFormula.exec(description);
+  let matchFormula = chargeMatchFormula.exec(description);
+  let matchFixed = chargeMatchFixed.exec(description);
+  let matchLastDitch = chargeMatchLastDitch.exec(description);
 
-  if (match && match[1]) {
-    match = match[1];
-  } else if (match === chargeMatchFixed.exec(description)) {
-    match = match[1];
-  } else if (match === chargeMatchLastDitch.exec(description)) {
-    match = match[1];
+  let match = maxCharges;
+  if (matchFormula && matchFormula[1]) {
+    match = matchFormula[1];
+  } else if (matchFixed && matchFixed[1]) {
+    match = matchFixed[1];
+  } else if (matchLastDitch && matchLastDitch[1]) {
+    match = matchLastDitch[1];
   } else if (description.search(chargeNextDawn) !== -1) {
     match = maxCharges;
   }
