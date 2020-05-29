@@ -149,82 +149,103 @@ const addJournalEntries = async (data) => {
   }
 };
 
+
+const updateScene = async (scene, folder) => {
+  console.log("Scene " + scene.name + " does exist already, updating...");
+  let existing = await game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
+  let update = {
+    width: scene.width,
+    height: scene.height,
+    backgroundColor: scene.backgroundColor,
+  };
+  if (scene.shiftX) update.shiftX = scene.shiftX;
+  if (scene.shiftY) update.shiftY = scene.shiftY;
+  if (scene.grid) update.grid = scene.grid;
+  if (scene.gridDistance) update.gridDistance = scene.gridDistance;
+  if (scene.gridType) update.gridType = scene.gridType;
+  if (scene.globalLight) update.globalLight = scene.globalLight;
+  await existing.update(update);
+
+  // remove existing walls, add from import
+  if (scene.walls && scene.walls.length > 0) {
+    await existing.deleteEmbeddedEntity(
+      "Wall",
+      existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
+    );
+    await existing.createEmbeddedEntity("Wall", scene.walls);
+  }
+
+  // remove existing lights, add from import
+  if (scene.lights && scene.lights.length > 0) {
+    await existing.deleteEmbeddedEntity(
+      "AmbientLight",
+      existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
+    );
+    await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+  }
+};
+
+
+const createScene = async (scene, folder) => {
+  const uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
+  scene.src.split(".").pop();
+  const baseFilename = scene.name
+    .replace(/’s/, "s")
+    .replace(/'s/, "s")
+    .replace(/\W/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/_$/, "")
+    .toLowerCase();
+
+  // get img and thumb from the proxy
+  const src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);
+  const thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb");
+  let createData = {
+    name: scene.name,
+    img: src,
+    thumb: thumb,
+    folder: folder._id,
+    width: scene.width,
+    height: scene.height,
+    backgroundColor: scene.backgroundColor,
+    globalLight: scene.globalLight ? scene.globalLight : true,
+  };
+  if (scene.shiftX) createData.shiftX = scene.shiftX;
+  if (scene.shiftY) createData.shiftY = scene.shiftY;
+  if (scene.grid) createData.grid = scene.grid;
+  if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
+  if (scene.gridType) createData.gridType = scene.gridType;
+
+  let existing = await Scene.create(createData);
+
+  if (scene.walls && scene.walls.length > 0) {
+    await existing.createEmbeddedEntity("Wall", scene.walls);
+  }
+  if (scene.lights && scene.lights.length > 0) {
+    await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+  }
+};
+
 const addScenes = async (data) => {
-  let uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
-  let folder = await getFolder([data.book.name, data.title], "Scene", data.book);
+  const folder = await getFolder([data.book.name, data.title], "Scene", data.book);
+
+  const existingScenes = await Promise.all(data.scenes
+    .filter((scene) =>
+      game.scenes.entities.some((s) => {
+        return (s.name === scene.name && s.data.folder === folder.data._id);
+      })
+    )
+    .map((scene) => {
+      return scene.name;
+    })
+  );
 
   // check if the scene already exists
   for (let scene of data.scenes) {
-    let existing = game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
-    if (existing) {
-      console.log("Scene " + scene.name + " does exist already, updating...");
-      let update = {
-        width: scene.width,
-        height: scene.height,
-        backgroundColor: scene.backgroundColor,
-      };
-      if (scene.shiftX) update.shiftX = scene.shiftX;
-      if (scene.shiftY) update.shiftY = scene.shiftY;
-      if (scene.grid) update.grid = scene.grid;
-      if (scene.gridDistance) update.gridDistance = scene.gridDistance;
-      if (scene.gridType) update.gridType = scene.gridType;
-      if (scene.globalLight) update.globalLight = scene.globalLight;
-      await existing.update(update);
-
-      // remove existing walls, add from import
-      if (scene.walls && scene.walls.length > 0) {
-        await existing.deleteEmbeddedEntity(
-          "Wall",
-          existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
-        );
-        await existing.createEmbeddedEntity("Wall", scene.walls);
-      }
-
-      // remove existing lights, add from import
-      if (scene.lights && scene.lights.length > 0) {
-        await existing.deleteEmbeddedEntity(
-          "AmbientLight",
-          existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
-        );
-        await existing.createEmbeddedEntity("AmbientLight", scene.lights);
-      }
+    if (existingScenes && existingScenes.includes(scene.name)) {
+      updateScene(scene, folder);
     } else {
-      const EXTENSION = scene.src.split(".").pop();
-      const baseFilename = scene.name
-        .replace(/’s/, "s")
-        .replace(/'s/, "s")
-        .replace(/\W/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/_$/, "")
-        .toLowerCase();
-
-      // get img and thumb from the proxy
-      let src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);
-      let thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb");
-      let createData = {
-        name: scene.name,
-        img: src,
-        thumb: thumb,
-        folder: folder._id,
-        width: scene.width,
-        height: scene.height,
-        backgroundColor: scene.backgroundColor,
-        globalLight: scene.globalLight ? scene.globalLight : true,
-      };
-      if (scene.shiftX) createData.shiftX = scene.shiftX;
-      if (scene.shiftY) createData.shiftY = scene.shiftY;
-      if (scene.grid) createData.grid = scene.grid;
-      if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
-      if (scene.gridType) createData.gridType = scene.gridType;
-
-      existing = await Scene.create(createData);
-
-      if (scene.walls && scene.walls.length > 0) {
-        await existing.createEmbeddedEntity("Wall", scene.walls);
-      }
-      if (scene.lights && scene.lights.length > 0) {
-        await existing.createEmbeddedEntity("AmbientLight", scene.lights);
-      }
+      createScene(scene, folder);
     }
   }
 };
