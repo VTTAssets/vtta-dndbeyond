@@ -17,7 +17,7 @@ let OutgoingCommunication = function(port) {
           };
           utils.log(`Sending HP change for Actor ${actor.name}`, 'messaging');
           utils.log(data);
-          port.send('set', data).then(response => {
+          port.send('set', data).then((response) => {
             utils.log(`REceived response for HP change for Actor ${actor.name}`, 'communication');
             utils.log(response);
           });

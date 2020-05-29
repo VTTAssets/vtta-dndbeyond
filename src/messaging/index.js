@@ -1,13 +1,13 @@
 import utils from "../utils.js";
-//import queryEntity from "./type/queryEntity.js";
-//import addEntity from "./type/addEntity.js";
+// import queryEntity from "./type/queryEntity.js";
+// import addEntity from "./type/addEntity.js";
 import roll from "./type/roll.js";
 
 import query from "./type/query/index.js";
 import add from "./type/add/index.js";
 
 let uuidv4 = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     var r = (Math.random() * 16) | 0,
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
