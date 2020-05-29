@@ -3,7 +3,7 @@ const onSocketMessage = (sender, data) => {
   console.log(data);
 
   switch (data.action) {
-    case "showImage":
+    case "showImage": {
       const src = data.src;
 
       // check for an existing popout with that source
@@ -15,7 +15,7 @@ const onSocketMessage = (sender, data) => {
 
       // create the image popup
       const popout = $('<div class="vtta-image-popout"><img src="' + src + '"/></div>');
-      popout.on("click", (event) => {
+      popout.on("click", () => {
         $(popout).hide(400, () => {
           $(popout).remove();
         });
@@ -23,6 +23,8 @@ const onSocketMessage = (sender, data) => {
       $("body").prepend(popout);
       $(popout).show(400);
       break;
+    }
+    // no default
   }
 };
 

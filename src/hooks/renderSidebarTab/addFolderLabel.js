@@ -1,4 +1,4 @@
-export default function (directory, html, user) {
+export default function (html) {
   $(html)
     .find("ol.directory-list > li.directory-item.folder")
     .each((index, element) => {
@@ -13,7 +13,7 @@ export default function (directory, html, user) {
           : null;
       if (labelText) {
         const label = $(`<span class="vtta-folder-label">${labelText.toUpperCase()}</span>`);
-        $(label).on("click", (event) => {
+        $(label).on("click", () => {
           const data = {
             senderId: game.user.data._id,
             action: "labelClick",

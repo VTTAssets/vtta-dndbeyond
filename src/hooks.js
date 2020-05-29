@@ -68,9 +68,9 @@ export function onReady() {
 }
 
 export function renderSidebarTab(directory, html, user) {
-  addFolderLabel(directory, html, user);
+  addFolderLabel(html);
 }
 
 export function renderJournalSheet(sheet, html, data) {
-  linkImages(sheet, html, data);
+  linkImages(html);
 }
