@@ -86,7 +86,7 @@ const addJournalEntries = async (data) => {
       entry = await JournalEntry.create({
         folder: folder._id,
         name: entry.name,
-        content: insertRollTables(entry.content), //section.content.join(""),
+        content: insertRollTables(entry.content), // section.content.join(""),
         img: null,
       });
     }
@@ -174,7 +174,7 @@ const addScenes = async (data) => {
 };
 
 const addRollTables = async (data) => {
-  //folderName, rollTables, sourcebook) => {
+  // folderName, rollTables, sourcebook) => {
   const folderName = data.title;
   const rollTables = data.rollTables;
 
@@ -206,7 +206,7 @@ let addPage = (body) => {
     const { data } = body;
 
     console.log(data);
-    let folderNames = []; //[body.data.module.name];
+    let folderNames = []; // [body.data.module.name];
 
     let rollTables = [];
     if (data.rollTables && data.rollTables.length > 0) {

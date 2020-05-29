@@ -75,7 +75,7 @@ let createNPC = async (npc, options) => {
     utils.log("Iconizer not responding");
   }
 
-  //let result = await Actor5e.create(npc, options);
+  // let result = await Actor5e.create(npc, options);
   // should be aliased again
   let result = await Actor.create(npc, options);
 
@@ -170,7 +170,7 @@ let addNPC = (body) => {
       // update existing (1) or overwrite (0)
       let compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
       if (compendiumName && compendiumName !== "") {
-        //let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
+        // let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
         let compendium = game.packs.find((pack) => pack.collection === compendiumName);
         if (compendium) {
           let index = await compendium.getIndex();

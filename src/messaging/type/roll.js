@@ -19,11 +19,9 @@ const doFakeRoll = (formula, resultParts, total) => {
         combined.push(dieRoll.roll);
         return dieRoll;
       });
-    } else {
-      if (typeof part === "string" && !isNaN(part)) {
+    } else if (typeof part === "string" && !isNaN(part)) {
         combined.push(resultParts.shift());
       }
-    }
     return part;
   });
   roll._result = combined.reduce((total, cur) => `${total} ${cur < 0 ? "-" : "+"} ${Math.abs(cur)}`);
@@ -32,13 +30,12 @@ const doFakeRoll = (formula, resultParts, total) => {
 };
 
 export default function (entity, data) {
-  return new Promise(async (resolve, reject) => {
-    let item, type;
+  return new Promise((resolve, reject) => {
     let roll = data.roll;
     let event = data.event;
 
     switch (roll.rollType) {
-      case "3D":
+      case "3D": {
         // get the desired actor
 
         let flavor = roll.flavor;
@@ -52,6 +49,7 @@ export default function (entity, data) {
             case "roll":
               flavor = CONFIG.DND5E.abilities[what] + " - Saving Throw";
               break;
+            // no default
           }
         } else {
           switch (how) {
@@ -79,7 +77,8 @@ export default function (entity, data) {
         resolve({ body: "3D die successfully rendered" });
 
         break;
-      case "ABILITY":
+      }
+      case "ABILITY": {
         switch (roll.subtype) {
           case "SAVE":
             entity.rollAbilitySave(roll.name, { event: event });
@@ -89,28 +88,32 @@ export default function (entity, data) {
             entity.rollAbility(roll.name, { event: event });
             resolve({ body: "Ability save rendered successfully" });
             break;
+          // no default
         }
         break;
-      case "SKILL":
+      }
+      case "SKILL": {
         entity.rollSkill(roll.name, { event: event });
         resolve({ body: "Ability save rendered successfully" });
         break;
-      default:
+      }
+      default: {
         let item = entity.items.find((item) => item.name === roll.name);
         if (item) {
           // Roll spells through the actor
           if (item.data.type === "spell") {
             return entity.useSpell(item, { configureDialog: !event.shiftKey });
+          } else {
+            // Otherwise roll the Item directly
+            return item.roll();
           }
-
-          // Otherwise roll the Item directly
-          else return item.roll();
         } else {
           reject("Unknown item");
         }
         break;
+      }
     }
 
-    reject("Unknown roll command");
+    return reject("Unknown roll command");
   });
 }
