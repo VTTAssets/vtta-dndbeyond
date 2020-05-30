@@ -1,12 +1,9 @@
 import utils from "../../../utils.js";
 
 const SAVE_ALL = 0;
-const SAVE_NEW = 1;
 const SAVE_NONE = 2;
 
-const CLEAN_NONE = 0;
 const CLEAN_MONSTERS = 1;
-const CLEAN_SPELLS = 2;
 const CLEAN_ALL = 3;
 
 /**
@@ -35,21 +32,51 @@ let queryIcons = (names) => {
  * @param {[string]} spells Array of Strings or
  */
 const retrieveSpells = async (spells) => {
-  let result = [];
-  let compendiumName = game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
+  let compendiumName = await game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
   const GET_ENTITY = true;
-  for (let i = 0; i < spells.length; i++) {
-    let spellName = typeof spells[i] === "string" ? spells[i] : spells[i].hasOwnProperty("name") ? spells[i].name : "";
-    const spell = await utils.queryCompendium(compendiumName, spellName, GET_ENTITY);
 
-    if (spell) {
-      // const spellId = spell.id || spell._id;
-      // console.log("Querying compendium for spell with ID " + spellId);
-      // spell = await compendium.getEntity(spellId);
-      result.push(spell);
+  const result = await Promise.all(
+    spells.map(async (spell) => {
+      let spellName =
+        typeof spell === "string" ? spell : Object.prototype.hasOwnProperty.call(spell, "name") ? spell.name : "";
+      return utils.queryCompendium(compendiumName, spellName, GET_ENTITY);
+    })
+  );
+  return result;
+};
+
+const getCompendium = async () => {
+  const compendiumName = await game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
+  if (compendiumName && compendiumName !== "") {
+    const compendium = await game.packs.find((pack) => pack.collection === compendiumName);
+    if (compendium) {
+      return compendium;
     }
   }
-  return result;
+  return undefined;
+};
+
+const addNPCToCompendium = async (npc, name) => {
+  // decide wether to save it into the compendium
+  if (game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE) {
+    // update existing (1) or overwrite (0)
+    const compendium = await getCompendium();
+    if (compendium) {
+      let index = await compendium.getIndex();
+      let entity = index.find((entity) => entity.name.toLowerCase() === name.toLowerCase());
+      if (entity) {
+        if (SAVE_ALL) {
+          const compendiumNPC = JSON.parse(JSON.stringify(npc));
+          compendiumNPC.data._id = entity._id;
+          await compendium.updateEntity(compendiumNPC.data);
+        }
+      } else {
+        await compendium.createEntity(npc.data);
+      }
+    } else {
+      console.error("Error opening compendium, check your settings");
+    }
+  }
 };
 
 // we are creating the NPC here not temporary
@@ -83,118 +110,114 @@ let createNPC = async (npc, options) => {
     // update existing (1) or overwrite (0)
     let spells = await retrieveSpells(npc.flags.vtta.dndbeyond.spells);
     spells = spells.map((spell) => spell.data);
-    let char = await result.createEmbeddedEntity("OwnedItem", spells);
-    console.log(char);
-    console.log(result);
+    await result.createEmbeddedEntity("OwnedItem", spells);
   }
 
   return result;
 };
 
-let addNPC = (body) => {
-  return new Promise(async (resolve, reject) => {
-    // cleaning up after imports
-    const cleanupAfterImport =
-      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_ALL ||
-      game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_MONSTERS;
+let buildNPC = async (data) => {
+  // get the folder to add this npc into
+  const folder = await utils.getFolder("npc", data.data.details.type, data.data.details.race);
+  // in this instance I can't figure out how to make this safe, but the risk seems minimal.
+  // eslint-disable-next-line require-atomic-updates
+  data.folder = folder._id;
 
-    // get the folder to add this npc into
-    let folder = await utils.getFolder(body.type, body.data.data.details.type, body.data.data.details.race);
-    body.data.folder = folder.id;
+  if (data.flags.vtta.dndbeyond.img) {
+    // image upload
+    let filename =
+      "npc-" +
+      data.name
+        .replace(/[^a-zA-Z]/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
 
-    if (body.data.flags.vtta.dndbeyond.img) {
-      // image upload
-      let filename =
-        "npc-" +
-        body.data.name
-          .replace(/[^a-zA-Z]/g, "-")
-          .replace(/\-+/g, "-")
-          .trim();
+    let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
+    // in this instance I can't figure out how to make this safe, but the risk seems minimal.
+    // eslint-disable-next-line require-atomic-updates
+    data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+  }
 
-      let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
-      body.data.img = await utils.uploadImage(body.data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+  // replace icons by iconizer, if available
+  let icons = data.items.map((item) => {
+    return {
+      name: item.name,
+    };
+  });
+  try {
+    utils.log("Querying iconizer for icons");
+    icons = await queryIcons(icons);
+    utils.log(icons);
+
+    // replace the icons
+    for (let item of data.items) {
+      let icon = icons.find((icon) => icon.name === item.name);
+      if (icon) {
+        item.img = icon.img;
+      }
     }
+  } catch (exception) {
+    utils.log("Iconizer not responding");
+  }
 
-    // replace icons by iconizer, if available
-    let icons = body.data.items.map((item) => {
-      return {
-        name: item.name,
-      };
+  utils.log("Importing NPC");
+  // check if there is an NPC with that name in that folder already
+  let npc = folder.content ? folder.content.find((actor) => actor.name === data.name) : undefined;
+  if (npc) {
+    utils.log("NPC exists");
+    // remove the inventory of said npc
+    await npc.deleteEmbeddedEntity(
+      "OwnedItem",
+      npc.getEmbeddedCollection("OwnedItem").map((item) => item._id)
+    );
+    // update items and basic data
+    await npc.update(data);
+    utils.log("NPC updated");
+    if (data.flags.vtta.dndbeyond.spells && data.flags.vtta.dndbeyond.spells.length !== 0) {
+      utils.log("Retrieving spells:");
+      utils.log(data.flags.vtta.dndbeyond.spells);
+      let spells = await retrieveSpells(data.flags.vtta.dndbeyond.spells);
+      spells = spells.map((spell) => spell.data);
+      await npc.createEmbeddedEntity("OwnedItem", spells);
+    }
+  } else {
+    // create the new npc
+    npc = await createNPC(data, {
+      temporary: false,
+      displaySheet: true,
     });
-    try {
-      utils.log("Querying iconizer for icons");
-      icons = await queryIcons(icons);
-      utils.log(icons);
+  }
+  return npc;
+};
 
-      // replace the icons
-      for (let item of body.data.items) {
-        let icon = icons.find((icon) => icon.name === item.name);
-        if (icon) {
-          item.img = icon.img;
-        }
-      }
-    } catch (exception) {
-      utils.log("Iconizer not responding");
-    }
+const cleanUp = async (npc) => {
+  // cleaning up after imports
+  const cleanupAfterImport =
+    game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_ALL ||
+    game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_MONSTERS;
 
-    utils.log("Importing NPC");
-    // check if there is an NPC with that name in that folder already
-    let npc = folder.content ? folder.content.find((actor) => actor.name === body.data.name) : undefined;
-    if (npc) {
-      utils.log("NPC exists");
-      // remove the inventory of said npc
-      await npc.deleteEmbeddedEntity(
-        "OwnedItem",
-        npc.getEmbeddedCollection("OwnedItem").map((item) => item._id)
-      );
-      // update items and basic data
-      await npc.update(body.data);
-      utils.log("NPC updated");
-      if (body.data.flags.vtta.dndbeyond.spells && body.data.flags.vtta.dndbeyond.spells.length !== 0) {
-        utils.log("Retrieving spells:");
-        utils.log(body.data.flags.vtta.dndbeyond.spells);
-        let spells = await retrieveSpells(body.data.flags.vtta.dndbeyond.spells);
-        spells = spells.map((spell) => spell.data);
-        await npc.createEmbeddedEntity("OwnedItem", spells);
-      }
-    } else {
-      // create the new npc
-      npc = await createNPC(body.data, {
-        temporary: false,
-        displaySheet: true,
+  if (cleanupAfterImport) {
+    await npc.delete();
+  }
+};
+
+const parseNPC = async (body) => {
+  let npc = await buildNPC(body.data);
+  await addNPCToCompendium(npc, body.data.name);
+  await cleanUp(npc);
+  return npc;
+};
+
+let addNPC = (body) => {
+  return new Promise((resolve, reject) => {
+    parseNPC(body)
+      .then((npc) => {
+        resolve(npc.data);
+      })
+      .catch((error) => {
+        console.error(`error parsing NPC: ${error}`);
+        reject(error);
       });
-    }
-
-    // decide wether to save it into the compendium
-    if (game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE) {
-      // update existing (1) or overwrite (0)
-      let compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
-      if (compendiumName && compendiumName !== "") {
-        // let compendium = game.packs.find(compendium => compendium.metadata.label === compendiumName);
-        let compendium = game.packs.find((pack) => pack.collection === compendiumName);
-        if (compendium) {
-          let index = await compendium.getIndex();
-          let entity = index.find((entity) => entity.name.toLowerCase() === body.data.name.toLowerCase());
-          if (entity) {
-            if (game.settings.get("vtta-dndbeyond", "entity-import-policy") === SAVE_ALL) {
-              const _id = npc.data._id;
-              npc.data._id = entity._id;
-              await compendium.updateEntity(npc.data);
-              npc.data._id = _id;
-            }
-          } else {
-            await compendium.createEntity(npc.data);
-          }
-        } else {
-          reject("Error opening compendium, check your settings");
-        }
-      }
-    }
-
-    if (cleanupAfterImport) {
-      await npc.delete();
-    }
-    resolve(npc.data);
   });
 };
 
