@@ -133,6 +133,7 @@ const addJournalEntry = async (structure, sourcebook, name, content) => {
 
 const addJournalEntries = async (data) => {
   // create the folders for all content before we import
+  await getFolder([data.title], "JournalEntry", data.book);
   await Promise.all(data.scenes.map(async (scene) => {
     const structure = [data.title, scene.name];
     return getFolder(structure, "JournalEntry", data.book);
@@ -278,21 +279,29 @@ const addRollTables = async (data) => {
   return tables;
 };
 
+
+const parsePage = async (data) => {
+  var tables;
+  if (data.rollTables && data.rollTables.length > 0) {
+    tables = await addRollTables(data);
+  }
+  // add all Journal Entries
+  var journals = await addJournalEntries(data);
+  var scenes = await addScenes(data);
+
+  return [tables, journals, scenes];
+};
+
 let addPage = (body) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const { data } = body;
 
-    console.log(data);
-    let folderNames = []; // [body.data.module.name];
-
-    let rollTables = [];
-    if (data.rollTables && data.rollTables.length > 0) {
-      rollTables = await addRollTables(data);
-    }
-    // add all Journal Entries
-    await addJournalEntries(data);
-    await addScenes(data);
-    resolve(true);
+    parsePage(data).then(() => {
+      resolve(true);
+    }).catch((error) => {
+      console.error(`error parsing page: ${error}`);
+      reject(error);
+    });
   });
 };
 
