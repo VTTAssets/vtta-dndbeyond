@@ -251,31 +251,33 @@ const addScenes = async (data) => {
   }
 };
 
+const addRollTable = async (table, folder) => {
+  let rollTable = await RollTable.create({
+    name: table.name,
+    formula: `1d${table.max}`,
+    folder: folder._id,
+    flags: {
+      vtta: {
+        dndbeyond: {
+          rollTableId: table.id,
+        },
+      },
+    },
+  });
+  await rollTable.createEmbeddedEntity("TableResult", table.results);
+  return rollTable;
+};
+
 const addRollTables = async (data) => {
   // folderName, rollTables, sourcebook) => {
   const folderName = data.title;
   const rollTables = data.rollTables;
 
   let folder = await getFolder([folderName], "RollTable", data.book);
-  let tables = [];
-  for (let data of rollTables) {
-    console.log(data);
-    let rollTable = await RollTable.create({
-      name: data.name,
-      formula: `1d${data.max}`,
-      folder: folder._id,
-      flags: {
-        vtta: {
-          dndbeyond: {
-            rollTableId: data.id,
-          },
-        },
-      },
-    });
-    await rollTable.createEmbeddedEntity("TableResult", data.results);
 
-    tables.push(rollTable);
-  }
+  const tables = await Promise.all(rollTables.map(async (table) => {
+    return addRollTable(table, folder);
+  }));
   return tables;
 };
 
