@@ -32,7 +32,7 @@ Examples:
 
 - `img/uploads` references to `[Foundry]/Data/img/uploads`
 - `uploads` references to `[Foundry]/Data/uploads`
-- `` references to `[Foundry]/Data` - probably not recommended
+- `` references to `[Foundry]/Data` - not recommended
 
 # Entity import policy
 
@@ -40,7 +40,6 @@ Three settings are available:
 
 - **Save all entities, overwrite existing ones** - Imported entities will be saved to their designated compendium, which you will set below. Existing entries will be updated/ overwritten. Great if you want to import all your stuff into Foundry
 - **Save new entities only, do not overwrite existing ones** - Import only entities currently not available in the compendiums
-- **Replace only default icons** - The icon will be replaced only if the current icon is the default icon (mystery man)
 - **Do not save the entities at** all - Just do nothing. If you choose this, you do not need to set the compendium entries below
 
 # Item compendium, Spell compendium and Monster compendium
