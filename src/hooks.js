@@ -67,6 +67,8 @@ export function onReady() {
   });
 }
 
+// these functions are hooked in, we don't use all the data, so lets stop eslint complaining
+/* eslint-disable no-unused-vars */
 export function renderSidebarTab(directory, html, user) {
   addFolderLabel(html);
 }
@@ -74,3 +76,4 @@ export function renderSidebarTab(directory, html, user) {
 export function renderJournalSheet(sheet, html, data) {
   linkImages(html);
 }
+/* eslint-enable no-unused-vars */

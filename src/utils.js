@@ -1,6 +1,6 @@
 import { DND5E } from "../../../systems/dnd5e/module/config.js";
 import DirectoryPicker from "./lib/DirectoryPicker.js";
-import DICTIONARY from './parser/dictionary.js';
+import DICTIONARY from "./parser/dictionary.js";
 
 let utils = {
   debug: () => {
@@ -50,7 +50,7 @@ let utils = {
 
     if (!Array.isArray(arr)) return undefined;
     arr
-      .filter((entry) => entry.hasOwnProperty(property))
+      .filter((entry) => Object.prototype.hasOwnProperty.call(entry, property))
       .forEach((entry) => {
         let distance = levenshtein(searchString, entry[property]);
         if (distance < nearestDistance && distance <= maxDistance && distance < minDistance) {
@@ -80,13 +80,13 @@ let utils = {
     };
     if (definition.sourceIds) {
       source.name = DICTIONARY.sources
-      .filter((source) => definition.sourceIds.includes(source.id))
-      .map((source) => source.name)
-      .join();
+        .filter((source) => definition.sourceIds.includes(source.id))
+        .map((source) => source.name)
+        .join();
     } else if (definition.sourceId) {
       source.name = DICTIONARY.sources
-      .filter((source) => source.id === definition.sourceId)
-      .map((source) => source.name);
+        .filter((source) => source.id === definition.sourceId)
+        .map((source) => source.name);
     }
 
     // add a page num if available
@@ -266,21 +266,21 @@ let utils = {
     };
     return result;
   },
-  /**
-       * Tries to reverse-match a given string to a given DND5E configuration value, e.g.
-       *
-       * DND5E.armorProficiencies = {
-          "lgt": "Light Armor",
-          "med": "Medium Armor",
-          "hvy": "Heavy Armor",
-          "shl": "Shields"
-         };
-
-       * findInConfig('armorProficiencies', 'Medium Armor') returns 'med'
-       */
+  //
+  //   * Tries to reverse-match a given string to a given DND5E configuration value, e.g.
+  //   *
+  //   * DND5E.armorProficiencies = {
+  //      "lgt": "Light Armor",
+  //      "med": "Medium Armor",
+  //      "hvy": "Heavy Armor",
+  //      "shl": "Shields"
+  //     };
+  //
+  //   * findInConfig('armorProficiencies', 'Medium Armor') returns 'med'
+  //
   findInConfig: (section, value) => {
     value = value.toLowerCase();
-    if (DND5E.hasOwnProperty(section)) {
+    if (Object.prototype.hasOwnProperty.call(DND5E, section)) {
       for (let property in DND5E[section]) {
         if (value == DND5E[section][property].toLowerCase()) {
           return property;
@@ -297,9 +297,9 @@ let utils = {
 
   // DEVELOPMENT FUNCTION
   // loads a character.json from a file in the file system
-  loadFromFile: (filename) => {
-    return require(`./input/${filename}.json`);
-  },
+  // loadFromFile: (filename) => {
+  //   return require(`./input/${filename}.json`);
+  // },
 
   // checks for a given file
   serverFileExists: (path) => {
@@ -339,7 +339,11 @@ let utils = {
     };
     let filterDeprecated = (data) => {
       for (let prop in data) {
-        if (data[prop] && data[prop].hasOwnProperty("_deprecated") && data[prop]["_deprecated"] === true) {
+        if (
+          data[prop] &&
+          Object.prototype.hasOwnProperty.call(data[prop], "_deprecated") &&
+          data[prop]["_deprecated"] === true
+        ) {
           delete data[prop];
         }
         if (prop === "_deprecated" && data[prop] === true) {
@@ -390,12 +394,24 @@ let utils = {
     }
 
     async function upload(data, path, filename) {
-      return new Promise(async (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         // create new file from the response
-        let file = new File([data], filename, { type: data.type });
 
-        let result = await DirectoryPicker.uploadToPath(path, file);
-        resolve(result.path);
+        const uploadFile = async (data, path, filename) => {
+          const file = new File([data], filename, { type: data.type });
+          const result = await DirectoryPicker.uploadToPath(path, file);
+          return result;
+        };
+
+        uploadFile(data, path, filename)
+        .then((result) => {
+          resolve(result.path);
+        })
+        .catch((error) => {
+          console.error(`error uploading file: ${error}`);
+          reject(error);
+        });
+
       });
     }
 
@@ -410,7 +426,7 @@ let utils = {
     let ext = url
       .split(".")
       .pop()
-      .split(/\#|\?|\&/)[0];
+      .split(/#|\?|&/)[0];
 
     // uploading the character avatar and token
     try {
@@ -423,6 +439,7 @@ let utils = {
     }
   },
 
+  // eslint-disable-next-line no-unused-vars
   getFolder: async (kind, type = "", race = "") => {
     let getOrCreateFolder = async (root, entityType, folderName) => {
       const baseColor = "#98020a";
@@ -564,7 +581,7 @@ let utils = {
       CONFIG.debug &&
       CONFIG.debug.vtta &&
       CONFIG.debug.vtta.dndbeyond &&
-      CONFIG.debug.vtta.dndbeyond.hasOwnProperty(section) &&
+      Object.prototype.hasOwnProperty.call(CONFIG.debug.vtta.dndbeyond, section) &&
       CONFIG.debug.vtta.dndbeyond[section]
     )
       switch (typeof msg) {
