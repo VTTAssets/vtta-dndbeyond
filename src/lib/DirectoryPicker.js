@@ -70,7 +70,7 @@ class DirectoryPicker extends FilePicker {
   static processHtml(html) {
     $(html)
       .find(`input[data-dtype="Directory"]`)
-      .each(function () {
+      .each(/* @this HTMLElement */function () {
         console.log("Adding Picker Button");
         let picker = new DirectoryPicker({
           field: $(this)[0],
@@ -79,7 +79,7 @@ class DirectoryPicker extends FilePicker {
         let pickerButton = $(
           '<button type="button" class="file-picker" data-type="imagevideo" data-target="img" title="Pick directory"><i class="fas fa-file-import fa-fw"></i></button>'
         );
-        pickerButton.on("click", function () {
+        pickerButton.on("click", () => {
           console.log(picker);
           picker.render(true);
         });
@@ -98,6 +98,8 @@ class DirectoryPicker extends FilePicker {
   }
 }
 
+// this s hooked in, we don't use all the data, so lets stop eslint complaining
+// eslint-disable-next-line no-unused-vars
 Hooks.on("renderSettingsConfig", (app, html, user) => {
   DirectoryPicker.processHtml(html);
 });
