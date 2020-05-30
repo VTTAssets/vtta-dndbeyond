@@ -1,4 +1,4 @@
-const queryId = async (message) => {
+const queryId = async () => {
   let { id, name, isGM } = game.user;
   let entities = game.actors.entities
     .filter((actor) => actor.owner)

@@ -46,8 +46,9 @@ const queryMonster = async (message) => {
     let actors = [];
     result.scene.entities = game.scenes.active.data.tokens
       .map((token) => {
+        let sceneEntity = undefined;
         // otherwise get the token.name directly, which is a more unique id than the actor.name
-        let actor = game.actors.entities.find(
+        const actor = game.actors.entities.find(
           (actor) =>
             actor.id === token.actorId &&
             utils.normalizeString(actor.name) === normalizedName &&
@@ -60,24 +61,21 @@ const queryMonster = async (message) => {
             token.actorData.name &&
             !actors.includes(token.actorData.name)
           ) {
-            return {
+            sceneEntity = {
               id: token.id,
               name: token.actorData.name,
             };
-          }
-
-          if (!actors.includes(token.name)) {
+          } else if (!actors.includes(token.name)) {
             // remember this token's name
             actors.push(token.name);
 
-            return {
+            sceneEntity = {
               id: token.id,
               name: token.name,
             };
           }
-        } else {
-          return undefined;
         }
+        return sceneEntity;
       })
       .filter((entity) => entity !== undefined);
 

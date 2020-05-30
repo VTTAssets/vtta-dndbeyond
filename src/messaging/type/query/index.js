@@ -16,7 +16,7 @@ const query = async (message) => {
   // New extension
   switch (message.type) {
     case "id":
-      response = await queryId(message);
+      response = await queryId();
       break;
     case "monster":
       response = await queryMonster(message);
@@ -32,6 +32,7 @@ const query = async (message) => {
     case "sourcebookPage":
       response = await querySourcebookPage(message);
       break;
+    // no default
   }
 
   return response;

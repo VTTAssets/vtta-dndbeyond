@@ -6,6 +6,8 @@ import roll from "./type/roll.js";
 import query from "./type/query/index.js";
 import add from "./type/add/index.js";
 
+
+/* eslint-disable no-bitwise */
 let uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     var r = (Math.random() * 16) | 0,
@@ -13,6 +15,7 @@ let uuidv4 = () => {
     return v.toString(16);
   });
 };
+/* eslint-enable no-bitwise */
 
 class EventPort {
   constructor() {
@@ -185,10 +188,10 @@ class EventPort {
   }
 
   send(type, data = null) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let message = {
         head: {
-          id: uuidv4(),
+          id: this.id,
           type: type,
         },
         body: data,
