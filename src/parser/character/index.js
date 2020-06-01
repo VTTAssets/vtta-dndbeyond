@@ -854,6 +854,22 @@ let getCustomSkillProficiency = (data, skill) => {
     return undefined;
 };
 
+let getCustomSkillAbility = (data, skill) => {
+  // Overwrite the proficient value with any custom set over rides
+  if (data.character.characterValues) {
+    const customAbility = data.character.characterValues.find((value) =>
+        value.typeId === 27 &&
+        value.valueId === skill.valueId
+      );
+    if (customAbility) {
+      return DICTIONARY.character.abilities
+        .find((ability) => ability.id === customAbility.value).value;
+    }
+  }
+  return undefined;
+};
+
+
 let getSkills = (data, character) => {
   let result = {};
   DICTIONARY.character.skills.forEach((skill) => {
@@ -875,10 +891,13 @@ let getSkills = (data, character) => {
 
     const value = character.data.abilities[skill.ability].value + proficiencyBonus + skillBonus;
 
+    const customAbility = getCustomSkillAbility(data, skill);
+    const ability = (customAbility !== undefined) ? customAbility : skill.ability;
+
     result[skill.name] = {
       type: "Number",
       label: skill.label,
-      ability: skill.ability,
+      ability: ability,
       value: proficient,
       mod: utils.calculateModifier(value),
       bonus: skillBonus,
