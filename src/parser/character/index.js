@@ -803,43 +803,82 @@ let getBiography = (data) => {
     }
 };
 
+let isHalfProficiencyRoundedUp = (data, skill) => {
+  const longAbility = DICTIONARY.character.abilities
+    .filter((ability) => skill.ability === ability.value)
+    .map((ability) => ability.long)[0];
+  const roundUp = utils.filterBaseModifiers(data, "half-proficiency-round-up", `${longAbility}-ability-checks`);
+  return Array.isArray(roundUp) && roundUp.length;
+};
+
+let getSkillProficiency = (data, skill) => {
+  const modifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    utils.getActiveItemModifiers(data),
+    data.character.modifiers.feat,
+    data.character.modifiers.background,
+  ]
+    .flat()
+    .filter((modifier) => modifier.friendlySubtypeName === skill.label)
+    .map((mod) => mod.type);
+
+  const halfProficiency =
+    data.character.modifiers.class.find(
+      (modifier) =>
+        // Jack of All trades/half-rounded down
+        (modifier.type === "half-proficiency" && modifier.subType === "ability-checks") ||
+        // e.g. champion for specific ability checks
+        isHalfProficiencyRoundedUp(data, skill)
+    ) !== undefined
+      ? 0.5
+      : 0;
+
+  const proficient = modifiers.includes("expertise") ? 2 : modifiers.includes("proficiency") ? 1 : halfProficiency;
+
+  return proficient;
+};
+
+let getCustomSkillProficiency = (data, skill) => {
+    // Overwrite the proficient value with any custom set over rides
+    if (data.character.characterValues) {
+      const customProficiency = data.character.characterValues.find((value) =>
+          value.typeId === 26 &&
+          value.valueId === skill.valueId
+        );
+      if (customProficiency) {
+        return DICTIONARY.character.customSkillProficiencies
+          .find((prof) => prof.value === customProficiency.value).proficient;
+      }
+    }
+    return undefined;
+};
+
+let getCustomSkillAbility = (data, skill) => {
+  // Overwrite the proficient value with any custom set over rides
+  if (data.character.characterValues) {
+    const customAbility = data.character.characterValues.find((value) =>
+        value.typeId === 27 &&
+        value.valueId === skill.valueId
+      );
+    if (customAbility) {
+      return DICTIONARY.character.abilities
+        .find((ability) => ability.id === customAbility.value).value;
+    }
+  }
+  return undefined;
+};
+
+
 let getSkills = (data, character) => {
   let result = {};
   DICTIONARY.character.skills.forEach((skill) => {
-    const modifiers = [
-      data.character.modifiers.class,
-      data.character.modifiers.race,
-      utils.getActiveItemModifiers(data),
-      data.character.modifiers.feat,
-      data.character.modifiers.background,
-    ]
-      .flat()
-      .filter((modifier) => modifier.friendlySubtypeName === skill.label)
-      .map((mod) => mod.type);
+    const customProficient = getCustomSkillProficiency(data, skill);
+    // we use !== undefined because the return value could be 0, which is falsey
+    const proficient = (customProficient !== undefined) ? customProficient : getSkillProficiency(data, skill);
 
-    const longAbility = DICTIONARY.character.abilities
-      .filter((ability) => skill.ability === ability.value)
-      .map((ability) => ability.long)[0];
-
-    // e.g. champion for specific ability checks
-    const halfProficiencyRoundedUp =
-      data.character.modifiers.class.find(
-        (modifier) =>
-          modifier.type === "half-proficiency-round-up" && modifier.subType === `${longAbility}-ability-checks`
-      ) !== undefined;
-
-    // Jack of All trades/half-rounded down
-    const halfProficiency =
-      data.character.modifiers.class.find(
-        (modifier) =>
-          (modifier.type === "half-proficiency" && modifier.subType === "ability-checks") || halfProficiencyRoundedUp
-      ) !== undefined
-        ? 0.5
-        : 0;
-
-    const proficient = modifiers.includes("expertise") ? 2 : modifiers.includes("proficiency") ? 1 : halfProficiency;
-
-    const proficiencyBonus = halfProficiencyRoundedUp
+    // some abilities round half prof up, some down
+    const proficiencyBonus = isHalfProficiencyRoundedUp(data, skill)
       ? Math.ceil(2 * character.data.attributes.prof * proficient)
       : Math.floor(2 * character.data.attributes.prof * proficient);
 
@@ -852,10 +891,13 @@ let getSkills = (data, character) => {
 
     const value = character.data.abilities[skill.ability].value + proficiencyBonus + skillBonus;
 
+    const customAbility = getCustomSkillAbility(data, skill);
+    const ability = (customAbility !== undefined) ? customAbility : skill.ability;
+
     result[skill.name] = {
       type: "Number",
       label: skill.label,
-      ability: skill.ability,
+      ability: ability,
       value: proficient,
       mod: utils.calculateModifier(value),
       bonus: skillBonus,
