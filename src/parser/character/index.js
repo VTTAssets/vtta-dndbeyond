@@ -783,24 +783,24 @@ let getBiography = (data) => {
       value: result + backstory + traits,
     };
   } else if (data.character.background.definition !== null) {
-      let bg = data.character.background.definition;
+    let bg = data.character.background.definition;
 
-      let result = "<h1>" + bg.name + "</h1>";
-      result += bg.shortDescription.replace("\r\n", "");
-      if (bg.featureName) {
-        result += "<h2>" + bg.featureName + "</h2>";
-        result += bg.featureDescription.replace("\r\n", "");
-      }
-      return {
-        public: result + backstory + traits,
-        value: result + backstory + traits,
-      };
-    } else {
-      return {
-        public: "" + backstory + traits,
-        value: "" + backstory + traits,
-      };
+    let result = "<h1>" + bg.name + "</h1>";
+    result += bg.shortDescription.replace("\r\n", "");
+    if (bg.featureName) {
+      result += "<h2>" + bg.featureName + "</h2>";
+      result += bg.featureDescription.replace("\r\n", "");
     }
+    return {
+      public: result + backstory + traits,
+      value: result + backstory + traits,
+    };
+  } else {
+    return {
+      public: "" + backstory + traits,
+      value: "" + backstory + traits,
+    };
+  }
 };
 
 let isHalfProficiencyRoundedUp = (data, skill) => {
@@ -840,42 +840,38 @@ let getSkillProficiency = (data, skill) => {
 };
 
 let getCustomSkillProficiency = (data, skill) => {
-    // Overwrite the proficient value with any custom set over rides
-    if (data.character.characterValues) {
-      const customProficiency = data.character.characterValues.find((value) =>
-          value.typeId === 26 &&
-          value.valueId === skill.valueId
-        );
-      if (customProficiency) {
-        return DICTIONARY.character.customSkillProficiencies
-          .find((prof) => prof.value === customProficiency.value).proficient;
-      }
-    }
-    return undefined;
-};
-
-let getCustomSkillAbility = (data, skill) => {
   // Overwrite the proficient value with any custom set over rides
   if (data.character.characterValues) {
-    const customAbility = data.character.characterValues.find((value) =>
-        value.typeId === 27 &&
-        value.valueId === skill.valueId
-      );
-    if (customAbility) {
-      return DICTIONARY.character.abilities
-        .find((ability) => ability.id === customAbility.value).value;
+    const customProficiency = data.character.characterValues.find(
+      (value) => value.typeId === 26 && value.valueId === skill.valueId
+    );
+    if (customProficiency) {
+      return DICTIONARY.character.customSkillProficiencies.find((prof) => prof.value === customProficiency.value)
+        .proficient;
     }
   }
   return undefined;
 };
 
+let getCustomSkillAbility = (data, skill) => {
+  // Overwrite the proficient value with any custom set over rides
+  if (data.character.characterValues) {
+    const customAbility = data.character.characterValues.find(
+      (value) => value.typeId === 27 && value.valueId === skill.valueId
+    );
+    if (customAbility) {
+      return DICTIONARY.character.abilities.find((ability) => ability.id === customAbility.value).value;
+    }
+  }
+  return undefined;
+};
 
 let getSkills = (data, character) => {
   let result = {};
   DICTIONARY.character.skills.forEach((skill) => {
     const customProficient = getCustomSkillProficiency(data, skill);
     // we use !== undefined because the return value could be 0, which is falsey
-    const proficient = (customProficient !== undefined) ? customProficient : getSkillProficiency(data, skill);
+    const proficient = customProficient !== undefined ? customProficient : getSkillProficiency(data, skill);
 
     // some abilities round half prof up, some down
     const proficiencyBonus = isHalfProficiencyRoundedUp(data, skill)
@@ -892,7 +888,7 @@ let getSkills = (data, character) => {
     const value = character.data.abilities[skill.ability].value + proficiencyBonus + skillBonus;
 
     const customAbility = getCustomSkillAbility(data, skill);
-    const ability = (customAbility !== undefined) ? customAbility : skill.ability;
+    const ability = customAbility !== undefined ? customAbility : skill.ability;
 
     result[skill.name] = {
       type: "Number",
@@ -1036,7 +1032,7 @@ let getBonusAbilities = (data, character) => {
 
   bonusLookup.forEach((b) => {
     const bonus = utils.getModifierSum(utils.filterBaseModifiers(data, "bonus", b.ddbSubType), character);
-    result[b.fvttType] = (bonus === 0) ? "" : bonus;
+    result[b.fvttType] = bonus === 0 ? "" : bonus;
   });
   return result;
 };
@@ -1104,8 +1100,8 @@ let getToolProficiencies = (data, character) => {
   let allToolProficiencies = DICTIONARY.character.proficiencies
     .filter((prof) => prof.type === "Tool")
     .map((prof) => {
- return prof.name;
-});
+      return prof.name;
+    });
 
   character.flags.vtta.dndbeyond.proficiencies.forEach((prof) => {
     // Some have values we can match too in VTTA, others have to be custom imported
@@ -1439,34 +1435,10 @@ let getSpellSlots = (data) => {
 };
 
 let getToken = (data) => {
-  //
-  //      obj.token = this.getToken(character);
-  //      obj.token.img = results[1];
-  //
+  // Default to the most basic token setup.
+  // everything else can be handled by the user / Token Mold
   let tokenData = {
-    actorData: {},
     actorLink: true,
-    bar1: { attribute: "attributes.hp" },
-    bar2: { attribute: "" },
-    // brightLight: 0,
-    brightSight: 0,
-    // dimLight: 0,
-    dimSight: 0,
-    displayBars: 40,
-    displayName: 40,
-    disposition: -1,
-    elevation: 0,
-    flags: {},
-    height: 1,
-    // lightAngle: 360,
-    lockRotation: false,
-    name: data.character.name,
-    randomImg: false,
-    rotation: 0,
-    // scale: 1,
-    sightAngle: 360,
-    vision: true,
-    width: 1,
   };
 
   let senses = getSensesLookup(data);
@@ -1538,6 +1510,7 @@ export default function getCharacter(ddb) {
   character.data.attributes.init = getInitiative(ddb, character);
 
   // proficiency
+  // prettier-ignore
   character.data.attributes.prof = Math.ceil(1 + (0.25 * character.flags.vtta.dndbeyond.totalLevels));
 
   // speeds
