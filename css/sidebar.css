@@ -1,7 +1,10 @@
+/* (Popout) Sidebar styles */
+div.sidebar-popout section.sidebar-directory ol.directory-list li.directory-item.folder header,
 #sidebar section.sidebar-directory ol.directory-list li.directory-item.folder header {
   align-items: baseline;
 }
 
+div.sidebar-popout section > ol.directory-list > li header > span.vtta-folder-label,
 #sidebar section > ol.directory-list > li header > span.vtta-folder-label {
   display: inline-block;
   flex: 0 0 auto !important;
@@ -17,14 +20,17 @@
   top: -2px;
 }
 
+div.sidebar-popout section ol.directory-list li[data-type="vtta-folder"] header h3,
 #sidebar section ol.directory-list li[data-type="vtta-folder"] header h3 {
   font-size: 0.8rem;
 }
 
+div.sidebar-popout section ol.directory-list li[data-type="vtta-folder"],
 #sidebar section ol.directory-list li[data-type="vtta-folder"] {
   line-height: 36px;
 }
 
+div.sidebar-popout section ol.directory-list li[data-type="vtta-folder"] header h3 i.fas,
 #sidebar section ol.directory-list li[data-type="vtta-folder"] header h3 i.fas {
   margin-right: 4px;
 }
