@@ -70,20 +70,21 @@ class DirectoryPicker extends FilePicker {
   static processHtml(html) {
     $(html)
       .find(`input[data-dtype="Directory"]`)
-      .each(/* @this HTMLElement */function () {
-        console.log("Adding Picker Button");
-        let picker = new DirectoryPicker({
-          field: $(this)[0],
-          ...DirectoryPicker.parse(this.value),
-        });
-        let pickerButton = $(
-          '<button type="button" class="file-picker" data-type="imagevideo" data-target="img" title="Pick directory"><i class="fas fa-file-import fa-fw"></i></button>'
-        );
-        pickerButton.on("click", () => {
-          console.log(picker);
-          picker.render(true);
-        });
-        $(this).parent().append(pickerButton);
+      .each((index, element) => {
+        // if there is no button next to this input element yet, we add it
+        if (!$(element).next().length) {
+          let picker = new DirectoryPicker({
+            field: $(this)[0],
+            ...DirectoryPicker.parse(this.value),
+          });
+          let pickerButton = $(
+            '<button type="button" class="file-picker" data-type="imagevideo" data-target="img" title="Pick directory"><i class="fas fa-file-import fa-fw"></i></button>'
+          );
+          pickerButton.on("click", (event) => {
+            picker.render(true);
+          });
+          $(this).parent().append(pickerButton);
+        }
       });
   }
 
