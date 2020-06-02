@@ -75,7 +75,7 @@ export default class CharacterImport extends Application {
     if (targetItem.flags === undefined) targetItem.flags = {};
     if (originalItem.flags && !!originalItem.flags[flagGroup]) {
       console.log(`Copying ${flagGroup} for ${originalItem.name}`);
-      targetItem.flags[flagGroup] = originalItem.flags.dynamiceffects;
+      targetItem.flags[flagGroup] = originalItem.flags[flagGroup];
     }
   }
 
