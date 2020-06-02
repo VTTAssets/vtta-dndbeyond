@@ -39,7 +39,7 @@ export default function () {
     scope: "world",
     config: true,
     type: Number,
-    default: 2,
+    default: 1,
     choices: [
       "vtta-dndbeyond.entity-import-policy.0",
       "vtta-dndbeyond.entity-import-policy.1",

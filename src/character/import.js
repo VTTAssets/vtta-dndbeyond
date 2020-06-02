@@ -90,6 +90,7 @@ export default class CharacterImport extends Application {
       );
       if (originalItem) {
         CharacterImport.copyFlags("dynamiceffects", originalItem, item);
+        CharacterImport.copyFlags("maestro", originalItem, item);
       }
     });
   }
@@ -107,35 +108,34 @@ export default class CharacterImport extends Application {
     if (game.user.isGM && importPolicy !== 2) {
       const initialIndex = await compendium.getIndex();
       // remove duplicate items based on name and type
-      const compendiumItems = [...new Map(this.result[type].map((item) => [item["name"] + item["type"], item])).values()];
+      const compendiumItems = [
+        ...new Map(this.result[type].map((item) => [item["name"] + item["type"], item])).values(),
+      ];
 
-      const updateItems = async() => {
+      const updateItems = async () => {
         if (importPolicy === 0) {
           return Promise.all(
-            compendiumItems.filter((item) =>
-              initialIndex.some((idx) => idx.name === item.name)
-            )
-            .map(async (item) => {
-              const entry = await compendium.index.find((idx) => idx.name === item.name);
-              console.log("Updating " + entry.name);
-              const existing = await compendium.getEntity(entry._id);
-              item._id = existing._id;
-              await compendium.updateEntity(item);
-              return item;
-            })
+            compendiumItems
+              .filter((item) => initialIndex.some((idx) => idx.name === item.name))
+              .map(async (item) => {
+                const entry = await compendium.index.find((idx) => idx.name === item.name);
+                console.log("Updating " + entry.name);
+                const existing = await compendium.getEntity(entry._id);
+                item._id = existing._id;
+                await compendium.updateEntity(item);
+                return item;
+              })
           );
         } else {
           return Promise.all([]);
         }
       };
 
-      const createItems = async() => {
+      const createItems = async () => {
         return Promise.all(
-          compendiumItems.filter((item) =>
-            !initialIndex.some((idx) => idx.name === item.name)
-          )
-          .map(
-            async (item) => {
+          compendiumItems
+            .filter((item) => !initialIndex.some((idx) => idx.name === item.name))
+            .map(async (item) => {
               console.log("Creating " + item.name);
               const newItem = await Item.create(item, {
                 temporary: true,
@@ -143,7 +143,7 @@ export default class CharacterImport extends Application {
               });
               await compendium.importEntity(newItem);
               return newItem;
-          })
+            })
         );
       };
 
@@ -151,7 +151,7 @@ export default class CharacterImport extends Application {
       await createItems();
 
       const updatedIndex = await compendium.getIndex();
-      const getItems = async() => {
+      const getItems = async () => {
         return Promise.all(
           this.result[type].map(async (item) => {
             const searchResult = await updatedIndex.find((idx) => idx.name === item.name);
@@ -194,33 +194,29 @@ export default class CharacterImport extends Application {
     const folderLookup = gameFolderLookup.find((c) => c.type == type);
     const magicItemsFolder = await utils.getFolder(folderLookup.folder);
     const existingItems = await game.items.entities.filter(
-      (item) =>
-      item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id
+      (item) => item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id
     );
 
     // update or create folder items
-    const updateItems = async() => {
+    const updateItems = async () => {
       return Promise.all(
-        this.result[type].filter((item) =>
-          existingItems.some((idx) => idx.name === item.name)
-        )
-        .map(async (item) => {
-          const existingItem = await existingItems.find((existing) => item.name === existing.name);
-          console.log("Updating " + existingItem.name);
-          item._id = existingItem._id;
-          await Item.update(item);
-          return item;
-        })
+        this.result[type]
+          .filter((item) => existingItems.some((idx) => idx.name === item.name))
+          .map(async (item) => {
+            const existingItem = await existingItems.find((existing) => item.name === existing.name);
+            console.log("Updating " + existingItem.name);
+            item._id = existingItem._id;
+            await Item.update(item);
+            return item;
+          })
       );
     };
 
-    const createItems = async() => {
+    const createItems = async () => {
       return Promise.all(
-        this.result[type].filter((item) =>
-          !existingItems.some((idx) => idx.name === item.name)
-        )
-        .map(
-          async (item) => {
+        this.result[type]
+          .filter((item) => !existingItems.some((idx) => idx.name === item.name))
+          .map(async (item) => {
             if (!game.user.can("ITEM_CREATE")) {
               ui.notifications.warn(`Cannot create ${folderLookup.type} ${item.name} for ${type}`);
             } else {
@@ -229,7 +225,7 @@ export default class CharacterImport extends Application {
               await Item.create(item);
             }
             return item;
-        })
+          })
       );
     };
 
@@ -240,18 +236,16 @@ export default class CharacterImport extends Application {
     // by things like magicitems
     const items = Promise.all(
       game.items.entities
-      .filter((item) =>
-        item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id
-      )
-      .map((result) => {
-        return {
-          _id: result._id,
-          id: result._id,
-          pack: "world",
-          img: result.img,
-          name: result.name,
-        };
-      })
+        .filter((item) => item.type === folderLookup.itemType && item.data.folder === magicItemsFolder._id)
+        .map((result) => {
+          return {
+            _id: result._id,
+            id: result._id,
+            pack: "world",
+            img: result.img,
+            name: result.name,
+          };
+        })
     );
     return items;
   }
