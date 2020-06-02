@@ -74,16 +74,16 @@ class DirectoryPicker extends FilePicker {
         // if there is no button next to this input element yet, we add it
         if (!$(element).next().length) {
           let picker = new DirectoryPicker({
-            field: $(this)[0],
-            ...DirectoryPicker.parse(this.value),
+            field: $(element)[0],
+            ...DirectoryPicker.parse($(element).val()),
           });
           let pickerButton = $(
             '<button type="button" class="file-picker" data-type="imagevideo" data-target="img" title="Pick directory"><i class="fas fa-file-import fa-fw"></i></button>'
           );
-          pickerButton.on("click", (event) => {
+          pickerButton.on("click", () => {
             picker.render(true);
           });
-          $(this).parent().append(pickerButton);
+          $(element).parent().append(pickerButton);
         }
       });
   }
