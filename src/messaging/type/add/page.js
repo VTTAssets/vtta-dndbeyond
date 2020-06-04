@@ -91,32 +91,33 @@ const getFolder = async (structure, entityName, sourcebook) => {
   return folder;
 };
 
-
 const insertRollTables = (content) => {
   let orig = $("<div>" + content + "</div>");
   let processed = [];
   $(orig)
     .find('div[data-type="rolltable"]')
-    .html(/* @this HTMLElement */function () {
-      let rollTableId = $(this).attr("data-id");
-      if (rollTableId) {
-        if (processed.includes(rollTableId)) {
-          $(this).remove();
-        } else {
-          processed.push(rollTableId);
-          let rollTable = game.tables.entities.find(
-            (t) =>
-              t.data.flags &&
-              t.data.flags.vtta &&
-              t.data.flags.vtta.dndbeyond &&
-              t.data.flags.vtta.dndbeyond.rollTableId === rollTableId
-          );
-          const replacement = `<div class="rolltable"><span class="rolltable-head">Roll Table: </span><span class="rolltable-link">@RollTable[${rollTable._id}]{${rollTable.name}}</span></div>`;
-          return replacement;
+    .html(
+      /* @this HTMLElement */ function () {
+        let rollTableId = $(this).attr("data-id");
+        if (rollTableId) {
+          if (processed.includes(rollTableId)) {
+            $(this).remove();
+          } else {
+            processed.push(rollTableId);
+            let rollTable = game.tables.entities.find(
+              (t) =>
+                t.data.flags &&
+                t.data.flags.vtta &&
+                t.data.flags.vtta.dndbeyond &&
+                t.data.flags.vtta.dndbeyond.rollTableId === rollTableId
+            );
+            const replacement = `<div class="rolltable"><span class="rolltable-head">Roll Table: </span><span class="rolltable-link">@RollTable[${rollTable._id}]{${rollTable.name}}</span></div>`;
+            return replacement;
+          }
         }
+        return undefined;
       }
-      return undefined;
-    });
+    );
   return $(orig).html();
 };
 
@@ -134,22 +135,23 @@ const addJournalEntry = async (structure, sourcebook, name, content) => {
 const addJournalEntries = async (data) => {
   // create the folders for all content before we import
   await getFolder([data.title], "JournalEntry", data.book);
-  await Promise.all(data.scenes.map(async (scene) => {
-    const structure = [data.title, scene.name];
-    return getFolder(structure, "JournalEntry", data.book);
-  }));
+  await Promise.all(
+    data.scenes.map(async (scene) => {
+      const structure = [data.title, scene.name];
+      return getFolder(structure, "JournalEntry", data.book);
+    })
+  );
 
   // add main journal entry
   addJournalEntry([data.title], data.book, data.title, data.content);
 
   // create sub-entries for all scenes
   for (let scene of data.scenes) {
-    for (let entry of scene.entries) {
+    for (let entry of scene.entries.filter((entry) => entry !== null)) {
       addJournalEntry([data.title, scene.name], data.book, entry.name, entry.content);
     }
   }
 };
-
 
 const updateScene = async (scene, folder) => {
   console.log("Scene " + scene.name + " does exist already, updating...");
@@ -185,7 +187,6 @@ const updateScene = async (scene, folder) => {
     await existing.createEmbeddedEntity("AmbientLight", scene.lights);
   }
 };
-
 
 const createScene = async (scene, folder) => {
   const uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
@@ -230,15 +231,16 @@ const createScene = async (scene, folder) => {
 const addScenes = async (data) => {
   const folder = await getFolder([data.book.name, data.title], "Scene", data.book);
 
-  const existingScenes = await Promise.all(data.scenes
-    .filter((scene) =>
-      game.scenes.entities.some((s) => {
-        return (s.name === scene.name && s.data.folder === folder.data._id);
+  const existingScenes = await Promise.all(
+    data.scenes
+      .filter((scene) =>
+        game.scenes.entities.some((s) => {
+          return s.name === scene.name && s.data.folder === folder.data._id;
+        })
+      )
+      .map((scene) => {
+        return scene.name;
       })
-    )
-    .map((scene) => {
-      return scene.name;
-    })
   );
 
   // check if the scene already exists
@@ -275,12 +277,13 @@ const addRollTables = async (data) => {
 
   let folder = await getFolder([folderName], "RollTable", data.book);
 
-  const tables = await Promise.all(rollTables.map(async (table) => {
-    return addRollTable(table, folder);
-  }));
+  const tables = await Promise.all(
+    rollTables.map(async (table) => {
+      return addRollTable(table, folder);
+    })
+  );
   return tables;
 };
-
 
 const parsePage = async (data) => {
   var tables;
@@ -298,12 +301,14 @@ let addPage = (body) => {
   return new Promise((resolve, reject) => {
     const { data } = body;
 
-    parsePage(data).then(() => {
-      resolve(true);
-    }).catch((error) => {
-      console.error(`error parsing page: ${error}`);
-      reject(error);
-    });
+    parsePage(data)
+      .then(() => {
+        resolve(true);
+      })
+      .catch((error) => {
+        console.error(`error parsing page: ${error}`);
+        reject(error);
+      });
   });
 };
 
