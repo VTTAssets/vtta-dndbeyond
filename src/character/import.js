@@ -91,6 +91,7 @@ export default class CharacterImport extends Application {
       if (originalItem) {
         CharacterImport.copyFlags("dynamiceffects", originalItem, item);
         CharacterImport.copyFlags("maestro", originalItem, item);
+        CharacterImport.copyFlags("mess", originalItem, item);
       }
     });
   }
