@@ -92,12 +92,12 @@ export default function parseClasses(ddb) {
     const castSpells = (characterClass.definition.canCastSpells ||
       (characterClass.subclassDefinition && characterClass.subclassDefinition.canCastSpells));
 
+    let spellcasting = "";
     if (castSpells) {
-      item.data.spellcasting = DICTIONARY.spell.progression.find(
-        (cls) => cls.name === characterClass.definition.name).value;
-    } else {
-      item.data.spellcasting = "";
+      const spellProgression = DICTIONARY.spell.progression.find((cls) => cls.name === characterClass.definition.name);
+      if (spellProgression) spellcasting = spellProgression.value;
     }
+    item.data.spellcasting = spellcasting;
 
     items.push(item);
   });

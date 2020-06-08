@@ -1,4 +1,5 @@
 import utils from "../../utils.js";
+import parseTemplateString from "../templateStrings.js";
 
 /**
  * Searches for selected options if a given feature provides choices to the user
@@ -42,7 +43,17 @@ let getChoice = (ddb, type, feat) => {
   return undefined;
 };
 
-export default function parseFeatures(ddb) {
+function getDescription(ddb, character, feat) {
+  const snippet = feat.snippet ? parseTemplateString(ddb, character, feat.snippet, feat) : "";
+  const description = feat.description ? parseTemplateString(ddb, character, feat.description, feat) : "";
+  return {
+    value: description !== "" ? description : snippet,
+    chat: snippet,
+    unidentified: "",
+  };
+}
+
+export default function parseFeatures(ddb, character) {
   let items = [];
 
   let characterClasses = ddb.character.classes;
@@ -73,13 +84,9 @@ export default function parseFeatures(ddb) {
           : feat.description;
       }
 
-      item.data.description = {
-        value: feat.description,
-        chat: feat.description,
-        unidentified: feat.description,
-      };
-
+      item.data.description = getDescription(ddb, character, feat);
       item.data.source = source;
+
       items.push(item);
     });
 
@@ -108,14 +115,12 @@ export default function parseFeatures(ddb) {
           feat.description = choice.description
             ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
             : feat.description;
+          feat.snippet = choice.description
+            ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
+            : feat.snippet;
         }
 
-        item.data.description = {
-          value: feat.description,
-          chat: feat.description,
-          unidentified: feat.description,
-        };
-
+        item.data.description = getDescription(ddb, character, feat);
         item.data.source = subSource;
 
         items.push(item);
@@ -133,12 +138,7 @@ export default function parseFeatures(ddb) {
       data: JSON.parse(utils.getTemplate("feat")),
     };
 
-    item.data.description = {
-      value: feat.definition.description,
-      chat: feat.definition.description,
-      unidentified: feat.definition.description,
-    };
-
+    item.data.description = getDescription(ddb, character, feat);
     item.data.source = utils.parseSource(feat.definition);
 
     items.push(item);
@@ -157,12 +157,7 @@ export default function parseFeatures(ddb) {
         data: JSON.parse(utils.getTemplate("feat")),
       };
 
-      item.data.description = {
-        value: feat.definition.description,
-        chat: feat.definition.description,
-        unidentified: feat.definition.description,
-      };
-
+      item.data.description = getDescription(ddb, character, feat);
       item.data.source = utils.parseSource(feat.definition);
 
       items.push(item);

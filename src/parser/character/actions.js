@@ -1,5 +1,6 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
+import parseTemplateString from "../templateStrings.js";
 
 function isMartialArtists(classes) {
   return classes.some((cls) => cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts"));
@@ -62,10 +63,12 @@ function getLimitedUse(action) {
   }
 }
 
-function getDescription(action) {
+function getDescription(ddb, character, action) {
+  const snippet = action.snippet ? parseTemplateString(ddb, character, action.snippet, action) : "";
+  const description = action.description ? parseTemplateString(ddb, character, action.description, action) : "";
   return {
-    value: action.snippet ? action.snippet : "",
-    chat: action.snippet ? action.snippet : "",
+    value: description !== "" ? description : snippet,
+    chat: snippet,
     unidentified: "",
   };
 }
@@ -105,7 +108,7 @@ function getAttackAction(ddb, character, action) {
     }
 
     weapon.data.proficient = action.isProficient ? 1 : 0;
-    weapon.data.description = getDescription(action);
+    weapon.data.description = getDescription(ddb, character, action);
     weapon.data.equipped = true;
     weapon.data.rarity = "common";
     weapon.data.identified = true;
@@ -218,7 +221,7 @@ function getAttackActions(ddb, character) {
  * @param {*} ddb
  * @param {*} items
  */
-function getOtherActions(ddb, items) {
+function getOtherActions(ddb, character, items) {
   const actions = [ddb.character.actions.race, ddb.character.actions.class, ddb.character.actions.feat]
     .flat()
     .filter(
@@ -234,7 +237,7 @@ function getOtherActions(ddb, items) {
         data: JSON.parse(utils.getTemplate("feat")),
       };
       feat.data.activation = getActivation(action);
-      feat.data.description = getDescription(action);
+      feat.data.description = getDescription(ddb, character, action);
       feat.data.uses = getLimitedUse(action);
 
       return feat;
@@ -254,7 +257,7 @@ export default function parseActions(ddb, character) {
   actions = [
     ...actions,
     // Try and parse other relevant actions
-    ...getOtherActions(ddb, actions),
+    ...getOtherActions(ddb, character, actions),
   ];
 
   // sort alphabetically, then by action type
