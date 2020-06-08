@@ -438,6 +438,7 @@ const DICTIONARY = {
   spell: {
     progression: [
       { name: "Artificer", value: "artificer" },
+      { name: "Artificer (UA)", value: "artificer" },
       { name: "Bard", value: "full" },
       { name: "Barbarian", value: "none" },
       { name: "Blood Hunter", value: "pact" },
@@ -456,6 +457,7 @@ const DICTIONARY = {
     ],
     preparationModes: [
       { name: "Artificer", value: "prepared" },
+      { name: "Artificer (UA)", value: "prepared" },
       { name: "Bard", value: "always" },
       { name: "Blood Hunter", value: "pact" },
       { name: "Blood Hunter (archived)", value: "pact" },
