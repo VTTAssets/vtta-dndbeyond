@@ -104,7 +104,7 @@ const applyConstraint = (value, constraint) => {
 
   let result = value;
 
-  if (splitConstraint.length >1) {
+  if (splitConstraint.length > 1) {
     switch (match) {
       case "max": {
         if (splitConstraint[1] < result) result = splitConstraint[1];
@@ -115,7 +115,7 @@ const applyConstraint = (value, constraint) => {
         break;
       }
       default: {
-        console.log(`Missed match is ${match}`)
+        console.log(`Missed match is ${match}`);
         console.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`);
       }
     }
