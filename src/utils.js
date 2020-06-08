@@ -178,10 +178,17 @@ let utils = {
   findClassByFeatureId: (data, featureId) => {
     const cls = data.character.classes.find((cls) => {
       let classFeatures = cls.classFeatures;
-      if (cls.subclassDefinition && cls.subclassDefinition.classFeatures) {
-        classFeatures = classFeatures.concat(cls.subclassDefinition.classFeatures);
+      let featureMatch = classFeatures.find((feature) => feature.definition.id === featureId);
+      if (featureMatch) {
+        return cls;
+      } else {
+        // if not in global class feature list lets dig down
+        classFeatures = cls.definition.classFeatures;
+        if (cls.subclassDefinition && cls.subclassDefinition.classFeatures) {
+          classFeatures = classFeatures.concat(cls.subclassDefinition.classFeatures);
+        }
+        return classFeatures.find((feature) => feature.id === featureId) !== undefined;
       }
-      return classFeatures.find((feature) => feature.id === featureId) !== undefined;
     });
     return cls;
   },
