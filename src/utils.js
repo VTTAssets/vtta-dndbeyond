@@ -521,7 +521,7 @@ let utils = {
    */
   queryCompendiumEntry: async (compendiumName, entityName, getEntity = false) => {
     // normalize the entity name for comparision
-    entityName = utis.normalizeString(entityName);
+    entityName = utils.normalizeString(entityName);
 
     // get the compendium
     let compendium = game.packs.find((pack) => pack.collection === compendiumName);
