@@ -35,14 +35,13 @@ const retrieveSpells = async (spells) => {
   let compendiumName = await game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
   const GET_ENTITY = true;
 
-  const result = await Promise.all(
-    spells.map(async (spell) => {
-      let spellName =
-        typeof spell === "string" ? spell : Object.prototype.hasOwnProperty.call(spell, "name") ? spell.name : "";
-      return utils.queryCompendium(compendiumName, spellName, GET_ENTITY);
-    })
-  );
-  return result;
+  const spellNames = spells.map((spell) => {
+    if (typeof spell === "string") return spell;
+    if (typeof spell === "object" && Object.prototype.hasOwnProperty.call(spell, "name")) return spell.name;
+    return "";
+  });
+
+  return utils.queryCompendiumEntries(compendiumName, spellNames, GET_ENTITY);
 };
 
 const getCompendium = async () => {
@@ -123,21 +122,6 @@ let buildNPC = async (data) => {
   // eslint-disable-next-line require-atomic-updates
   data.folder = folder._id;
 
-  if (data.flags.vtta.dndbeyond.img) {
-    // image upload
-    let filename =
-      "npc-" +
-      data.name
-        .replace(/[^a-zA-Z]/g, "-")
-        .replace(/-+/g, "-")
-        .trim();
-
-    let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
-    // in this instance I can't figure out how to make this safe, but the risk seems minimal.
-    // eslint-disable-next-line require-atomic-updates
-    data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
-  }
-
   // replace icons by iconizer, if available
   let icons = data.items.map((item) => {
     return {
@@ -181,6 +165,21 @@ let buildNPC = async (data) => {
       await npc.createEmbeddedEntity("OwnedItem", spells);
     }
   } else {
+    if (data.flags.vtta.dndbeyond.img) {
+      // image upload
+      let filename =
+        "npc-" +
+        data.name
+          .replace(/[^a-zA-Z]/g, "-")
+          .replace(/-+/g, "-")
+          .trim();
+
+      let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
+      // in this instance I can't figure out how to make this safe, but the risk seems minimal.
+      // eslint-disable-next-line require-atomic-updates
+      data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+    }
+
     // create the new npc
     npc = await createNPC(data, {
       temporary: false,
