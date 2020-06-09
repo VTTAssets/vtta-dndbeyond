@@ -411,14 +411,13 @@ let utils = {
         };
 
         uploadFile(data, path, filename)
-        .then((result) => {
-          resolve(result.path);
-        })
-        .catch((error) => {
-          console.error(`error uploading file: ${error}`);
-          reject(error);
-        });
-
+          .then((result) => {
+            resolve(result.path);
+          })
+          .catch((error) => {
+            console.error(`error uploading file: ${error}`);
+            reject(error);
+          });
       });
     }
 
@@ -514,6 +513,56 @@ let utils = {
 
   normalizeString: (str) => {
     return str.toLowerCase().replace(/\W/g, "");
+  },
+
+  /**
+   * Queries a compendium for a single entity
+   * Returns either the entry from the index, or the complete entity from the compendium
+   */
+  queryCompendiumEntry: async (compendiumName, entityName, getEntity = false) => {
+    // normalize the entity name for comparision
+    entityName = utils.normalizeString(entityName);
+
+    // get the compendium
+    let compendium = game.packs.find((pack) => pack.collection === compendiumName);
+    if (!compendium) return null;
+
+    // retrieve the compendium index
+    let index = await compendium.getIndex();
+
+    let id = index.find((entity) => utils.normalizeString(entity.name) === entityName);
+    if (id && getEntity) {
+      let entity = await compendium.getEntity(id._id);
+      return entity;
+    }
+    return id ? id : null;
+  },
+
+  /**
+   * Queries a compendium for a single entity
+   * Returns either the entry from the index, or the complete entity from the compendium
+   */
+  queryCompendiumEntries: async (compendiumName, entityNames, getEntities = false) => {
+    // get the compendium
+    let compendium = game.packs.find((pack) => pack.collection === compendiumName);
+    if (!compendium) return null;
+
+    // retrieve the compendium index
+    let index = await compendium.getIndex();
+
+    // get the indices of all the entitynames, filter un
+    let indices = entityNames
+      .map((entityName) => utils.normalizeString(entityName))
+      .map((entityName) => index.find((entity) => utils.normalizeString(entity.name) === entityName))
+      // replace values that are not found with null to ensure JSON serialization
+      .map((entity) => (entity === undefined ? null : entity));
+
+    if (getEntities) {
+      // replace non-null values with the complete entity from the compendium
+      let entities = await Promise.all(indices.map((entry) => (entry ? compendium.getEntity(entry._id) : null)));
+      return entities;
+    }
+    return indices;
   },
 
   /**
