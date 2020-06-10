@@ -82,7 +82,20 @@ let parseMatch = (ddb, character, match, feature) => {
   // (classlevel/2)@roundup
   if (result.includes("classlevel")) {
     const cls = utils.findClassByFeatureId(ddb, feature.componentId);
-    result = result.replace("classlevel", cls.level);
+    if (cls) {
+      result = result.replace("classlevel", cls.level);
+    } else {
+      // still not found a cls? could be an option
+      const classOption = [ddb.character.options.race, ddb.character.options.class, ddb.character.options.feat]
+        .flat()
+        .find((option) => option.definition.id === feature.componentId);
+      const optionCls = utils.findClassByFeatureId(ddb, classOption.componentId);
+      if (optionCls) {
+        result = result.replace("classlevel", optionCls.level);
+      } else {
+        console.error("Unable to parse option class info, please log a bug report");
+      }
+    }
   }
 
   return result;
@@ -140,6 +153,10 @@ const applyConstraint = (value, constraint) => {
   return result;
 };
 
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
 /**
  * This will parse a snippet/description with template boilerplate in from DDB.
  * e.g. Each creature in the area must make a DC {{savedc:con}} saving throw.
@@ -155,7 +172,7 @@ export default function parseTemplateString(ddb, character, text, feature) {
   const matches = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
 
   matches.forEach((match) => {
-    const replacePattern = new RegExp(`{{${match}}}`, 'g');
+    const replacePattern = new RegExp(`{{${escapeRegExp(match)}}}`, 'g');
     const splitRemoveUnsigned = match.split('#')[0];
     const splitMatchAt = splitRemoveUnsigned.split('@');
     const parsedMatch = parseMatch(ddb, character, splitRemoveUnsigned, feature);
