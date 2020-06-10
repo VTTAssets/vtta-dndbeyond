@@ -37,7 +37,8 @@
     "./css/default.css",
     "./src/character/import.css",
     "./css/sidebar.css",
-    "./css/journal.css"
+    "./css/journal.css",
+    "./css/notifications.css"
   ],
   "packs": [],
   "socket": true,

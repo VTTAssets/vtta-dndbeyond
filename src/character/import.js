@@ -343,7 +343,17 @@ export default class CharacterImport extends Application {
         let data = undefined;
         try {
           data = JSON.parse(pasteData);
-          if (!data.character) data.character = data;
+          // the expected data structure is
+          // data: {
+          //    character: {...}
+          // }
+          if (!Object.hasOwnProperty.call(data, "character")) {
+            if (Object.hasOwnProperty.call(data, "data")) {
+              data.character = data.data;
+            } else {
+              data.character = data;
+            }
+          }
         } catch (error) {
           if (error.message === "Unexpected end of JSON input") {
             CharacterImport.showCurrentTask(

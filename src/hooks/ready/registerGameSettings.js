@@ -148,4 +148,26 @@ export default function () {
     type: Boolean,
     default: true,
   });
+
+  // sets the current tutorial step the user has completed
+  game.settings.register("vtta-dndbeyond", "tutorial-step", {
+    scope: "world",
+    config: false,
+    type: Number,
+    default: 0,
+  });
+  // sets the current tutorial step the user has completed
+  game.settings.register("vtta-dndbeyond", "tutorial-user", {
+    scope: "world",
+    config: false,
+    type: String,
+    default: "",
+  });
+  // sets the current tutorial step the user has completed
+  game.settings.register("vtta-dndbeyond", "popup-version", {
+    scope: "world",
+    config: false,
+    type: String,
+    default: "1.0.0",
+  });
 }

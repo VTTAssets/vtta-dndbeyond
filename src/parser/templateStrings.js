@@ -1,4 +1,4 @@
-import utils from '../utils.js';
+import utils from "../utils.js";
 
 /**
  * Look up a component by id
@@ -26,7 +26,7 @@ const getScalingValue = (feature) => {
   } else if (feature && feature.levelScale && feature.levelScale.dice) {
     return feature.levelScale.dice.diceString;
   } else {
-    return '{{scalevalue-unknown}}';
+    return "{{scalevalue-unknown}}";
   }
 };
 
@@ -38,7 +38,7 @@ const getScalingValue = (feature) => {
  * @param {*} feature
  */
 let parseMatch = (ddb, character, match, feature) => {
-  const splitMatchAt = match.split('@');
+  const splitMatchAt = match.split("@");
   let result = splitMatchAt[0];
 
   // scalevalue
@@ -59,7 +59,7 @@ let parseMatch = (ddb, character, match, feature) => {
       // not sure if we should add this, probably not.
       // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
       const dc = 8 + character.data.attributes.prof + abilityModifier;
-      const saveRegexp = RegExp(`savedc:${save}`, 'g');
+      const saveRegexp = RegExp(`savedc:${save}`, "g");
       result = result.replace(saveRegexp, dc);
     });
   }
@@ -73,7 +73,7 @@ let parseMatch = (ddb, character, match, feature) => {
 
     mods.forEach((mod) => {
       const abilityModifier = utils.calculateModifier(character.data.abilities[mod].value);
-      const modRegexp = RegExp(`modifier:${mod}`, 'g');
+      const modRegexp = RegExp(`modifier:${mod}`, "g");
       result = result.replace(modRegexp, abilityModifier);
     });
   }
@@ -112,7 +112,7 @@ const applyConstraint = (value, constraint) => {
   // @roundown
   // min:1
   // max:3
-  const splitConstraint = constraint.split(':');
+  const splitConstraint = constraint.split(":");
   const match = splitConstraint[0];
 
   let result = value;
@@ -132,7 +132,6 @@ const applyConstraint = (value, constraint) => {
         console.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`);
       }
     }
-
   } else {
     switch (match) {
       case "roundup": {
@@ -154,8 +153,8 @@ const applyConstraint = (value, constraint) => {
 };
 
 const escapeRegExp = (string) => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-}
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+};
 
 /**
  * This will parse a snippet/description with template boilerplate in from DDB.
@@ -172,9 +171,9 @@ export default function parseTemplateString(ddb, character, text, feature) {
   const matches = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
 
   matches.forEach((match) => {
-    const replacePattern = new RegExp(`{{${escapeRegExp(match)}}}`, 'g');
-    const splitRemoveUnsigned = match.split('#')[0];
-    const splitMatchAt = splitRemoveUnsigned.split('@');
+    const replacePattern = new RegExp(`{{${escapeRegExp(match)}}}`, "g");
+    const splitRemoveUnsigned = match.split("#")[0];
+    const splitMatchAt = splitRemoveUnsigned.split("@");
     const parsedMatch = parseMatch(ddb, character, splitRemoveUnsigned, feature);
     const dicePattern = /\d*d\d\d*/;
     // do we have a dice string, e.g. sneak attack?

@@ -15,6 +15,8 @@ import registerGameSettings from "./hooks/ready/registerGameSettings.js";
 // other hooks
 import addFolderLabel from "./hooks/renderSidebarTab/addFolderLabel.js";
 import linkImages from "./hooks/renderJournalSheet/linkImages.js";
+import startTutorial from "./tutorial/index.js";
+import showPopup from "./popup.js";
 
 // socket messaging
 import onSocketMessage from "./hooks/socket/onSocketMessage.js";
@@ -50,6 +52,8 @@ export function onceReady() {
 
     // send a notification to dndbeyond that it should update the actor data
     Hooks.on("preUpdateActor", com.updateActorHP);
+
+    showPopup().then(() => startTutorial());
   }, 500);
 }
 
@@ -57,7 +61,6 @@ export function onReady() {
   game.socket.on("module.vtta-dndbeyond", (data) => {
     console.log("Socket Message received");
     if (data.sender === game.user.data._id) {
-      console.log("I sent this");
       return;
     }
 

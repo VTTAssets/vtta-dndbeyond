@@ -17,9 +17,7 @@ export default function () {
       // only for GMs or the owner of this character
       if (!data.owner || !data.actor) return;
 
-      let button = $(
-        '<button type="button" id="ddbImportButton" class="inactive"></button>'
-      );
+      let button = $('<button type="button" id="ddbImportButton" class="inactive"></button>');
       if (
         app.entity.data.flags.vtta &&
         app.entity.data.flags.vtta.dndbeyond &&
@@ -58,30 +56,29 @@ export default function () {
         }
 
         if (event.altKey) {
-          event.preventDefault();
-          if (dndBeyondJsonPopup && !dndBeyondJsonPopup.closed) {
-            dndBeyondJsonPopup.focus();
-            dndBeyondPopup.location.href = url;
-          } else {
-            let ratio = window.innerWidth / window.innerHeight;
-            let width = Math.round(window.innerWidth * 0.5);
-            let height = Math.round(window.innerWidth * 0.5 * ratio);
-            dndBeyondJsonPopup = window.open(
-              url + "/json",
-              "ddb_sheet_popup",
-              `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
-            );
+          // get the character ID
+          const characterId = url.split("/").pop();
+          if (characterId) {
+            const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
+            event.preventDefault();
+            if (dndBeyondJsonPopup && !dndBeyondJsonPopup.closed) {
+              dndBeyondJsonPopup.focus();
+              dndBeyondPopup.location.href = url;
+            } else {
+              let ratio = window.innerWidth / window.innerHeight;
+              let width = Math.round(window.innerWidth * 0.5);
+              let height = Math.round(window.innerWidth * 0.5 * ratio);
+              dndBeyondJsonPopup = window.open(
+                jsonUrl,
+                "ddb_sheet_popup",
+                `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
+              );
+            }
           }
         }
 
-        if (
-          (!event.shiftKey && !event.ctrlKey && !event.altKey) ||
-          url === null
-        ) {
-          characterImport = new CharacterImport(
-            CharacterImport.defaultOptions,
-            data.actor
-          );
+        if ((!event.shiftKey && !event.ctrlKey && !event.altKey) || url === null) {
+          characterImport = new CharacterImport(CharacterImport.defaultOptions, data.actor);
           characterImport.render(true);
         }
       });
