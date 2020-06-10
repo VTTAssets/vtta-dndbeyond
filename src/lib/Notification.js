@@ -30,12 +30,12 @@ const registerNotifications = () => {
     },
     hint: {
       clear: () => {
-        $("#vtta-hints div").hide(200, (event) => {
+        $("#vtta-hints div").hide(200, () => {
           $("#vtta-hints").empty();
         });
       },
       show: (message, options = {}) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           $("#vtta-hints").css("width", options.width ? options.width : 300);
 
           // construct the note
@@ -90,14 +90,11 @@ const registerNotifications = () => {
           }
 
           if (options.buttons) {
-            //$(note).append('<div class="buttons"></div>');
-            console.log("Buttons: ");
-            console.log(options.buttons);
             for (let name of options.buttons) {
               let btn = $("<button>" + name + "</button>");
               $("div.buttons", note).append(btn);
               $(btn).on("click", () => {
-                $(note).fadeOut(100, (event) => {
+                $(note).fadeOut(100, () => {
                   $(note).remove();
                   resolve(name);
                 });
@@ -106,7 +103,7 @@ const registerNotifications = () => {
           }
           if (options.hide) {
             $(options.hide.selector).on(options.hide.event, () => {
-              $(note).fadeOut(100, (event) => {
+              $(note).fadeOut(100, () => {
                 $(note).remove();
                 resolve(true);
               });
