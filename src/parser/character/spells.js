@@ -659,6 +659,21 @@ let fixSpells = (ddb, items) => {
       case "Word of Radiance":
         spell.data.range = { value: null, units: "self", long: null };
         spell.data.target = { value: "15", units: "ft", type: "cube" };
+        break;
+      case "Sleep": {
+        spell.data.damage = {
+          "parts": [
+              ["5d8", ""]
+          ],
+          "versatile": "",
+          "value": ""
+        };
+        spell.data.scaling = {
+          "mode": "level",
+          "formula": "2d8"
+        }
+        break;
+      }
       // no default
     }
   });
