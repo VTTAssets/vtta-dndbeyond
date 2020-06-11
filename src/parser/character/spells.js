@@ -855,6 +855,7 @@ export default function parseSpells(ddb, character) {
 
     // parse spells chosen as spellcasting (playerClass.spells)
     playerClass.spells.forEach((spell) => {
+      if (!spell.definition) return;
       // add some data for the parsing of the spells into the data structure
       spell.flags = {
         vtta: {
@@ -896,6 +897,7 @@ export default function parseSpells(ddb, character) {
 
   // Parse any spells granted by class features, such as Barbarian Totem
   ddb.character.spells.class.forEach((spell) => {
+    if (!spell.definition) return;
     // If the spell has an ability attached, use that
     let spellCastingAbility = undefined;
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
@@ -930,6 +932,7 @@ export default function parseSpells(ddb, character) {
 
   // Race spells are handled slightly differently
   ddb.character.spells.race.forEach((spell) => {
+    if (!spell.definition) return;
     // for race spells the spell spellCastingAbilityId is on the spell
     // if there is no ability on spell, we default to wis
     let spellCastingAbility = "wis";
@@ -972,6 +975,7 @@ export default function parseSpells(ddb, character) {
 
   // feat spells are handled slightly differently
   ddb.character.spells.feat.forEach((spell) => {
+    if (!spell.definition) return;
     // If the spell has an ability attached, use that
     // if there is no ability on spell, we default to wis
     let spellCastingAbility = "wis";
@@ -1023,6 +1027,7 @@ export function parseItemSpells(ddb, character) {
 
   // feat spells are handled slightly differently
   ddb.character.spells.item.forEach((spell) => {
+    if (!spell.definition) return;
     const itemInfo = lookups.item.find((it) => it.id === spell.componentId);
 
     const active =
