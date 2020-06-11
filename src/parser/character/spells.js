@@ -640,7 +640,6 @@ let getEldritchInvocations = (data) => {
  * @param {*} items
  */
 let fixSpells = (ddb, items) => {
-
   items.forEach((spell) => {
     switch (spell.name) {
       // Eldritch Blast is a special little kitten and has some fun Eldritch
@@ -661,17 +660,13 @@ let fixSpells = (ddb, items) => {
         spell.data.target = { value: "15", units: "ft", type: "cube" };
         break;
       case "Sleep": {
-        spell.data.damage = {
-          "parts": [
-              ["5d8", ""]
-          ],
-          "versatile": "",
-          "value": ""
-        };
-        spell.data.scaling = {
-          "mode": "level",
-          "formula": "2d8"
-        }
+        spell.data.damage = { parts: [["5d8", ""]], versatile: "", value: "" };
+        spell.data.scaling = { mode: "level", formula: "2d8" };
+        break;
+      }
+      case "Color Spray": {
+        spell.data.damage = { parts: [["6d10", ""]], versatile: "", value: "" };
+        spell.data.scaling = { mode: "level", formula: "2d10" };
         break;
       }
       // no default
