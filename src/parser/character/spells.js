@@ -90,6 +90,11 @@ let getSpellPreparationMode = (data) => {
       // this was changed to "atwill"
       prepMode = "atwill";
     }
+    if (data.flags.vtta.dndbeyond.lookup === "classFeature") {
+      if (data.alwaysPrepared) {
+        prepMode = "always";
+      }
+    }
   }
 
   return {
@@ -895,16 +900,21 @@ export default function parseSpells(ddb, character) {
     if (!spell.definition) return;
     // If the spell has an ability attached, use that
     let spellCastingAbility = undefined;
+    const classInfo = lookups.classFeature.find((cls) => cls.id === spell.componentId);
+    const klass = utils.getClassFromOptionID(ddb, spell.componentId);
+
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
       spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
+    } else if (klass) {
+      spellCastingAbility = getSpellCastingAbility(klass);
+      // force these spells to always be prepared
+      spell.alwaysPrepared = true;
     } else {
       // if there is no ability on spell, we default to wis
       spellCastingAbility = "wis";
     }
 
     const abilityModifier = utils.calculateModifier(character.data.abilities[spellCastingAbility].value);
-
-    const classInfo = lookups.classFeature.find((cls) => cls.id === spell.componentId);
 
     // add some data for the parsing of the spells into the data structure
     spell.flags = {
@@ -922,7 +932,25 @@ export default function parseSpells(ddb, character) {
       },
     };
 
-    items.push(parseSpell(spell, character));
+    // Check for duplicate spells, normally domain ones
+    // We will import spells from a different class that are the same though
+    // as they may come from with different spell casting mods
+    const duplicateSpell = items.findIndex(
+      (existingSpell) =>
+        existingSpell.name === spell.definition.name &&
+        klass &&
+        klass.definition.name === existingSpell.flags.vtta.dndbeyond.class
+    );
+    if (!items[duplicateSpell]) {
+      items.push(parseSpell(spell, character));
+    } else if (spell.alwaysPrepared) {
+      // if our new spell is always known we overwrite!
+      // it's probably domain
+      items[duplicateSpell] = parseSpell(spell, character);
+    } else {
+      // we'll emit a console message if it doesn't match this case for future debugging
+      console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
+    }
   });
 
   // Race spells are handled slightly differently

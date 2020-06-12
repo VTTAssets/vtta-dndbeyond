@@ -69,6 +69,37 @@ let utils = {
     return !!classOptions;
   },
 
+  getClassFromOptionID: (data, optionId) => {
+    // Use case class spell - which class?
+    // componentId on spells.class[0].componentId = options.class[0].definition.id
+    // options.class[0].definition.componentId = classes[0].classFeatures[0].definition.id
+    const option = data.character.options.class.find((option) => option.definition.id === optionId);
+    console.log(option);
+    if (option) {
+      const klass = data.character.classes.find((klass) =>
+        klass.classFeatures.some((feature) => feature.definition.id === option.componentId)
+      );
+      return klass;
+    }
+    return undefined;
+  },
+
+  /**
+   * Look up a component by id
+   * For now we assume that most features we are going to want to get a scaling value
+   * from are character options
+   * @param {*} ddb
+   * @param {*} featureId
+   */
+  findComponentByComponentId: (ddb, componentId) => {
+    let result;
+    ddb.character.classes.forEach((cls) => {
+      const feature = cls.classFeatures.find((component) => component.definition.id === componentId);
+      if (feature) result = feature;
+    });
+    return result;
+  },
+
   /**
    * Gets the sourcebook for a subset of dndbeyond sources
    * @param {obj} definition item definition

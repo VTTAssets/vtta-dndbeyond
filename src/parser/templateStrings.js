@@ -1,22 +1,6 @@
 import utils from "../utils.js";
 
 /**
- * Look up a component by id
- * For now we assume that most features we are going to want to get a scaling value
- * from are character options
- * @param {*} ddb
- * @param {*} featureId
- */
-const findComponentByComponentId = (ddb, componentId) => {
-  let result;
-  ddb.character.classes.forEach((cls) => {
-    const feature = cls.classFeatures.find((component) => component.definition.id === componentId);
-    if (feature) result = feature;
-  });
-  return result;
-};
-
-/**
  * Gets the levelscaling value for a feature
  * @param {*} feature
  */
@@ -43,7 +27,7 @@ let parseMatch = (ddb, character, match, feature) => {
 
   // scalevalue
   if (result.includes("scalevalue")) {
-    const feat = feature.levelScale ? feature : findComponentByComponentId(ddb, feature.componentId);
+    const feat = feature.levelScale ? feature : utils.findComponentByComponentId(ddb, feature.componentId);
     const scaleValue = getScalingValue(feat);
     result = result.replace("scalevalue", scaleValue);
   }
