@@ -98,6 +98,11 @@ let parseMatch = (ddb, character, match, feature) => {
     }
   }
 
+  if (result.includes("proficiency")) {
+    const profBonus = character.data.attributes.prof;
+    result = result.replace("proficiency", profBonus);
+  }
+
   return result;
 };
 
