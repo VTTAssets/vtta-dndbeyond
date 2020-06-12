@@ -7,7 +7,7 @@ import getActions from "./character/actions.js";
 
 let parseJson = (ddb) => {
   let character = getCharacter(ddb);
-  let features = getFeatures(ddb);
+  let features = getFeatures(ddb, character);
   let classes = getClasses(ddb);
   let spells = getSpells(ddb, character);
   let actions = getActions(ddb, character);
