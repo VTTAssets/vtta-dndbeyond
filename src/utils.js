@@ -113,7 +113,7 @@ let utils = {
     const modifiers = data.character.inventory
       .filter(
         (item) =>
-          ((!item.definition.canEquip && !item.definition.canAttune) || // if item just gives a thing
+          ((!item.definition.canEquip && !item.definition.canAttune && !item.definition.isConsumable) || // if item just gives a thing and not potion/scroll
           (item.isAttuned && item.equipped) || // if it is attuned and equipped
           (item.isAttuned && !item.definition.canEquip) || // if it is attuned but can't equip
             (!item.definition.canAttune && item.equipped)) && // can't attune but is equipped
