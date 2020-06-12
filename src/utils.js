@@ -75,7 +75,7 @@ let utils = {
     // options.class[0].definition.componentId = classes[0].classFeatures[0].definition.id
     const option = data.character.options.class.find((option) => option.definition.id === optionId);
     console.log(option);
-    if (option){
+    if (option) {
       const klass = data.character.classes.find((klass) =>
         klass.classFeatures.some((feature) => feature.definition.id === option.componentId)
       );

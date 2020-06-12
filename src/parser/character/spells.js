@@ -905,7 +905,7 @@ export default function parseSpells(ddb, character) {
 
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {
       spellCastingAbility = convertSpellCastingAbilityId(spell.spellCastingAbilityId);
-    } else if(klass){
+    } else if (klass) {
       spellCastingAbility = getSpellCastingAbility(klass);
       // force these spells to always be prepared
       spell.alwaysPrepared = true;
