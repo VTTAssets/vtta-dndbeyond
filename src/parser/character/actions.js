@@ -12,9 +12,7 @@ function martialArtsDamage(ddb, action) {
   // are we dealing with martial arts?
   if (action.isMartialArts && isMartialArtists(ddb.character.classes)) {
     const die = ddb.character.classes
-      .filter((cls) =>
-        isMartialArtists([cls])
-      )
+      .filter((cls) => isMartialArtists([cls]))
       .map((cls) => {
         const feature = cls.classFeatures.find((feature) => feature.definition.name === "Martial Arts");
 
@@ -27,7 +25,7 @@ function martialArtsDamage(ddb, action) {
         } else {
           return "1";
         }
-    });
+      });
 
     // set the weapon damage
     return {
@@ -67,7 +65,7 @@ function getDescription(ddb, character, action) {
   const snippet = action.snippet ? parseTemplateString(ddb, character, action.snippet, action) : "";
   const description = action.description ? parseTemplateString(ddb, character, action.description, action) : "";
   return {
-    value: description !== "" ? description : snippet,
+    value: description !== "" ? description + ((snippet !== "") ? "<h3>Summary</h3>" + snippet : "") : snippet,
     chat: snippet,
     unidentified: "",
   };
@@ -75,9 +73,7 @@ function getDescription(ddb, character, action) {
 
 function getActivation(action) {
   if (action.activation) {
-    const actionType = DICTIONARY.actions.activationTypes.find(
-      (type) => type.id === action.activation.activationType
-    );
+    const actionType = DICTIONARY.actions.activationTypes.find((type) => type.id === action.activation.activationType);
     const activation = !actionType
       ? {}
       : {
@@ -131,11 +127,12 @@ function getAttackAction(ddb, character, action) {
       weapon.data.range = { value: 5, units: "ft.", long: "" };
     }
 
-    weapon.data.ability = action.isMartialArts && isMartialArtists(ddb.character.classes)
-      ? character.data.abilities.dex.value >= character.data.abilities.str.value
-        ? "dex"
-        : "str"
-      : "str";
+    weapon.data.ability =
+      action.isMartialArts && isMartialArtists(ddb.character.classes)
+        ? character.data.abilities.dex.value >= character.data.abilities.str.value
+          ? "dex"
+          : "str"
+        : "str";
 
     // lets see if we have a save stat for things like Dragon born Breath Weapon
     if (action.saveStatId) {
@@ -146,20 +143,24 @@ function getAttackAction(ddb, character, action) {
         versatile: "",
       };
       weapon.data.save = {
-        "ability": DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value,
-        "dc": null,
-        "scaling": "spell"
+        ability: DICTIONARY.character.abilities.find((stat) => stat.id === action.saveStatId).value,
+        dc: null,
+        scaling: "spell",
       };
-      weapon.data.ability = DICTIONARY.character.abilities.find((stat) => stat.id === action.abilityModifierStatId).value;
+      weapon.data.ability = DICTIONARY.character.abilities.find(
+        (stat) => stat.id === action.abilityModifierStatId
+      ).value;
     } else {
       weapon.data.actionType = "mwak";
       weapon.data.damage = martialArtsDamage(ddb, action);
     }
 
     weapon.data.uses = getLimitedUse(action);
-
   } catch (err) {
-    utils.log(`Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`, "extension");
+    utils.log(
+      `Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`,
+      "extension"
+    );
   }
 
   return weapon;

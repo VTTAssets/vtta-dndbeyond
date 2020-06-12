@@ -69,12 +69,12 @@ let parseMatch = (ddb, character, match, feature) => {
   if (result.includes("modifier")) {
     const regexp = /modifier:([a-z]{3})/g;
     // creates array from match groups and dedups
-    const mods = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
+    const ability = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
 
-    mods.forEach((mod) => {
-      const abilityModifier = utils.calculateModifier(character.data.abilities[mod].value);
-      const modRegexp = RegExp(`modifier:${mod}`, "g");
-      result = result.replace(modRegexp, abilityModifier);
+    ability.forEach((ab) => {
+      const abilityModifier = character.data.abilities[ab].mod;
+      const abRegexp = RegExp(`modifier:${ab}`, "g");
+      result = result.replace(abRegexp, abilityModifier);
     });
   }
 
@@ -102,6 +102,20 @@ let parseMatch = (ddb, character, match, feature) => {
     const profBonus = character.data.attributes.prof;
     result = result.replace("proficiency", profBonus);
   }
+
+  // abilityscore:int
+  if (result.includes("abilityscore")) {
+    const regexp = /abilityscore:([a-z]{3})/g;
+    // creates array from match groups and dedups
+    const ability = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
+
+    ability.forEach((ab) => {
+      const abilityModifier = character.data.abilities[ab].value;
+      const abRegexp = RegExp(`abilityscore:${ab}`, "g");
+      result = result.replace(abRegexp, abilityModifier);
+    });
+  }
+
 
   return result;
 };

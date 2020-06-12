@@ -57,7 +57,7 @@ function getDescription(ddb, character, feat) {
     description = feat.description ? parseTemplateString(ddb, character, feat.description, feat) : "";
   }
   return {
-    value: description !== "" ? description : snippet,
+    value: description !== "" ? description + ((snippet !== "") ? "<h3>Summary</h3>" + snippet : "") : snippet,
     chat: snippet,
     unidentified: "",
   };
