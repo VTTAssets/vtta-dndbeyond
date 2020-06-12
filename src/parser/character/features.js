@@ -44,8 +44,18 @@ let getChoice = (ddb, type, feat) => {
 };
 
 function getDescription(ddb, character, feat) {
-  const snippet = feat.snippet ? parseTemplateString(ddb, character, feat.snippet, feat) : "";
-  const description = feat.description ? parseTemplateString(ddb, character, feat.description, feat) : "";
+  let snippet = "";
+  let description = "";
+  if (feat.definition && feat.definition.snippet) {
+    snippet = parseTemplateString(ddb, character, feat.definition.snippet, feat);
+  } else {
+    snippet = feat.snippet ? parseTemplateString(ddb, character, feat.snippet, feat) : "";
+  }
+  if (feat.definition && feat.definition.description) {
+    description = parseTemplateString(ddb, character, feat.definition.description, feat);
+  } else {
+    description = feat.description ? parseTemplateString(ddb, character, feat.description, feat) : "";
+  }
   return {
     value: description !== "" ? description : snippet,
     chat: snippet,
