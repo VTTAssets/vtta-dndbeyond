@@ -31,5 +31,9 @@
   "vtta-dndbeyond.item-type.loot": "Loot",
   "vtta-dndbeyond.item-type.class": "Class",
   "vtta-dndbeyond.item-type.backpack": "Backpack",
-  "vtta-dndbeyond.item-type.magic-items": "Magic Items"
+  "vtta-dndbeyond.item-type.magic-items": "Magic Items",
+  "vtta-dndbeyond.scenes.player-enable": "Enable Player Map",
+  "vtta-dndbeyond.scenes.player-enabled": "Player Map",
+  "vtta-dndbeyond.scenes.gm-enable": "Enable GM Map",
+  "vtta-dndbeyond.scenes.gm-enabled": "GM Map"
 }
