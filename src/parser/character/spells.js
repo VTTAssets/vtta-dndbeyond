@@ -554,7 +554,7 @@ let getSpellScaling = (data) => {
     case "characterlevel":
       return {
         mode: "cantrip",
-        formula: baseDamage,
+        formula: "",
       };
     case "spellscale":
       return {
