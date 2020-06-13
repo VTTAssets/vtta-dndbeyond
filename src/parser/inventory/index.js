@@ -167,11 +167,19 @@ let parseItem = (ddb, data, character) => {
     }
     return item;
   } catch (err) {
-    utils.log(
+    console.warn( // eslint-disable-line no-console
       `Unable to parse item: ${data.definition.name}, ${data.definition.type}/${data.definition.filterType}. ${err.message}`,
       "character"
     );
-    return {};
+    return { // return empty strut
+      name: data.definition.name,
+      flags: {
+        vtta: {
+          dndbeyond: {
+          },
+        },
+      },
+    };
   }
 };
 
