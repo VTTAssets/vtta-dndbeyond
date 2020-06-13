@@ -154,7 +154,7 @@ const addJournalEntries = async (data) => {
 };
 
 const updateScene = async (scene, folder) => {
-  console.log("Scene " + scene.name + " does exist already, updating...");
+  utils.log("Scene " + scene.name + " does exist already, updating...");
   let existing = await game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
   let update = {
     width: scene.width,
@@ -306,7 +306,7 @@ let addPage = (body) => {
         resolve(true);
       })
       .catch((error) => {
-        console.error(`error parsing page: ${error}`);
+        console.error(`error parsing page: ${error}`); // eslint-disable-line no-console
         reject(error);
       });
   });

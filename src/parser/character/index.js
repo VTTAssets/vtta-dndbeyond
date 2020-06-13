@@ -308,8 +308,8 @@ let getArmorClass = (data, character) => {
   // lets get the AC for all our non-armored gear, we'll add this later
   const gearAC = getEquippedAC(equippedGear);
 
-  console.log("Calculated GearAC: " + gearAC);
-  console.log("Unarmoured AC Bonus:" + unarmoredACBonus);
+  utils.log("Calculated GearAC: " + gearAC);
+  utils.log("Unarmoured AC Bonus:" + unarmoredACBonus);
 
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
@@ -345,7 +345,7 @@ let getArmorClass = (data, character) => {
     miscACBonus += bonus.value;
   });
 
-  console.log("Calculated MiscACBonus: " + miscACBonus);
+  utils.log("Calculated MiscACBonus: " + miscACBonus);
 
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
@@ -370,7 +370,7 @@ let getArmorClass = (data, character) => {
     (shield) => shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
   );
 
-  console.log("Equipped AC Options: " + JSON.stringify(equippedArmor));
+  utils.log("Equipped AC Options: " + JSON.stringify(equippedArmor));
 
   // the presumption here is that you can only wear a shield and a single
   // additional 'armor' piece. in DDB it's possible to equip multiple armor

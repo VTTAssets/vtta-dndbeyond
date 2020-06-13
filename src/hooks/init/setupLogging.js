@@ -1,5 +1,5 @@
-export default function() {
-  let enabledDebugLogging = true;
+export default function () {
+  let enabledDebugLogging = false;
 
   let defaults = {
     general: enabledDebugLogging,

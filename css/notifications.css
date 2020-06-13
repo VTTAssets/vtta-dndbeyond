@@ -30,27 +30,31 @@
   font-family: "Roboto", Helvetica, sans-serif;
 }
 
+#vtta-hints p,
+#vtta-notifications p {
+  font-family: "Roboto", Helvetica, sans-serif;
+  font-size: 0.8rem;
+}
+
 #vtta-notifications {
   display: flex;
   flex-direction: column-reverse;
 
   position: fixed;
   width: 200px;
-  bottom: 100px;
-  right: 20%;
   margin: 0;
   padding: 0;
   z-index: 160;
 }
 
 #vtta-notifications > div {
+  box-shadow: 0 0 20px #000;
   flex: 0 0 auto;
   padding: 10px;
   margin-bottom: 10px;
   border: 4px solid rgb(31, 31, 31);
   border-radius: 4px;
   background: rgb(41, 41, 41);
-  color: rgba(199, 171, 12, 0.801);
   font-family: "Roboto Condensed", Helvetica, sans-serif;
 }
 

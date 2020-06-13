@@ -6,7 +6,6 @@ export default async () => {
       game.modules.get("vtta-dndbeyond").data.version,
       game.settings.get("vtta-dndbeyond", "popup-version")
     ) !== 1;
-  console.log("Version compare: " + hasShownPopup);
   if (hasShownPopup) {
     return true;
   }

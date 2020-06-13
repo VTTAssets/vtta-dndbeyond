@@ -6,7 +6,6 @@ import roll from "./type/roll.js";
 import query from "./type/query/index.js";
 import add from "./type/add/index.js";
 
-
 /* eslint-disable no-bitwise */
 let uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -38,7 +37,7 @@ class EventPort {
             };
           }
           let result = await query(body);
-          console.log("Dispatching result");
+          utils.log("Dispatching result", "messaging");
           let message = {
             detail: {
               head: {
@@ -49,10 +48,9 @@ class EventPort {
               body: result,
             },
           };
-          console.log(message);
           document.dispatchEvent(new CustomEvent(head.id, message));
         } catch (error) {
-          console.log(error);
+          utils.log(error);
           document.dispatchEvent(
             new CustomEvent(head.id, {
               detail: {
@@ -84,7 +82,6 @@ class EventPort {
             })
           );
         } catch (error) {
-          console.log(error);
           document.dispatchEvent(
             new CustomEvent(head.id, {
               detail: {
@@ -178,6 +175,12 @@ class EventPort {
       }
 
       if (head.type === "ping") {
+        utils.log("Received ping from extension");
+        utils.log(event.detail);
+        // display the connection version to Foundry
+        if (body.version) {
+          window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");
+        }
         // answer back to the extensions wanting to establish communications
         this.send("ping").then((response) => utils.log(response, "communication"));
       }

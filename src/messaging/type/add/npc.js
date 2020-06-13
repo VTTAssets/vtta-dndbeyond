@@ -73,7 +73,7 @@ const addNPCToCompendium = async (npc, name) => {
         await compendium.createEntity(npc.data);
       }
     } else {
-      console.error("Error opening compendium, check your settings");
+      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
     }
   }
 };
@@ -214,7 +214,7 @@ let addNPC = (body) => {
         resolve(npc.data);
       })
       .catch((error) => {
-        console.error(`error parsing NPC: ${error}`);
+        console.error(`error parsing NPC: ${error}`); // eslint-disable-line no-console
         reject(error);
       });
   });

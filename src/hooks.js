@@ -11,12 +11,15 @@ import registerSheets from "./hooks/ready/registerSheets.js";
 import checkCompendiums from "./hooks/ready/checkCompendiums.js";
 import repairGameSettings from "./hooks/ready/repairGameSettings.js";
 import registerGameSettings from "./hooks/ready/registerGameSettings.js";
+import extendSceneNavigationContext from "./hooks/getSceneNavigationContext/extendSceneNavigationContext.js";
 
 // other hooks
 import addFolderLabel from "./hooks/renderSidebarTab/addFolderLabel.js";
 import linkImages from "./hooks/renderJournalSheet/linkImages.js";
 import startTutorial from "./tutorial/index.js";
 import showPopup from "./popup.js";
+import checkVersion from "./hooks/init/checkVersion.js";
+import checkElectron from "./hooks/ready/checkElectron.js";
 
 // socket messaging
 import onSocketMessage from "./hooks/socket/onSocketMessage.js";
@@ -24,7 +27,6 @@ import onSocketMessage from "./hooks/socket/onSocketMessage.js";
 // foundry is initializing
 export function init() {
   setupLogging();
-  CONFIG.debug.hooks = false;
   utils.log("Init");
 }
 
@@ -38,6 +40,12 @@ export function onceReady() {
 
   // check for valid compendiums
   checkCompendiums();
+
+  // check for the running version
+  checkVersion();
+
+  // check if ran in electron app
+  checkElectron();
 
   // delay the startup just a tiny little bit
   setTimeout(() => {
@@ -59,7 +67,6 @@ export function onceReady() {
 
 export function onReady() {
   game.socket.on("module.vtta-dndbeyond", (data) => {
-    console.log("Socket Message received");
     if (data.sender === game.user.data._id) {
       return;
     }
@@ -78,5 +85,9 @@ export function renderSidebarTab(directory, html, user) {
 
 export function renderJournalSheet(sheet, html, data) {
   linkImages(html);
+}
+
+export function getSceneNavigationContext(html, contextItems) {
+  extendSceneNavigationContext(html, contextItems);
 }
 /* eslint-enable no-unused-vars */
