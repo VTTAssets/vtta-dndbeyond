@@ -1,7 +1,8 @@
+/* global canvas */
 export default (html, contextOptions) => {
   contextOptions.push({
     name: "vtta-dndbeyond.scenes.gm-enabled",
-    callback: (li) => {
+    callback: () => {
       return true;
     },
     condition: (li) => {
@@ -22,12 +23,15 @@ export default (html, contextOptions) => {
     name: "vtta-dndbeyond.scenes.gm-enable",
     callback: (li) => {
       const scene = game.scenes.get(li.data("sceneId"));
-      const thumb = scene.data.thumb;
-      scene.update({ img: scene.data.flags.vtta.alt.GM }).then(() => {
-        scene.update({ thumb: thumb });
-        if (scene.visible) {
-          return canvas.draw();
-        }
+      // keep Foundry from setting the image dimensions to original image dimensions
+      const { width, height, thumb } = scene.data;
+
+      return scene.update({ img: scene.data.flags.vtta.alt.GM }).then(() => {
+        // re-set to the original thumb
+        // we cannot keep Foundry from generating it's own
+        return scene.update({ thumb: thumb, width: width, height: height }).then(() => {
+          return scene.visible ? canvas.draw() : true;
+        });
       });
     },
     condition: (li) => {
@@ -45,7 +49,7 @@ export default (html, contextOptions) => {
 
   contextOptions.push({
     name: "vtta-dndbeyond.scenes.player-enabled",
-    callback: (li) => {
+    callback: () => {
       return true;
     },
     condition: (li) => {
@@ -67,10 +71,14 @@ export default (html, contextOptions) => {
     name: "vtta-dndbeyond.scenes.player-enable",
     callback: (li) => {
       const scene = game.scenes.get(li.data("sceneId"));
-      scene.update({ img: scene.data.flags.vtta.alt.Player, thumb: scene.data.thumb }).then(() => {
-        if (scene.visible) {
-          canvas.draw();
-        }
+      const { width, height, thumb } = scene.data;
+
+      return scene.update({ img: scene.data.flags.vtta.alt.Player }).then(() => {
+        // re-set to the original thumb
+        // we cannot keep Foundry from generating it's own
+        return scene.update({ thumb: thumb, width: width, height: height }).then(() => {
+          return scene.visible ? canvas.draw() : true;
+        });
       });
     },
     condition: (li) => {

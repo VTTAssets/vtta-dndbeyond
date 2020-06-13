@@ -19,7 +19,8 @@ const registerNotifications = () => {
       },
       show: (message, timeout = 4000) => {
         $("#vtta-notifications").css("left", $("#players").css("left"));
-        $("#vtta-notifications").css("bottom", $("#players").height() + 2 * MARGIN);
+        // prettier-ignore
+        $("#vtta-notifications").css("bottom", $("#players").height() + (2 * MARGIN));
 
         let note = $(`<div style="display: none">${message}</div>`);
         $("#vtta-notifications").append(note);

@@ -11,7 +11,6 @@ import registerSheets from "./hooks/ready/registerSheets.js";
 import checkCompendiums from "./hooks/ready/checkCompendiums.js";
 import repairGameSettings from "./hooks/ready/repairGameSettings.js";
 import registerGameSettings from "./hooks/ready/registerGameSettings.js";
-//import registerSceneNavigation from "./hooks/ready/registerSceneNavigation.js";
 import extendSceneNavigationContext from "./hooks/getSceneNavigationContext/extendSceneNavigationContext.js";
 
 // other hooks
@@ -67,9 +66,6 @@ export function onceReady() {
 }
 
 export function onReady() {
-  // register scene change on contextmenu in scene navigation
-  //registerSceneNavigation();
-
   game.socket.on("module.vtta-dndbeyond", (data) => {
     console.log("Socket Message received");
     if (data.sender === game.user.data._id) {
