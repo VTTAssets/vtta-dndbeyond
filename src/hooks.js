@@ -67,7 +67,6 @@ export function onceReady() {
 
 export function onReady() {
   game.socket.on("module.vtta-dndbeyond", (data) => {
-    console.log("Socket Message received");
     if (data.sender === game.user.data._id) {
       return;
     }

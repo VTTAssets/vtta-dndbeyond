@@ -2,7 +2,6 @@ import utils from "../../utils.js";
 
 const getLatestVersion = async (manifestUrl) => {
   return new Promise((resolve, reject) => {
-    console.log("Retrieving: " + manifestUrl);
     fetch(manifestUrl)
       .then((data) => data.json())
       .then((json) => resolve(json.version))
@@ -11,6 +10,9 @@ const getLatestVersion = async (manifestUrl) => {
 };
 
 export default async () => {
+  // check version number only for GMs
+  if (!game.user.isGM) return;
+
   const moduleInfo = game.modules.get("vtta-dndbeyond").data;
   const installedVersion = moduleInfo.version;
   try {
@@ -24,7 +26,6 @@ export default async () => {
       );
     }
   } catch (error) {
-    console.log(error);
     window.vtta.notification.show("Could not retrieve latest vtta-dndbeyond version");
   }
 };

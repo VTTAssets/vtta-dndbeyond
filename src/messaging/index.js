@@ -37,7 +37,7 @@ class EventPort {
             };
           }
           let result = await query(body);
-          console.log("Dispatching result");
+          utils.log("Dispatching result", "messaging");
           let message = {
             detail: {
               head: {
@@ -50,7 +50,7 @@ class EventPort {
           };
           document.dispatchEvent(new CustomEvent(head.id, message));
         } catch (error) {
-          console.log(error);
+          utils.log(error);
           document.dispatchEvent(
             new CustomEvent(head.id, {
               detail: {
@@ -82,7 +82,6 @@ class EventPort {
             })
           );
         } catch (error) {
-          console.log(error);
           document.dispatchEvent(
             new CustomEvent(head.id, {
               detail: {
@@ -176,8 +175,8 @@ class EventPort {
       }
 
       if (head.type === "ping") {
-        console.log("REceived ping from extension");
-        console.log(event.detail);
+        utils.log("Received ping from extension");
+        utils.log(event.detail);
         // display the connection version to Foundry
         if (body.version) {
           window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");

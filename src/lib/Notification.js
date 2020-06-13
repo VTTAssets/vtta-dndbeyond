@@ -5,15 +5,13 @@ const MARGIN = 10;
 
 const registerNotifications = () => {
   // register the notification global object
-  console.log("Registering notifications");
   $("body").append(`<div id="vtta-notifications"></div>`);
   $("body").append(`<div id="vtta-hints"></div>`);
 
   window.vtta = window.vtta || {
     notification: {
       clear: () => {
-        $("#vtta-notifications div").fadeOut(200, (event) => {
-          console.log(event);
+        $("#vtta-notifications div").fadeOut(200, () => {
           $("#vtta-notifications").empty();
         });
       },
@@ -28,8 +26,7 @@ const registerNotifications = () => {
 
         if (timeout)
           setTimeout(() => {
-            $(note).fadeOut(200, (event) => {
-              console.log(event);
+            $(note).fadeOut(200, () => {
               $(note).remove();
             });
           }, timeout);
@@ -37,8 +34,7 @@ const registerNotifications = () => {
           $(note).append('<p style="text-align: center; color: #7e7e7e; margin: 0px;"><small>Click to close</small>');
 
         $(note).on("click", () => {
-          $(note).fadeOut(200, (event) => {
-            console.log(event);
+          $(note).fadeOut(200, () => {
             $(note).remove();
           });
         });

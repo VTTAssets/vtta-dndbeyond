@@ -27,7 +27,6 @@ const createSpell = async (data) => {
   return spell;
 };
 
-
 const getCompendium = async () => {
   const compendiumName = await game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
   if (compendiumName && compendiumName !== "") {
@@ -57,7 +56,7 @@ const addSpellToCompendium = async (spell, name) => {
         await compendium.createEntity(spell.data);
       }
     } else {
-      console.error("Error opening compendium, check your settings");
+      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
     }
   }
 };
@@ -86,7 +85,7 @@ let addSpell = (body) => {
         resolve(spell.data);
       })
       .catch((error) => {
-        console.error(`error parsing spell: ${error}`);
+        console.error(`error parsing spell: ${error}`); // eslint-disable-line no-console
         reject(error);
       });
   });

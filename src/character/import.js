@@ -74,7 +74,7 @@ export default class CharacterImport extends Application {
   static async copyFlags(flagGroup, originalItem, targetItem) {
     if (targetItem.flags === undefined) targetItem.flags = {};
     if (originalItem.flags && !!originalItem.flags[flagGroup]) {
-      console.log(`Copying ${flagGroup} for ${originalItem.name}`);
+      utils.log(`Copying ${flagGroup} for ${originalItem.name}`);
       targetItem.flags[flagGroup] = originalItem.flags[flagGroup];
     }
   }
@@ -120,7 +120,6 @@ export default class CharacterImport extends Application {
               .filter((item) => initialIndex.some((idx) => idx.name === item.name))
               .map(async (item) => {
                 const entry = await compendium.index.find((idx) => idx.name === item.name);
-                console.log("Updating " + entry.name);
                 const existing = await compendium.getEntity(entry._id);
                 item._id = existing._id;
                 await compendium.updateEntity(item);
@@ -137,7 +136,6 @@ export default class CharacterImport extends Application {
           compendiumItems
             .filter((item) => !initialIndex.some((idx) => idx.name === item.name))
             .map(async (item) => {
-              console.log("Creating " + item.name);
               const newItem = await Item.create(item, {
                 temporary: true,
                 displaySheet: false,
@@ -157,7 +155,7 @@ export default class CharacterImport extends Application {
           this.result[type].map(async (item) => {
             const searchResult = await updatedIndex.find((idx) => idx.name === item.name);
             if (!searchResult) {
-              console.warn(`Couldn't find ${item.name} in the compendium`);
+              utils.log(`Couldn't find ${item.name} in the compendium`);
               return null;
             } else {
               const entity = compendium.getEntity(searchResult._id);
@@ -205,7 +203,6 @@ export default class CharacterImport extends Application {
           .filter((item) => existingItems.some((idx) => idx.name === item.name))
           .map(async (item) => {
             const existingItem = await existingItems.find((existing) => item.name === existing.name);
-            console.log("Updating " + existingItem.name);
             item._id = existingItem._id;
             await Item.update(item);
             return item;
@@ -221,7 +218,6 @@ export default class CharacterImport extends Application {
             if (!game.user.can("ITEM_CREATE")) {
               ui.notifications.warn(`Cannot create ${folderLookup.type} ${item.name} for ${type}`);
             } else {
-              console.log("Creating " + item.name);
               item.folder = magicItemsFolder._id;
               await Item.create(item);
             }
@@ -371,12 +367,12 @@ export default class CharacterImport extends Application {
         try {
           this.result = parser.parseJson(data);
         } catch (error) {
-          console.log("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000");
-          console.log(`**Foundry version         :** ${game.data.version}`);
-          console.log(`**DND5e version           :** ${game.system.data.version}`);
-          console.log(`**VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`);
-          console.log(error);
-          console.log("%c ##########################################", "color: #ff0000");
+          console.log("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000"); // eslint-disable-line no-console
+          console.log(`**Foundry version         :** ${game.data.version}`); // eslint-disable-line no-console
+          console.log(`**DND5e version           :** ${game.system.data.version}`); // eslint-disable-line no-console
+          console.log(`**VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`); // eslint-disable-line no-console
+          console.log(error); // eslint-disable-line no-console
+          console.log("%c ##########################################", "color: #ff0000"); // eslint-disable-line no-console
           CharacterImport.showCurrentTask(
             html,
             "I guess you are special!",

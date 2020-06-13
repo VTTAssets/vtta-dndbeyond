@@ -74,7 +74,7 @@ let utils = {
     // componentId on spells.class[0].componentId = options.class[0].definition.id
     // options.class[0].definition.componentId = classes[0].classFeatures[0].definition.id
     const option = data.character.options.class.find((option) => option.definition.id === optionId);
-    console.log(option);
+    utils.log(option);
     if (option) {
       const klass = data.character.classes.find((klass) =>
         klass.classFeatures.some((feature) => feature.definition.id === option.componentId)
@@ -446,7 +446,7 @@ let utils = {
             resolve(result.path);
           })
           .catch((error) => {
-            console.error(`error uploading file: ${error}`);
+            utils.log(`error uploading file: ${error}`);
             reject(error);
           });
       });
@@ -470,7 +470,7 @@ let utils = {
       let result = await process("https://proxy.vttassets.com/?url=" + url, targetDirectory, filename + "." + ext);
       return result;
     } catch (error) {
-      console.log(error);
+      utils.log(error);
       ui.notifications.warn("Image upload failed. Please check your vtta-dndbeyond upload folder setting");
       return null;
     }
@@ -624,8 +624,6 @@ let utils = {
 
     let existingEntry = await utils.queryCompendium(compendiumName, entity.name);
     if (existingEntry) {
-      console.log("Entry exists already:");
-      console.log(existingEntry);
       if (updateExistingEntry) {
         // update all existing entries
         existingEntry = await compendium.updateEntity({
@@ -639,13 +637,10 @@ let utils = {
           name: existingEntry.name,
         };
       } else {
-        console.log("Update: no");
         return existingEntry;
       }
     } else {
-      console.log("Entry does not exist");
       let compendiumEntry = await compendium.createEntity(entity.data);
-      console.log(compendiumEntry);
       return {
         _id: compendiumEntry._id,
         img: compendiumEntry.img,
@@ -674,11 +669,11 @@ let utils = {
       switch (typeof msg) {
         case "object":
         case "array":
-          console.log(`${LOG_PREFIX} | ${section} > ${typeof msg}`);
-          console.log(msg);
+          console.log(`${LOG_PREFIX} | ${section} > ${typeof msg}`); // eslint-disable-line no-console
+          console.log(msg); // eslint-disable-line no-console
           break;
         default:
-          console.log(`${LOG_PREFIX} | ${section} > ${msg}`);
+          console.log(`${LOG_PREFIX} | ${section} > ${msg}`); // eslint-disable-line no-console
       }
   },
 

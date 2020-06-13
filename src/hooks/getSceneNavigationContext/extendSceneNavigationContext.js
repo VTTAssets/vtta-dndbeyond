@@ -1,4 +1,3 @@
-/* global canvas */
 export default (html, contextOptions) => {
   contextOptions.push({
     name: "vtta-dndbeyond.scenes.gm-enabled",
@@ -7,7 +6,6 @@ export default (html, contextOptions) => {
     },
     condition: (li) => {
       const scene = game.scenes.get(li.data("sceneId"));
-      console.log(scene);
       return (
         scene.data.flags &&
         scene.data.flags.vtta &&
@@ -55,7 +53,6 @@ export default (html, contextOptions) => {
     condition: (li) => {
       $(li).addClass("active");
       const scene = game.scenes.get(li.data("sceneId"));
-      console.log(scene);
       return (
         scene.data.flags &&
         scene.data.flags.vtta &&

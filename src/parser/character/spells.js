@@ -439,7 +439,7 @@ let getScaleType = (name, mod) => {
     if (definition) {
       scaleType = modScaleType;
     } else {
-      console.warn("No definition found for " + name);
+      utils.log("No definition found for " + name); // eslint-disable-line no-console
     }
   } else if (modScaleType === "spellscale") {
     // lets handle cases where there is a spellscale type but no damage
@@ -474,7 +474,7 @@ let getScaleType = (name, mod) => {
     // examples include: hex, shadowblade, magic weapon, bestow curse
     scaleType = modScaleType;
   } else {
-    console.warn(name + " parse failed: " + JSON.stringify(modScaleType));
+    utils.log(name + " parse failed: " + JSON.stringify(modScaleType));
     scaleType = modScaleType; // if this is new/unknow will use default
   }
 
@@ -546,7 +546,7 @@ let getSpellScaling = (data) => {
                 scaleDamage = modScaleDamage;
               }
             } else {
-              console.warn("No definition found for " + data.definition.name);
+              console.warn("No definition found for " + data.definition.name); // eslint-disable-line no-console
             }
           }
 
@@ -628,7 +628,7 @@ let getEldritchInvocations = (data) => {
         range = mod.value;
         break;
       default:
-        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`);
+        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`); // eslint-disable-line no-console
     }
   });
 
@@ -890,7 +890,7 @@ export default function parseSpells(ddb, character) {
         items[duplicateSpell] = parseSpell(spell, character);
       } else {
         // we'll emit a console message if it doesn't match this case for future debugging
-        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
+        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`); // eslint-disable-line no-console
       }
     });
   });
@@ -949,7 +949,7 @@ export default function parseSpells(ddb, character) {
       items[duplicateSpell] = parseSpell(spell, character);
     } else {
       // we'll emit a console message if it doesn't match this case for future debugging
-      console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
+      utils.log(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
     }
   });
 
