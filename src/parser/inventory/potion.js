@@ -67,7 +67,7 @@ let getDamage = (data, actionType) => {
       );
       if (healingModifier && healingModifier.dice) {
         damage.parts = [[healingModifier.dice.diceString, "healing"]];
-      } else if (healingModifier && healingModifier.fixedValue){
+      } else if (healingModifier && healingModifier.fixedValue) {
         damage.parts = [[healingModifier.fixedValue, "healing"]];
       }
       break;
