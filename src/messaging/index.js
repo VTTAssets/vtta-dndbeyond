@@ -178,7 +178,7 @@ class EventPort {
         utils.log("Received ping from extension");
         utils.log(event.detail);
         // display the connection version to Foundry
-        if (body.version) {
+        if (body && body.version) {
           window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");
         }
         // answer back to the extensions wanting to establish communications
