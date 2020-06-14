@@ -46,16 +46,23 @@ let getChoice = (ddb, type, feat) => {
 function getDescription(ddb, character, feat) {
   let snippet = "";
   let description = "";
+
   if (feat.definition && feat.definition.snippet) {
     snippet = parseTemplateString(ddb, character, feat.definition.snippet, feat);
+  } else if (feat.snippet) {
+    snippet = parseTemplateString(ddb, character, feat.snippet, feat);
   } else {
-    snippet = feat.snippet ? parseTemplateString(ddb, character, feat.snippet, feat) : "";
+    snippet = "";
   }
+
   if (feat.definition && feat.definition.description) {
     description = parseTemplateString(ddb, character, feat.definition.description, feat);
+  } else if (feat.description) {
+    description = parseTemplateString(ddb, character, feat.description, feat);
   } else {
-    description = feat.description ? parseTemplateString(ddb, character, feat.description, feat) : "";
+    description = "";
   }
+
   return {
     value: description !== "" ? description + ((snippet !== "") ? "<h3>Summary</h3>" + snippet : "") : snippet,
     chat: snippet,
@@ -63,113 +70,199 @@ function getDescription(ddb, character, feat) {
   };
 }
 
-export default function parseFeatures(ddb, character) {
-  let items = [];
+function parseFeature(feat, ddb, character, source, type) {
+  // filter proficiencies and Ability Score Improvement
+  const name = (feat.definition) ? feat.definition.name : feat.name;
+  let item = {
+    name: name,
+    type: "feat",
+    data: JSON.parse(utils.getTemplate("feat")),
+    flags: {
+      vtta: {
+        dndbeyond: {
+          requiredLevel: feat.requiredLevel,
+          displayOrder: (feat.definition && feat.definition.displayOrder) ? feat.definition.displayOrder : feat.displayOrder,
+        }
+      },
+    },
+  };
 
-  let characterClasses = ddb.character.classes;
-  characterClasses.forEach((cls) => {
-    let features = cls.definition.classFeatures.filter(
+  // Add choices to the textual description of that feat
+  let choice = getChoice(ddb, type, feat);
+  if (choice) {
+    item.name = choice.label ? `${item.name}: ${choice.label}` : item.name;
+    if (feat.description) {
+      feat.description = choice.description
+        ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
+        : feat.description;
+    }
+    if (feat.snippet) {
+      feat.snippet = choice.description
+      ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
+      : feat.snippet;
+    }
+  }
+
+  item.data.description = getDescription(ddb, character, feat);
+  item.data.source = source;
+
+  return item;
+}
+
+function isDuplicateFeature(items, item) {
+  return items.some((dup) =>
+    dup.name === item.name &&
+    dup.data.description.value === item.data.description.value
+  );
+}
+
+function getNameMatchedFeature(items, item) {
+  return items.find((dup) => dup.name === item.name);
+}
+
+function parseClassFeatures(ddb, character) {
+  // class and subclass traits
+  let classItems = [];
+  let classesFeatureList = [];
+  let subClassesFeatureList = [];
+  let processedClassesFeatureList = [];
+
+  // subclass features can often be duplicates of class features.
+  ddb.character.classes.forEach((klass) => {
+    const classFeatures = klass.definition.classFeatures.filter(
       (feat) =>
         feat.name !== "Proficiencies" &&
         feat.name !== "Ability Score Improvement" &&
-        feat.requiredLevel <= cls.level &&
+        feat.requiredLevel <= klass.level &&
         !ddb.character.actions.class.some((action) => action.name === feat.name)
     );
-    let source = cls.definition.name;
-
-    features.forEach((feat) => {
-      // filter proficiencies and Ability Score Improvement
-      let item = {
-        name: feat.name,
-        type: "feat",
-        data: JSON.parse(utils.getTemplate("feat")),
-      };
-
-      // Add choices to the textual description of that feat
-      let choice = getChoice(ddb, "class", feat);
-      if (choice) {
-        item.name = choice.label ? `${item.name}: ${choice.label}` : item.name;
-        feat.description = choice.description
-          ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
-          : feat.description;
-      }
-
-      item.data.description = getDescription(ddb, character, feat);
-      item.data.source = source;
-
-      items.push(item);
+    const klassName = klass.definition.name;
+    const klassFeatureList = classFeatures.map((feat) => {
+      let item = parseFeature(feat, ddb, character, klassName, 'class');
+      item.flags.vtta.dndbeyond.class = klassName;
+      // add feature to all features list
+      classesFeatureList.push(JSON.parse(JSON.stringify(item)));
+      return item;
+    }).sort((a, b) => {
+      return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
     });
 
+    klassFeatureList.forEach((item) => {
+      // have we already processed an identical item?
+      if (!isDuplicateFeature(processedClassesFeatureList, item)) {
+        const existingFeature = getNameMatchedFeature(classItems, item);
+        const duplicateFeature = isDuplicateFeature(classItems, item);
+        if (existingFeature && !duplicateFeature) {
+          const levelAdjustment = `<h3>${klassName}: Level ${item.flags.vtta.dndbeyond.requiredLevel}</h3>${item.data.description.value}`;
+          existingFeature.data.description.value += levelAdjustment;
+        } else if (!existingFeature) {
+          classItems.push(item);
+        }
+      }
+    });
+    processedClassesFeatureList = processedClassesFeatureList.concat(classesFeatureList, klassFeatureList);
+
     // subclasses
-    if (cls.subclassDefinition && cls.subclassDefinition.classFeatures) {
-      features = cls.subclassDefinition.classFeatures.filter(
+    if (klass.subclassDefinition && klass.subclassDefinition.classFeatures) {
+      let subClassItems = [];
+      const subFeatures = klass.subclassDefinition.classFeatures.filter(
         (feat) =>
+          feat.name !== "Proficiencies" &&
           feat.name !== "Bonus Proficiency" &&
           feat.name !== "Ability Score Improvement" &&
-          feat.requiredLevel <= cls.level
+          feat.requiredLevel <= klass.level &&
+          !ddb.character.actions.class.some((action) => action.name === feat.name)
       );
-      let subSource = cls.subclassDefinition.name;
+      const subKlassName = `${klassName} : ${klass.subclassDefinition.name}`;
+      const subKlassFeatureList = subFeatures.map((feat) => {
+        let item = parseFeature(feat, ddb, character, subKlassName, 'class');
+        item.flags.vtta.dndbeyond.class = subKlassName;
+        // add feature to all features list
+        subClassesFeatureList.push(JSON.parse(JSON.stringify(item)));
+        return item;
+      }).sort((a, b) => {
+        return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
+      });
 
-      features.forEach((feat) => {
-        // filter proficiencies and Ability Score Improvement
-        let item = {
-          name: feat.name,
-          type: "feat",
-          data: JSON.parse(utils.getTemplate("feat")),
-        };
-
-        // Add choices to the textual description of that feat
-        let choice = getChoice(ddb, "class", feat);
-        if (choice) {
-          item.name = choice.label ? `${item.name}: ${choice.label}` : item.name;
-          feat.description = choice.description
-            ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
-            : feat.description;
-          feat.snippet = choice.description
-            ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
-            : feat.snippet;
+      // parse out duplicate features from class features
+      subKlassFeatureList.forEach((item) => {
+        if (!isDuplicateFeature(classesFeatureList, item)) {
+          const existingFeature = getNameMatchedFeature(subClassItems, item);
+          const duplicateFeature = isDuplicateFeature(subClassItems, item);
+          if (existingFeature && !duplicateFeature) {
+            const levelAdjustment = `<h3>${subKlassName}: At Level ${item.flags.vtta.dndbeyond.requiredLevel}</h3>${item.data.description.value}`;
+            existingFeature.data.description.value += levelAdjustment;
+          } else if (!existingFeature) {
+            subClassItems.push(item);
+          }
         }
+      });
+      // add features to list to indicate processed
+      processedClassesFeatureList = processedClassesFeatureList.concat(subClassesFeatureList, subKlassFeatureList);
 
-        item.data.description = getDescription(ddb, character, feat);
-        item.data.source = subSource;
-
-        items.push(item);
+      // now we take the unique subclass features and add to class
+      subClassItems.forEach((item) => {
+        const existingFeature = getNameMatchedFeature(classItems, item);
+        const duplicateFeature = isDuplicateFeature(classItems, item);
+        if (existingFeature && !duplicateFeature) {
+          const levelAdjustment = `<h3>${subKlassName}: At Level ${item.flags.vtta.dndbeyond.requiredLevel}</h3>${item.data.description.value}`;
+          existingFeature.data.description.value += levelAdjustment;
+        } else if (!existingFeature) {
+          classItems.push(item);
+        }
       });
     }
   });
+  return classItems;
+}
 
-  let feats = ddb.character.feats.filter(
-    (feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name)
-  );
-  feats.forEach((feat) => {
-    let item = {
-      name: feat.definition.name,
-      type: "feat",
-      data: JSON.parse(utils.getTemplate("feat")),
-    };
 
-    item.data.description = getDescription(ddb, character, feat);
-    item.data.source = utils.parseSource(feat.definition);
+export default function parseFeatures(ddb, character) {
+  let items = [];
 
-    items.push(item);
-  });
-
+  // racial traits
   ddb.character.race.racialTraits
     .filter(
       (trait) =>
         !["Ability Score Increase", "Age", "Alignment", "Size", "Speed", "Languages"].includes(trait.definition.name) &&
         !ddb.character.actions.race.some((action) => action.name === trait.definition.name)
     )
+    .forEach(
+      (feat) => {
+        const source = utils.parseSource(feat.definition);
+        let item = parseFeature(feat, ddb, character, source, 'race');
+        const existingFeature = getNameMatchedFeature(items, item);
+        const duplicateFeature = isDuplicateFeature(items, item);
+        if (existingFeature && !duplicateFeature) {
+          existingFeature.data.description.value += `<h3>Racial Trait Addition</h3>${item.data.description.value}`;
+        } else if (!existingFeature) {
+          items.push(item);
+        }
+    });
+
+  // class and subclass traits
+  let classItems = parseClassFeatures(ddb, character);
+
+  // now we loop over class features and add to list, removing any that match racial traits, e.g. Darkvision
+  classItems.forEach((item) => {
+    const existingFeature = getNameMatchedFeature(items, item);
+    const duplicateFeature = isDuplicateFeature(items, item);
+    if (existingFeature && !duplicateFeature) {
+      const klassAdjustment = `<h3>${item.flags.vtta.dndbeyond.class}</h3>${item.data.description.value}`;
+      existingFeature.data.description.value += klassAdjustment;
+    } else if (!existingFeature) {
+      items.push(item);
+    }
+  });
+
+  // finally add feats
+  ddb.character.feats
+    .filter(
+      (feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name)
+    )
     .forEach((feat) => {
-      let item = {
-        name: feat.definition.name,
-        type: "feat",
-        data: JSON.parse(utils.getTemplate("feat")),
-      };
-
-      item.data.description = getDescription(ddb, character, feat);
-      item.data.source = utils.parseSource(feat.definition);
-
+      const source = utils.parseSource(feat.definition);
+      let item = parseFeature(feat, ddb, character, source, 'feat');
       items.push(item);
     });
 
