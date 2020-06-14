@@ -136,7 +136,19 @@ export default function parseFeatures(ddb, character) {
         item.data.description = getDescription(ddb, character, feat);
         item.data.source = subSource;
 
-        items.push(item);
+        const fullDuplicate = items.some((dup) =>
+          dup.name === item.name &&
+          dup.data.description.value === item.data.description.value
+        );
+        const nameDuplicate = items.find((dup) =>
+          dup.name === item.name
+        );
+        if (!fullDuplicate || !nameDuplicate) {
+          items.push(item);
+        } else if(nameDuplicate) {
+          const levelAdjustment = `<h3>At Level ${feat.requiredLevel}</h3>${item.data.description.value}`;
+          nameDuplicate.data.description.value += levelAdjustment;
+        }
       });
     }
   });
