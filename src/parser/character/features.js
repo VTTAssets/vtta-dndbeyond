@@ -92,6 +92,9 @@ export default function parseFeatures(ddb, character) {
         feat.description = choice.description
           ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
           : feat.description;
+        feat.snippet = choice.snippet
+          ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.snippet
+          : feat.snippet;
       }
 
       item.data.description = getDescription(ddb, character, feat);
@@ -125,8 +128,8 @@ export default function parseFeatures(ddb, character) {
           feat.description = choice.description
             ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
             : feat.description;
-          feat.snippet = choice.description
-            ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
+          feat.snippet = choice.snippet
+            ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.snippet
             : feat.snippet;
         }
 
