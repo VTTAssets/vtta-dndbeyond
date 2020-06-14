@@ -25,11 +25,16 @@ export default (html, contextOptions) => {
       const { width, height, thumb } = scene.data;
 
       return scene.update({ img: scene.data.flags.vtta.alt.GM }).then(() => {
-        // re-set to the original thumb
-        // we cannot keep Foundry from generating it's own
-        return scene.update({ thumb: thumb, width: width, height: height }).then(() => {
-          return scene.visible ? canvas.draw() : true;
-        });
+        // re-set to the original thumb and the original dimensions
+        return scene
+          .update({
+            thumb: scene.data.flags.vtta.thumb,
+            width: scene.data.flags.vtta.width,
+            height: scene.data.flags.vtta.height,
+          })
+          .then(() => {
+            return canvas.draw();
+          });
       });
     },
     condition: (li) => {
@@ -73,9 +78,15 @@ export default (html, contextOptions) => {
       return scene.update({ img: scene.data.flags.vtta.alt.Player }).then(() => {
         // re-set to the original thumb
         // we cannot keep Foundry from generating it's own
-        return scene.update({ thumb: thumb, width: width, height: height }).then(() => {
-          return scene.visible ? canvas.draw() : true;
-        });
+        return scene
+          .update({
+            thumb: scene.data.flags.vtta.thumb,
+            width: scene.data.flags.vtta.width,
+            height: scene.data.flags.vtta.height,
+          })
+          .then(() => {
+            return canvas.draw();
+          });
       });
     },
     condition: (li) => {
@@ -89,5 +100,41 @@ export default (html, contextOptions) => {
       );
     },
     icon: "<i class='far fa-map'></i>",
+  });
+
+  contextOptions.push({
+    name: "vtta-dndbeyond.scenes.share",
+    callback: (li) => {
+      const scene = game.scenes.get(li.data("sceneId"));
+
+      const data = {};
+
+      const { width, height, thumb } = scene.data;
+
+      return scene.update({ img: scene.data.flags.vtta.alt.Player }).then(() => {
+        // re-set to the original thumb
+        // we cannot keep Foundry from generating it's own
+        return scene
+          .update({
+            thumb: scene.data.flags.vtta.thumb,
+            width: scene.data.flags.vtta.width,
+            height: scene.data.flags.vtta.height,
+          })
+          .then(() => {
+            return canvas.draw();
+          });
+      });
+    },
+    condition: (li) => {
+      const scene = game.scenes.get(li.data("sceneId"));
+      return (
+        scene.data.flags &&
+        scene.data.flags.vtta &&
+        window.vtta &&
+        window.vtta.pid !== undefined &&
+        window.vtta.pid !== null
+      );
+    },
+    icon: '<i class="fas fa-share-alt"></i>',
   });
 };

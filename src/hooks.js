@@ -20,6 +20,7 @@ import startTutorial from "./tutorial/index.js";
 import showPopup from "./popup.js";
 import checkVersion from "./hooks/init/checkVersion.js";
 import checkElectron from "./hooks/ready/checkElectron.js";
+import displayConnectionIndicator from "./hooks/renderPlayerList/displayConnectionIndicator.js";
 
 // socket messaging
 import onSocketMessage from "./hooks/socket/onSocketMessage.js";
@@ -90,4 +91,9 @@ export function renderJournalSheet(sheet, html, data) {
 export function getSceneNavigationContext(html, contextItems) {
   extendSceneNavigationContext(html, contextItems);
 }
+
+export function renderPLayerList(app, html) {
+  displayConnectionIndicator(app, html);
+}
+
 /* eslint-enable no-unused-vars */

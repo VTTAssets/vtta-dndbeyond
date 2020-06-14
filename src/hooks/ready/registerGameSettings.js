@@ -33,6 +33,16 @@ export default function () {
     default: "[data] ",
   });
 
+  game.settings.register("vtta-dndbeyond", "scene-format", {
+    name: "vtta-dndbeyond.scene-format.name",
+    hint: "vtta-dndbeyond.scene-format.hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: ["vtta-dndbeyond.scene-format.0", "vtta-dndbeyond.scene-format.1"],
+    default: 0,
+  });
+
   game.settings.register("vtta-dndbeyond", "entity-import-policy", {
     name: "vtta-dndbeyond.entity-import-policy.name",
     hint: "vtta-dndbeyond.entity-import-policy.hint",

@@ -412,7 +412,7 @@ let utils = {
     return undefined;
   },
 
-  uploadImage: async function (url, targetDirectory, baseFilename) {
+  uploadImage: async function (url, targetDirectory, baseFilename, useProxy = true) {
     async function download(url) {
       return new Promise((resolve, reject) => {
         try {
@@ -467,7 +467,8 @@ let utils = {
 
     // uploading the character avatar and token
     try {
-      let result = await process("https://proxy.vttassets.com/?url=" + url, targetDirectory, filename + "." + ext);
+      url = useProxy ? "https://proxy.vttassets.com/?url=" + url : url;
+      let result = await process(url, targetDirectory, filename + "." + ext);
       return result;
     } catch (error) {
       utils.log(error);
