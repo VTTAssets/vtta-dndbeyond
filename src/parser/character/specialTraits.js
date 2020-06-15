@@ -1,6 +1,6 @@
 import utils from "../../utils.js";
 
-function getSpecialTraits (data) {
+export function getSpecialTraits (data) {
   let results = {
     powerfulBuild: false,
     savageAttacks: false,
@@ -87,5 +87,3 @@ function getSpecialTraits (data) {
 
   return results;
 }
-
-export default getSpecialTraits;

@@ -64,7 +64,7 @@ let getCustomSkillAbility = (data, skill) => {
   return undefined;
 };
 
-function getSkills(data, character) {
+export function getSkills(data, character) {
   let result = {};
   DICTIONARY.character.skills.forEach((skill) => {
     const customProficient = getCustomSkillProficiency(data, skill);
@@ -101,4 +101,3 @@ function getSkills(data, character) {
   return result;
 }
 
-export default getSkills;

@@ -109,7 +109,7 @@ let getArmoredACBonuses = (modifiers, character) => {
   return armoredACBonuses;
 };
 
-let getArmorClass = (data, character) => {
+export function getArmorClass(data, character) {
   // array to assemble possible AC values
   let armorClassValues = [];
   // get a list of equipped armor
@@ -262,6 +262,3 @@ let getArmorClass = (data, character) => {
     value: max,
   };
 };
-
-
-export default getArmorClass;
