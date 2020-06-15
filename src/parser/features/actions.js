@@ -1,6 +1,6 @@
-import DICTIONARY from "../../dictionary.js";
-import utils from "../../../utils.js";
-import parseTemplateString from "../../templateStrings.js";
+import DICTIONARY from "../dictionary.js";
+import utils from "../../utils.js";
+import parseTemplateString from "../templateStrings.js";
 
 function isMartialArtists(classes) {
   return classes.some((cls) => cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts"));

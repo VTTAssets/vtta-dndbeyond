@@ -261,4 +261,4 @@ export function getArmorClass(data, character) {
     label: "Armor Class",
     value: max,
   };
-};
+}
