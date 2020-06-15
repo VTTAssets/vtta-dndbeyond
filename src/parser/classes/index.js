@@ -1,5 +1,5 @@
-import DICTIONARY from '../../dictionary.js';
-import utils from '../../../utils.js';
+import DICTIONARY from '../dictionary.js';
+import utils from '../../utils.js';
 
 /**
  * Fetches the sources and pages for class and subclass

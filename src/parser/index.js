@@ -1,7 +1,7 @@
 import getCharacter from "./character/index.js";
-import getActions from "./character/features/actions.js";
-import getFeatures from "./character/features/features.js";
-import getClasses from "./character/classes/index.js";
+import getActions from "./features/actions.js";
+import getFeatures from "./features/features.js";
+import getClasses from "./classes/index.js";
 import { default as getSpells, parseItemSpells as getItemSpells } from "./spells/index.js";
 import getInventory from "./inventory/index.js";
 

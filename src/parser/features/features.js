@@ -1,5 +1,5 @@
-import utils from "../../../utils.js";
-import parseTemplateString from "../../templateStrings.js";
+import utils from "../../utils.js";
+import parseTemplateString from "../templateStrings.js";
 
 /**
  * Searches for selected options if a given feature provides choices to the user
