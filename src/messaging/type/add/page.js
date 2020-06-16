@@ -121,11 +121,26 @@ const insertRollTables = (content) => {
   return $(orig).html();
 };
 
-const addJournalEntry = async (structure, sourcebook, name, content) => {
+const addJournalEntry = async (structure, sourcebook, namePrefix, name, content, sceneId = null) => {
+  const cleanLabel = (label) => {
+    // remove all dots from the end of the string
+    while (label.length && label.trim().search(/\.$/) !== -1) {
+      label = label.trim();
+      label = label.substr(0, label.length - 1);
+    }
+
+    // remove the prefix
+    const parts = label.split(".");
+    label = parts.length === 1 ? parts[0] : parts[1];
+    return label.trim();
+  };
+
   const folder = await getFolder(structure, "JournalEntry", sourcebook);
   console.log("Folder: ");
   console.log(folder);
-  let entry = game.journal.find((entry) => entry.data.folder === folder.data._id && entry.name === name);
+  let entry = game.journal.find(
+    (entry) => entry.data.folder === folder.data._id && entry.name === namePrefix + " " + cleanLabel(name)
+  );
   console.log("JE: Entry");
   console.log(entry);
   if (entry) {
@@ -135,9 +150,15 @@ const addJournalEntry = async (structure, sourcebook, name, content) => {
   } else {
     entry = await JournalEntry.create({
       folder: folder._id,
-      name: name,
+      name: namePrefix + " " + cleanLabel(name),
       content: insertRollTables(content),
       img: null,
+      flags: {
+        vtta: {
+          name: name,
+          sceneId: sceneId,
+        },
+      },
     });
   }
   return entry;
@@ -154,33 +175,50 @@ const addJournalEntries = async (data, scenes) => {
   );
 
   // add main journal entry
-  addJournalEntry([data.title], data.book, data.title, data.content);
+  addJournalEntry([data.title], data.book, "", data.title, data.content);
 
   // create sub-entries for all scenes
   for (let s of data.scenes) {
     const entries = s.entries.filter((entry) => entry !== null);
-    const scene = scenes.find((myScene) => myScene.name === s.name);
+    // get the created scene based on internal scene id
+    const VTTAID = s.id;
+    const scene = scenes.find(
+      (myScene) => myScene.data.flags.vtta && myScene.data.flags.vtta.id && myScene.data.flags.vtta.id === VTTAID // s.id is the vtta id
+    );
     // delete all VTTA created notes
     await scene.deleteEmbeddedEntity(
       "Note",
-      scene.getEmbeddedCollection("Note").filter((note) => note.flags && note.flags.vtta)
+      scene
+        .getEmbeddedCollection("Note")
+        .filter((note) => note.flags && note.flags.vtta)
+        .map((note) => note._id)
     );
 
     // create the entities and place them on the scene, if possible
     const notes = [];
     for (let [index, entry] of entries.entries()) {
       const prefix = ("" + (index + 1)).padStart(2, "0");
-      let je = await addJournalEntry([data.title, scene.name], data.book, prefix + " " + entry.name, entry.content);
+      let je = await addJournalEntry([data.title, scene.name], data.book, prefix, entry.name, entry.content, VTTAID);
       console.log("Position: ");
       console.log(entry.position);
-      if (entry.position && entry.position.x && entry.position.y) {
-        notes.push({
-          entryId: je.data._id,
-          flags: { vtta: true },
-          icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
-          x: entry.position.x,
-          y: entry.position.y,
-          iconSize: scene.data.grid,
+      if (entry.positions) {
+        entry.positions.forEach((position) => {
+          notes.push({
+            entryId: je.data._id,
+            flags: { vtta: { sceneId: VTTAID } },
+            icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
+            x: position.x,
+            y: position.y,
+            iconSize: scene.data.grid,
+          });
+          notes.push({
+            entryId: je.data._id,
+            flags: { vtta: { sceneId: VTTAID } },
+            icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
+            x: position.x * 1.15,
+            y: position.y * 0.85,
+            iconSize: scene.data.grid,
+          });
         });
       }
     }
@@ -192,17 +230,46 @@ const addJournalEntries = async (data, scenes) => {
 const updateScene = async (scene, folder) => {
   utils.log("Scene " + scene.name + " does exist already, updating...");
   let existing = await game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
+
   let update = {
-    width: scene.width,
-    height: scene.height,
-    backgroundColor: scene.backgroundColor,
+    flags: {
+      vtta: {
+        id: scene.id,
+        width: scene.width,
+        height: scene.height,
+        thumb: scene.thumb,
+      },
+    },
   };
-  if (scene.shiftX) update.shiftX = scene.shiftX;
-  if (scene.shiftY) update.shiftY = scene.shiftY;
-  if (scene.grid) update.grid = scene.grid;
-  if (scene.gridDistance) update.gridDistance = scene.gridDistance;
-  if (scene.gridType) update.gridType = scene.gridType;
-  if (scene.globalLight) update.globalLight = scene.globalLight;
+  let autoKeys = [
+    "width",
+    "height",
+    "backgroundColor",
+    "shiftX",
+    "shiftY",
+    "grid",
+    "gridDistance",
+    "gridType",
+    "globalLight",
+  ];
+  for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
+    if (!!scene[prop]) {
+      update[prop] = scene[prop];
+    }
+  }
+
+  // let update = {
+  //   id: scene.id,
+  //   width: scene.width,
+  //   height: scene.height,
+  //   backgroundColor: scene.backgroundColor,
+  // };
+  // if (scene.shiftX) update.shiftX = scene.shiftX;
+  // if (scene.shiftY) update.shiftY = scene.shiftY;
+  // if (scene.grid) update.grid = scene.grid;
+  // if (scene.gridDistance) update.gridDistance = scene.gridDistance;
+  // if (scene.gridType) update.gridType = scene.gridType;
+  // if (scene.globalLight) update.globalLight = scene.globalLight;
   await existing.update(update);
 
   // remove existing walls, add from import
@@ -257,17 +324,25 @@ const createScene = async (scene, folder) => {
   // upload GM map
   if (UNLOCK_GM_MAPS && scene.gmSrc && scene.gmLocal) {
     let targetFilename = scene.gmLocal.replace(/\//g, "-").replace(".webp", "");
-    if (uploadDirectory === SCENE_FORMAT_ORIG) {
-      // replace webp with the desired file extension
-      //targetFilename.replace(".webp", "." + scene.gmSrc.split(".").pop());
-      gmSrc = await utils.uploadImage(scene.gmSrc, uploadDirectory, targetFilename);
-    } else {
-      gmSrc = await utils.uploadImage(
-        "https://cdn.vttassets.com/scenes/" + scene.gmLocal,
-        uploadDirectory,
-        targetFilename,
-        false
-      );
+    switch (uploadDirector) {
+      case SCENE_FORMAT_ORIG:
+        gmSrc = await utils.uploadImage(scene.gmSrc, uploadDirectory, targetFilename);
+        break;
+      case SCENE_FORMAT_WEBP:
+        gmSrc = await utils.uploadImage(
+          "https://cdn.vttassets.com/scenes/" + scene.gmLocal,
+          uploadDirectory,
+          targetFilename,
+          false
+        );
+        break;
+      default:
+        gmSrc = await utils.uploadImage(
+          "https://cdn.vttassets.com/scenes/" + scene.gmLocal,
+          uploadDirectory,
+          targetFilename,
+          false
+        );
     }
   }
 
@@ -279,42 +354,84 @@ const createScene = async (scene, folder) => {
     false
   );
 
-  let createData = {
-    name: scene.name,
+  let create = {
     img: playerSrc,
     thumb: thumb,
     folder: folder._id,
-    width: scene.width,
-    height: scene.height,
-    backgroundColor: scene.backgroundColor,
-    globalLight: scene.globalLight ? scene.globalLight : true,
     navigation: false,
-  };
-
-  // store the original dimensions in a flag to retain them on switching
-  createData.flags = {
-    vtta: {
-      width: scene.width,
-      height: scene.height,
-      thumb: scene.thumb,
+    flags: {
+      vtta: {
+        id: scene.id,
+        width: scene.width,
+        height: scene.height,
+        thumb: scene.thumb,
+      },
     },
   };
 
   // enable map switching
   if (playerSrc && gmSrc) {
-    createData.flags.vtta.alt = {
+    create.flags.vtta.alt = {
       GM: gmSrc,
       Player: playerSrc,
     };
   }
 
-  if (scene.shiftX) createData.shiftX = scene.shiftX;
-  if (scene.shiftY) createData.shiftY = scene.shiftY;
-  if (scene.grid) createData.grid = scene.grid;
-  if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
-  if (scene.gridType) createData.gridType = scene.gridType;
+  let autoKeys = [
+    "name",
+    "width",
+    "height",
+    "backgroundColor",
+    "shiftX",
+    "shiftY",
+    "grid",
+    "gridDistance",
+    "gridType",
+    "globalLight",
+  ];
+  for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
+    if (!!scene[prop]) {
+      create[prop] = scene[prop];
+    }
+  }
 
-  let existing = await Scene.create(createData);
+  // let createData = {
+  //   name: scene.name,
+  //   img: playerSrc,
+  //   thumb: thumb,
+  //   folder: folder._id,
+  //   width: scene.width,
+  //   height: scene.height,
+  //   backgroundColor: scene.backgroundColor,
+  //   globalLight: scene.globalLight ? scene.globalLight : true,
+  //   navigation: false,
+  // };
+
+  // // store the original dimensions in a flag to retain them on switching
+  // createData.flags = {
+  //   vtta: {
+  //     id: scene.id,
+  //     width: scene.width,
+  //     height: scene.height,
+  //     thumb: scene.thumb,
+  //   },
+  // };
+
+  // // enable map switching
+  // if (playerSrc && gmSrc) {
+  //   createData.flags.vtta.alt = {
+  //     GM: gmSrc,
+  //     Player: playerSrc,
+  //   };
+  // }
+
+  // if (scene.shiftX) createData.shiftX = scene.shiftX;
+  // if (scene.shiftY) createData.shiftY = scene.shiftY;
+  // if (scene.grid) createData.grid = scene.grid;
+  // if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
+  // if (scene.gridType) createData.gridType = scene.gridType;
+
+  let existing = await Scene.create(create);
 
   if (scene.walls && scene.walls.length > 0) {
     await existing.createEmbeddedEntity("Wall", scene.walls);

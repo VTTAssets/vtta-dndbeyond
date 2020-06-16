@@ -2,6 +2,12 @@
  * Notification area
  */
 
+#vtta-hints,
+#vtta-notifications {
+  color: rgb(255, 250, 234);
+  font-family: "Roboto", Helvetica, sans-serif;
+}
+
 #vtta-hints hr,
 #vtta-notifications hr {
   border: 1px solid #782e22;
@@ -24,6 +30,16 @@
   font-family: Roboto Condensed, Roboto, Helvetica, sans-serif;
 }
 
+#vtta-notifications > div {
+  box-shadow: 0 0 20px #000;
+  flex: 0 0 auto;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 4px solid rgb(31, 31, 31);
+  border-radius: 4px;
+  background: rgb(41, 41, 41);
+}
+
 #vtta-hints,
 #vtta-notifications {
   color: rgb(255, 250, 234);
@@ -31,9 +47,11 @@
 }
 
 #vtta-hints p,
-#vtta-notifications p {
+#vtta-notifications p,
+#vtta-hints li #vtta-notifications li {
   font-family: "Roboto", Helvetica, sans-serif;
   font-size: 0.8rem;
+  line-height: 1rem;
 }
 
 #vtta-notifications {
@@ -45,17 +63,6 @@
   margin: 0;
   padding: 0;
   z-index: 160;
-}
-
-#vtta-notifications > div {
-  box-shadow: 0 0 20px #000;
-  flex: 0 0 auto;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 4px solid rgb(31, 31, 31);
-  border-radius: 4px;
-  background: rgb(41, 41, 41);
-  font-family: "Roboto Condensed", Helvetica, sans-serif;
 }
 
 /**
