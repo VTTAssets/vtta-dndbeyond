@@ -1,15 +1,16 @@
 import getCharacter from "./character/index.js";
-import getFeatures from "./character/features.js";
-import getClasses from "./character/classes.js";
-import { default as getSpells, parseItemSpells as getItemSpells } from "./character/spells.js";
+import getActions from "./features/actions.js";
+import getFeatures from "./features/features.js";
+import getClasses from "./classes/index.js";
+import { getCharacterSpells } from "./spells/getCharacterSpells.js";
+import { getItemSpells } from "./spells/getItemSpells.js";
 import getInventory from "./inventory/index.js";
-import getActions from "./character/actions.js";
 
 let parseJson = (ddb) => {
   let character = getCharacter(ddb);
   let features = getFeatures(ddb, character);
   let classes = getClasses(ddb);
-  let spells = getSpells(ddb, character);
+  let spells = getCharacterSpells(ddb, character);
   let actions = getActions(ddb, character);
   let itemSpells = getItemSpells(ddb, character);
   let inventory = getInventory(ddb, character, itemSpells);
