@@ -339,45 +339,6 @@ export default class CharacterImport extends Application {
         let data = undefined;
         try {
           data = JSON.parse(pasteData);
-          // the expected data structure is
-          // data: {
-          //    character: {...}
-          // }
-
-          // check if the character is set to public
-          /*
-            {
-              "id":0,
-              "success":false,
-              "message":"An unexpected error has occured",
-              "data":{
-                "serverMessage":"Unauthorized Access Attempt.",
-                "errorCode":"55f9b86"
-              },
-              "pagination":null
-            }
-          */
-
-          if (Object.hasOwnProperty.call(data, "success") && data.success === false) {
-            CharacterImport.showCurrentTask(
-              html,
-              "JSON retrieval failed",
-              `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
-              <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
-              <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
-              `,
-              true
-            );
-            return;
-          }
-
-          if (!Object.hasOwnProperty.call(data, "character")) {
-            if (Object.hasOwnProperty.call(data, "data")) {
-              data.character = data.data;
-            } else {
-              data.character = data;
-            }
-          }
         } catch (error) {
           if (error.message === "Unexpected end of JSON input") {
             CharacterImport.showCurrentTask(
@@ -389,7 +350,32 @@ export default class CharacterImport extends Application {
           } else {
             CharacterImport.showCurrentTask(html, "JSON invalid", error.message, true);
           }
+        }
+
+        // check if the character is set to public
+        if (!data.success) {
+          CharacterImport.showCurrentTask(
+            html,
+            "JSON retrieval failed",
+            `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
+              <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
+              <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
+              `,
+            true
+          );
           return false;
+        }
+
+        // the expected data structure is
+        // data: {
+        //    character: {...}
+        // }
+        if (!Object.hasOwnProperty.call(data, "character")) {
+          if (Object.hasOwnProperty.call(data, "data")) {
+            data.character = data.data;
+          } else {
+            data.character = data;
+          }
         }
 
         try {
@@ -406,15 +392,14 @@ export default class CharacterImport extends Application {
             const characterId = this.actor.data.flags.vtta.dndbeyond.url.split("/").pop();
             if (characterId) {
               const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
-              console.log("%c **Character JSON          :** " + jsonUrl, "color: #ff0000");
+              console.log("%c **Character JSON          :** " + jsonUrl, "color: #ff0000"); // eslint-disable-line no-console
             }
           }
           console.log(`%c **Foundry version         :** ${game.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
           console.log(`%c **DND5e version           :** ${game.system.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
-          console.log(
-            `%c **VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`,
-            "color: #ff0000"
-          ); // eslint-disable-line no-console
+          // eslint-disable-line no-console
+          const moduleVersion = game.modules.get("vtta-dndbeyond").data.version;
+          console.log(`%c **VTTA D&D Beyond version :** ${moduleVersion}`, "color: #ff0000"); // eslint-disable-line no-console
           console.log(error); // eslint-disable-line no-console
           console.log("%c #### --------------- COPY ABOVE --------------- #####", "color: #ff0000"); // eslint-disable-line no-console
           CharacterImport.showCurrentTask(
