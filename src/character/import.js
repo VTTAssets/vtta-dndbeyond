@@ -343,6 +343,34 @@ export default class CharacterImport extends Application {
           // data: {
           //    character: {...}
           // }
+
+          // check if the character is set to public
+          /*
+            {
+              "id":0,
+              "success":false,
+              "message":"An unexpected error has occured",
+              "data":{
+                "serverMessage":"Unauthorized Access Attempt.",
+                "errorCode":"55f9b86"
+              },
+              "pagination":null
+            }
+          */
+
+          if (Object.hasOwnProperty.call(data, "success") && data.success === false) {
+            CharacterImport.showCurrentTask(
+              html,
+              "JSON retrieval failed",
+              `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
+              <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
+              <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
+              `,
+              true
+            );
+            return;
+          }
+
           if (!Object.hasOwnProperty.call(data, "character")) {
             if (Object.hasOwnProperty.call(data, "data")) {
               data.character = data.data;
@@ -368,15 +396,36 @@ export default class CharacterImport extends Application {
           this.result = parser.parseJson(data);
         } catch (error) {
           console.log("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000"); // eslint-disable-line no-console
-          console.log(`**Foundry version         :** ${game.data.version}`); // eslint-disable-line no-console
-          console.log(`**DND5e version           :** ${game.system.data.version}`); // eslint-disable-line no-console
-          console.log(`**VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`); // eslint-disable-line no-console
+          console.log("%c #### ", "color: #ff0000"); // eslint-disable-line no-console
+          console.log("%c #### --------------- COPY BELOW --------------- #####", "color: #ff0000"); // eslint-disable-line no-console
+          if (
+            this.actor.data.flags.vtta &&
+            this.actor.data.flags.vtta.dndbeyond &&
+            this.actor.data.flags.vtta.dndbeyond.url
+          ) {
+            const characterId = this.actor.data.flags.vtta.dndbeyond.url.split("/").pop();
+            if (characterId) {
+              const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
+              console.log("%c **Character JSON          :** " + jsonUrl, "color: #ff0000");
+            }
+          }
+          console.log(`%c **Foundry version         :** ${game.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
+          console.log(`%c **DND5e version           :** ${game.system.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
+          console.log(
+            `%c **VTTA D&D Beyond version :** ${game.modules.get("vtta-dndbeyond").data.version}`,
+            "color: #ff0000"
+          ); // eslint-disable-line no-console
           console.log(error); // eslint-disable-line no-console
-          console.log("%c ##########################################", "color: #ff0000"); // eslint-disable-line no-console
+          console.log("%c #### --------------- COPY ABOVE --------------- #####", "color: #ff0000"); // eslint-disable-line no-console
           CharacterImport.showCurrentTask(
             html,
             "I guess you are special!",
-            "We had trouble understanding this character. But you can help us to improve! Please <ul><li>open the console with F12</li><li>search for a block of text starting with #### PLEASE PASTE TO #parsing-errors #####</li><li>save the JSON as a text file and submit it along with the error message to <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!",
+            `We had trouble understanding this character. But you can help us to improve!</p>
+            <p>Please</p>
+            <ul>
+              <li>open the console with F12</li>
+              <li>search for a block of text starting with <b>#### PLEASE PASTE TO ...</b></li>
+              <li>Copy the designated lines and submit it to the Discord channel <a href='https://discord.gg/YEnjUHd'>#parsing-errors</a></li></ul> Thanks!`,
             true
           );
           return false;
