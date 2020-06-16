@@ -29,7 +29,7 @@ let getArmorType = (data) => {
       maxDexModifier = 2;
       break;
     default:
-      maxDexModifier = "";
+      maxDexModifier = null;
   }
 
   return {
