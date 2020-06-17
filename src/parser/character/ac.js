@@ -1,8 +1,16 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
+/**
+ * This excludes shields
+ * @param {} data
+ */
 export function isArmored(data) {
-  return data.character.inventory.filter((item) => item.equipped && item.definition.armorClass).length >= 1;
+  return (
+    data.character.inventory.filter(
+      (item) => item.equipped && item.definition.armorClass && item.definition.armorTypeId !== 4
+    ).length >= 1
+  );
 }
 
 let getMinimumBaseAC = (modifiers) => {
