@@ -144,7 +144,16 @@ const addJournalEntry = async (structure, sourcebook, namePrefix, name, content,
   console.log("JE: Entry");
   console.log(entry);
   if (entry) {
-    await JournalEntry.update({ _id: entry._id, content: insertRollTables(content) });
+    await JournalEntry.update({
+      _id: entry._id,
+      content: insertRollTables(content),
+      flags: {
+        vtta: {
+          name: name,
+          sceneId: sceneId,
+        },
+      },
+    });
     // not sure if returning the entry here is okay. perhaps fetchting the updated one is better
     return entry;
   } else {
@@ -179,11 +188,15 @@ const addJournalEntries = async (data, scenes) => {
 
   // create sub-entries for all scenes
   for (let s of data.scenes) {
+    // filter malformed entries out (note: should not be the case anymore)
     const entries = s.entries.filter((entry) => entry !== null);
     // get the created scene based on internal scene id
-    const VTTAID = s.id;
+    const VTTAID = s.sceneId;
+    console.log("VTTA Scene ID: " + VTTAID);
+    // find the corresponding created scene
     const scene = scenes.find(
-      (myScene) => myScene.data.flags.vtta && myScene.data.flags.vtta.id && myScene.data.flags.vtta.id === VTTAID // s.id is the vtta id
+      (myScene) =>
+        myScene.data.flags.vtta && myScene.data.flags.vtta.sceneId && myScene.data.flags.vtta.sceneId === VTTAID // s.id is the vtta id
     );
     // delete all VTTA created notes
     await scene.deleteEmbeddedEntity(
@@ -211,14 +224,6 @@ const addJournalEntries = async (data, scenes) => {
             y: position.y,
             iconSize: scene.data.grid,
           });
-          notes.push({
-            entryId: je.data._id,
-            flags: { vtta: { sceneId: VTTAID } },
-            icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
-            x: position.x * 1.15,
-            y: position.y * 0.85,
-            iconSize: scene.data.grid,
-          });
         });
       }
     }
@@ -234,7 +239,7 @@ const updateScene = async (scene, folder) => {
   let update = {
     flags: {
       vtta: {
-        id: scene.id,
+        sceneId: scene.sceneId,
         width: scene.width,
         height: scene.height,
         thumb: scene.thumb,
@@ -258,18 +263,6 @@ const updateScene = async (scene, folder) => {
     }
   }
 
-  // let update = {
-  //   id: scene.id,
-  //   width: scene.width,
-  //   height: scene.height,
-  //   backgroundColor: scene.backgroundColor,
-  // };
-  // if (scene.shiftX) update.shiftX = scene.shiftX;
-  // if (scene.shiftY) update.shiftY = scene.shiftY;
-  // if (scene.grid) update.grid = scene.grid;
-  // if (scene.gridDistance) update.gridDistance = scene.gridDistance;
-  // if (scene.gridType) update.gridType = scene.gridType;
-  // if (scene.globalLight) update.globalLight = scene.globalLight;
   await existing.update(update);
 
   // remove existing walls, add from import
@@ -361,7 +354,7 @@ const createScene = async (scene, folder) => {
     navigation: false,
     flags: {
       vtta: {
-        id: scene.id,
+        sceneId: scene.sceneId,
         width: scene.width,
         height: scene.height,
         thumb: scene.thumb,
@@ -394,42 +387,6 @@ const createScene = async (scene, folder) => {
       create[prop] = scene[prop];
     }
   }
-
-  // let createData = {
-  //   name: scene.name,
-  //   img: playerSrc,
-  //   thumb: thumb,
-  //   folder: folder._id,
-  //   width: scene.width,
-  //   height: scene.height,
-  //   backgroundColor: scene.backgroundColor,
-  //   globalLight: scene.globalLight ? scene.globalLight : true,
-  //   navigation: false,
-  // };
-
-  // // store the original dimensions in a flag to retain them on switching
-  // createData.flags = {
-  //   vtta: {
-  //     id: scene.id,
-  //     width: scene.width,
-  //     height: scene.height,
-  //     thumb: scene.thumb,
-  //   },
-  // };
-
-  // // enable map switching
-  // if (playerSrc && gmSrc) {
-  //   createData.flags.vtta.alt = {
-  //     GM: gmSrc,
-  //     Player: playerSrc,
-  //   };
-  // }
-
-  // if (scene.shiftX) createData.shiftX = scene.shiftX;
-  // if (scene.shiftY) createData.shiftY = scene.shiftY;
-  // if (scene.grid) createData.grid = scene.grid;
-  // if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
-  // if (scene.gridType) createData.gridType = scene.gridType;
 
   let existing = await Scene.create(create);
 

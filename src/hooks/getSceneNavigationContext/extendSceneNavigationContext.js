@@ -114,13 +114,20 @@ export default (html, contextOptions) => {
     callback: (li) => {
       const scene = game.scenes.get(li.data("sceneId"));
       let data = collectSceneData(scene);
+      if (typeof data === "string") {
+        window.vtta.notification.show(data);
+        return false;
+      }
+      console.log("Data collected for submission:");
+      console.log(data);
+      return uploadSceneSubmission(data);
     },
     condition: (li) => {
       const scene = game.scenes.get(li.data("sceneId"));
       return (
         scene.data.flags &&
         scene.data.flags.vtta &&
-        scene.data.flags.vtta.id &&
+        scene.data.flags.vtta.sceneId &&
         window.vtta &&
         window.vtta.pid !== undefined &&
         window.vtta.pid !== null
@@ -130,18 +137,22 @@ export default (html, contextOptions) => {
   });
 };
 
+const getSceneRelatedJournalEntries = (sceneId) => {
+  return game.journal.filter(
+    (je) => je.data.flags && je.data.flags.vtta && je.data.flags.vtta.sceneId && je.data.flags.vtta.sceneId === sceneId
+  );
+};
+
 /**
  * Prepares the scene data for upload to vttassets.com as a user-submission for walling/scene adjustments
  * @param {Scene} scene
  */
 const collectSceneData = (scene) => {
-  if (!scene.data.flags.vtta || !scene.data.flags.vtta.id) {
-    window.vtta.notification.show("Scene share failed: No VTTA imported scene");
-    return;
+  if (!scene.data.flags.vtta || !scene.data.flags.vtta.sceneId) {
+    return "Scene share failed: No VTTA imported scene";
   }
   if (!window.vtta.pid) {
-    window.vtta.notification.show("Scene share failed: No Collaborateur flag found");
-    return;
+    return "Scene share failed: No Collaborateur flag found";
   }
 
   /**
@@ -152,13 +163,7 @@ const collectSceneData = (scene) => {
    */
   const getNotes = (scene) => {
     // get all notes in the Journal related to this scene
-    let relatedJournalEntries = game.journal.filter(
-      (je) =>
-        je.data.flags &&
-        je.data.flags.vtta &&
-        je.data.flags.vtta.sceneId &&
-        je.data.flags.vtta.sceneId === scene.data.flags.vtta.id
-    );
+    let relatedJournalEntries = getSceneRelatedJournalEntries(scene.data.flags.vtta.sceneId);
 
     // get all notes placed on the map
     let notes = scene.data.notes
@@ -167,7 +172,10 @@ const collectSceneData = (scene) => {
       // .filter((note) => note.flags.vtta)
       .filter((note) => {
         let je = relatedJournalEntries.find((je) => je._id === note.entryId);
-        return !!(je && je.data.flags.vtta && je.data.flags.vtta.name);
+        const result = !!(je && je.data.flags.vtta && je.data.flags.vtta.name);
+        console.log("Note " + je.data.name + ": " + (result ? "IN" : "OUT"));
+        return result;
+        //return !!(je && je.data.flags.vtta && je.data.flags.vtta.name);
       })
       .map((note) => {
         let je = relatedJournalEntries.find((je) => je._id === note.entryId);
@@ -216,7 +224,7 @@ const collectSceneData = (scene) => {
 
   const data = {
     pid: window.vtta.pid,
-    id: scene.data.flags.vtta.id,
+    sceneId: scene.data.flags.vtta.sceneId,
     name: scene.data.name,
     // dimensions
     width: scene.data.width,
@@ -252,4 +260,109 @@ const collectSceneData = (scene) => {
     })),
   };
   return data;
+};
+
+const uploadSceneSubmission = (data) => {
+  //const API = 'https://www.vttassets.com/api/v2/dndbeyond/scene/submission'
+  const API = "http://localhost:3001/api/dndbeyond/scene/submission";
+  const URL = API + `?pid=${data.pid}&sceneId=${data.sceneId}`;
+
+  try {
+    fetch(URL)
+      .then((response) => response.json())
+      .then(async (json) => {
+        console.log("Response from API");
+        console.log(json);
+
+        if (json.status === "error") {
+          return window.vtta.notification.show(`<h1>Sorry!</h1><p>${json.message}</p>`);
+        }
+
+        const SUBMIT_BUTTON = "Submit Scene";
+        const CLOSE_BUTTON = "Close";
+
+        let username = game.settings.get("vtta-dndbeyond", "scene-submission-username");
+        if (username === "") {
+          username = json.patron.fullName;
+          game.settings.set("vtta-dndbeyond", "scene-submission-username", json.patron.fullName);
+        }
+
+        let changelog = "";
+
+        // construct the UI
+        let text = $(`<h1>Scene Submission</h1><p>When you hit submit, the scene adjustments like image dimensions, grid size and shift; wall, light and note information related to the imported Journal Entries are collected and submitted to vttassets.com for review. After approval, <b>your submission</b> will be used for everyone importing the same scene! Thank you for your contribution!</p>
+          <p class="vtta input sceneSubmission">
+            <label for="username">Scene submission username</label>
+            <input type="text" name="username" value="${username}" />
+          </p>
+          <p class="vtta input sceneSubmission">
+            <label for="changelog">Change description</label>
+            <input type="text" name="changelog" value="${changelog}" placeholder="Example: Adjusted map dimensions, placed Journal Entries"/>
+          </p>
+          <p>You ${
+            json.hasSubmitted
+              ? `<b>already submitted this map</b> and your submission will be updated`
+              : `never submitted this map`
+          }, there are <b>${json.numAcceptedSubmissions} accepted prior versions</b> of this map and <b>${
+          json.numOpenSubmissions
+        } in submissions queued for review</b>.
+          </p>
+          <p><b>Please note:</b> The scene submission username will e.g. be displayed as a Discord announcement when your submitted data is reviewed and approved. It is totally fine to use a pseudonym, but by pressing the "Submit Scene" button below, you are expressing your willingness that the aforementioned username will be publicly visible and that the submitted scene data can be made publicly available.</p>
+          <hr />`);
+
+        // when the user changes the value of the username on the form, we will
+        // save that to the config for future reference. We want everyone to feel good
+        // about submitting personal data
+        $('input[name="username"]', text).on("change paste keyup", (event) => {
+          username = event.currentTarget.value;
+        });
+
+        $('input[name="changelog"]', text).on("change paste keyup", (event) => {
+          changelog = event.currentTarget.value;
+        });
+
+        // Welcome - hidden on "Next"
+        let result = await window.vtta.hint.show(text, {
+          align: "CENTER",
+          buttons: [SUBMIT_BUTTON, CLOSE_BUTTON],
+          width: window.innerWidth * 0.5,
+        });
+
+        if (result === SUBMIT_BUTTON) {
+          console.log("Submitting Scene");
+          // set the user-filled in username into the game settings for future reference
+          game.settings.set("vtta-dndbeyond", "scene-submission-username", username);
+
+          const submissionData = {
+            meta: {
+              pid: data.pid,
+              sceneId: data.id,
+              username: username,
+              changelog: changelog,
+            },
+            scene: data,
+          };
+
+          console.log("SUbmitting data:");
+          console.log(submissionData);
+
+          // transmit the collected scene data alongside the meta information to the vttassets.com server
+          fetch(URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(submissionData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Scene updated successfully");
+            });
+        }
+      });
+  } catch (error) {
+    window.vtta.notification.show(
+      `<h1>Sorry!</h1><p>There was an error reaching vttassets.com to submit your scene data. Please try again later.</p>`
+    );
+  }
 };

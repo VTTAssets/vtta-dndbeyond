@@ -127,3 +127,19 @@
 #vtta-hints > div > div.buttons button {
   flex: 0 1 auto;
 }
+
+#vtta-hints p.input {
+  display: flex;
+  align-items: center;
+}
+
+#vtta-hints p.input label {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 30%;
+  font-weight: bold;
+}
+
+#vtta-hints p.input input {
+  background-color: rgb(255, 250, 234);
+}

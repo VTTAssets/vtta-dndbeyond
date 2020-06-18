@@ -180,4 +180,11 @@ export default function () {
     type: String,
     default: "1.0.0",
   });
+  // sets the user submission name for scene adjustments
+  game.settings.register("vtta-dndbeyond", "scene-submission-username", {
+    scope: "user",
+    config: false,
+    type: String,
+    default: "",
+  });
 }

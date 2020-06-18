@@ -57,7 +57,9 @@ const registerNotifications = () => {
           $("#vtta-hints").css("width", options.width ? options.width : 300);
 
           // construct the note
-          let note = $(`<div style="display: none">${message}<div class="buttons"></div></div>`);
+          let note = $(`<div style="display: none"></div>`);
+          $(note).append(message);
+          $(note).append('<div class="buttons"></div>');
           $("#vtta-hints").append(note);
           $(note).fadeIn(200);
 
