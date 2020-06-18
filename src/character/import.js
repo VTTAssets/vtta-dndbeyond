@@ -80,18 +80,26 @@ export default class CharacterImport extends Application {
   }
 
   /**
-   * Copies across some flags for existing items
+   * Copies across some flags for existing item
    * @param {*} items
    */
-  async copySupportedItemFlags(items) {
+  static async copySupportedItemFlags(originalItem, item) {
+    CharacterImport.copyFlagGroup("dynamiceffects", originalItem, item);
+    CharacterImport.copyFlagGroup("maestro", originalItem, item);
+    CharacterImport.copyFlagGroup("mess", originalItem, item);
+  }
+
+  /**
+   * Loops through a characters items and updates flags
+   * @param {*} items
+   */
+  async copySupportedCharacterItemFlags(items) {
     items.forEach((item) => {
       const originalItem = this.actorOriginal.items.find(
         (originalItem) => item.name === originalItem.name && item.type === originalItem.type
       );
       if (originalItem) {
-        CharacterImport.copyFlagGroup("dynamiceffects", originalItem, item);
-        CharacterImport.copyFlagGroup("maestro", originalItem, item);
-        CharacterImport.copyFlagGroup("mess", originalItem, item);
+        CharacterImport.copySupportedItemFlags(originalItem, item);
       }
     });
   }
@@ -490,7 +498,7 @@ export default class CharacterImport extends Application {
         }
 
         CharacterImport.showCurrentTask(html, "Copying existing flags");
-        await this.copySupportedItemFlags(items);
+        await this.copySupportedCharacterItemFlags(items);
 
         utils.log("Character items", "character");
         utils.log(items, "character");
