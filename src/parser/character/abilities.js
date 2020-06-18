@@ -30,18 +30,37 @@ export function getAbilities(data) {
     const setAbilities = utils
       .filterBaseModifiers(data, "set", `${ability.long}-score`, [null, "", "if not already higher"])
       .map((mod) => mod.value);
-    const setAbility = Math.max(...[0, ...setAbilities]);
-    const calculatedStat = overrideStat === 0 ? stat + bonusStat + bonus + abilityScoreMaxBonus : overrideStat;
+    const cappedBonusExp = /Maximum of (\d*)/i;
+    const cappedBonus = utils
+      .filterBaseModifiers(data, "bonus", `${ability.long}-score`, false)
+      .filter((mod) => mod.entityId === ability.id && mod.restriction && mod.restriction.startsWith("Maximum of "))
+      .reduce(
+        (prev, cur) => {
+          const restricted = cur.restriction ? cappedBonusExp.exec(cur.restriction) : undefined;
+          const max = restricted ? restricted[1] : 20;
+          return {
+            value: prev.value + cur.value,
+            cap: Math.max(prev.cap, max),
+          };
+        },
+        { value: 0 + abilityScoreMaxBonus, cap: 20 + abilityScoreMaxBonus }
+      );
 
-    // calculate value, mod and proficiency
-    result[ability.value].value = calculatedStat > setAbility ? calculatedStat : setAbility;
-    result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
-    result[ability.value].proficient =
+    const setAbility = Math.max(...[0, ...setAbilities]);
+    const calculatedStat = overrideStat === 0 ? stat + bonusStat + bonus + cappedBonus.value : overrideStat;
+    const maxAdjustedStat = Math.min(cappedBonus.cap, calculatedStat);
+    const overRiddenStat = maxAdjustedStat > setAbility ? maxAdjustedStat : setAbility;
+    const proficient =
       data.character.modifiers.class.find(
         (mod) => mod.subType === ability.long + "-saving-throws" && mod.type === "proficiency"
       ) !== undefined
         ? 1
         : 0;
+
+    // update value, mod and proficiency
+    result[ability.value].value = overRiddenStat;
+    result[ability.value].mod = utils.calculateModifier(result[ability.value].value);
+    result[ability.value].proficient = proficient;
   });
 
   return result;

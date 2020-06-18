@@ -162,7 +162,7 @@ let utils = {
         (modifier) =>
           modifier.type === type &&
           (subType !== null ? modifier.subType === subType : true) &&
-          restriction.includes(modifier.restriction)
+          (!restriction ? true : restriction.includes(modifier.restriction))
       );
   },
 
