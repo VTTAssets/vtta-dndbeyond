@@ -71,7 +71,7 @@ export default class CharacterImport extends Application {
     $(html).parent().parent().css("height", "auto");
   }
 
-  static async copyFlags(flagGroup, originalItem, targetItem) {
+  static async copyFlagGroup(flagGroup, originalItem, targetItem) {
     if (targetItem.flags === undefined) targetItem.flags = {};
     if (originalItem.flags && !!originalItem.flags[flagGroup]) {
       utils.log(`Copying ${flagGroup} for ${originalItem.name}`);
@@ -80,18 +80,26 @@ export default class CharacterImport extends Application {
   }
 
   /**
-   * Coies across some flags for existing items
+   * Copies across some flags for existing item
    * @param {*} items
    */
-  async copySupportedItemFlags(items) {
+  static async copySupportedItemFlags(originalItem, item) {
+    CharacterImport.copyFlagGroup("dynamiceffects", originalItem, item);
+    CharacterImport.copyFlagGroup("maestro", originalItem, item);
+    CharacterImport.copyFlagGroup("mess", originalItem, item);
+  }
+
+  /**
+   * Loops through a characters items and updates flags
+   * @param {*} items
+   */
+  async copySupportedCharacterItemFlags(items) {
     items.forEach((item) => {
       const originalItem = this.actorOriginal.items.find(
         (originalItem) => item.name === originalItem.name && item.type === originalItem.type
       );
       if (originalItem) {
-        CharacterImport.copyFlags("dynamiceffects", originalItem, item);
-        CharacterImport.copyFlags("maestro", originalItem, item);
-        CharacterImport.copyFlags("mess", originalItem, item);
+        CharacterImport.copySupportedItemFlags(originalItem, item);
       }
     });
   }
@@ -122,6 +130,7 @@ export default class CharacterImport extends Application {
                 const entry = await compendium.index.find((idx) => idx.name === item.name);
                 const existing = await compendium.getEntity(entry._id);
                 item._id = existing._id;
+                await CharacterImport.copySupportedItemFlags(existing, item);
                 await compendium.updateEntity(item);
                 return item;
               })
@@ -204,6 +213,7 @@ export default class CharacterImport extends Application {
           .map(async (item) => {
             const existingItem = await existingItems.find((existing) => item.name === existing.name);
             item._id = existingItem._id;
+            await CharacterImport.copySupportedItemFlags(existingItem, item);
             await Item.update(item);
             return item;
           })
@@ -490,7 +500,7 @@ export default class CharacterImport extends Application {
         }
 
         CharacterImport.showCurrentTask(html, "Copying existing flags");
-        await this.copySupportedItemFlags(items);
+        await this.copySupportedCharacterItemFlags(items);
 
         utils.log("Character items", "character");
         utils.log(items, "character");
