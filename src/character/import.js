@@ -130,6 +130,7 @@ export default class CharacterImport extends Application {
                 const entry = await compendium.index.find((idx) => idx.name === item.name);
                 const existing = await compendium.getEntity(entry._id);
                 item._id = existing._id;
+                await CharacterImport.copySupportedItemFlags(existing, item);
                 await compendium.updateEntity(item);
                 return item;
               })
@@ -212,6 +213,7 @@ export default class CharacterImport extends Application {
           .map(async (item) => {
             const existingItem = await existingItems.find((existing) => item.name === existing.name);
             item._id = existingItem._id;
+            await CharacterImport.copySupportedItemFlags(existingItem, item);
             await Item.update(item);
             return item;
           })
