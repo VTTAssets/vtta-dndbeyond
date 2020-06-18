@@ -71,7 +71,7 @@ export default class CharacterImport extends Application {
     $(html).parent().parent().css("height", "auto");
   }
 
-  static async copyFlags(flagGroup, originalItem, targetItem) {
+  static async copyFlagGroup(flagGroup, originalItem, targetItem) {
     if (targetItem.flags === undefined) targetItem.flags = {};
     if (originalItem.flags && !!originalItem.flags[flagGroup]) {
       utils.log(`Copying ${flagGroup} for ${originalItem.name}`);
@@ -80,7 +80,7 @@ export default class CharacterImport extends Application {
   }
 
   /**
-   * Coies across some flags for existing items
+   * Copies across some flags for existing items
    * @param {*} items
    */
   async copySupportedItemFlags(items) {
@@ -89,9 +89,9 @@ export default class CharacterImport extends Application {
         (originalItem) => item.name === originalItem.name && item.type === originalItem.type
       );
       if (originalItem) {
-        CharacterImport.copyFlags("dynamiceffects", originalItem, item);
-        CharacterImport.copyFlags("maestro", originalItem, item);
-        CharacterImport.copyFlags("mess", originalItem, item);
+        CharacterImport.copyFlagGroup("dynamiceffects", originalItem, item);
+        CharacterImport.copyFlagGroup("maestro", originalItem, item);
+        CharacterImport.copyFlagGroup("mess", originalItem, item);
       }
     });
   }
