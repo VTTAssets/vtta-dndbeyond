@@ -161,7 +161,7 @@ let buildNPC = async (data) => {
       utils.log("Retrieving spells:");
       utils.log(data.flags.vtta.dndbeyond.spells);
       let spells = await retrieveSpells(data.flags.vtta.dndbeyond.spells);
-      spells = spells.map((spell) => spell.data);
+      spells = spells.filter((spell) => spell !== null).map((spell) => spell.data);
       await npc.createEmbeddedEntity("OwnedItem", spells);
     }
   } else {

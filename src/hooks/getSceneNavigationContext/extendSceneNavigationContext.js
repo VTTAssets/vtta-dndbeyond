@@ -172,6 +172,7 @@ const collectSceneData = (scene) => {
       // .filter((note) => note.flags.vtta)
       .filter((note) => {
         let je = relatedJournalEntries.find((je) => je._id === note.entryId);
+        if (!je) return false;
         const result = !!(je && je.data.flags.vtta && je.data.flags.vtta.name);
         console.log("Note " + je.data.name + ": " + (result ? "IN" : "OUT"));
         return result;

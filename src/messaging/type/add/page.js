@@ -222,7 +222,7 @@ const addJournalEntries = async (data, scenes) => {
             icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
             x: position.x,
             y: position.y,
-            iconSize: scene.data.grid,
+            iconSize: Math.round(scene.data.grid * 0.75),
           });
         });
       }

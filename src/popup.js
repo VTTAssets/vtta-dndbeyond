@@ -10,24 +10,22 @@ export default async () => {
     return true;
   }
 
-  // set the version number for the popup to be shown to this version
-  game.settings.set("vtta-dndbeyond", "popup-version", game.modules.get("vtta-dndbeyond").data.version);
-
   // display the popup for this release
-  return window.vtta.hint.show(
+  let result = await window.vtta.hint.show(
     `<h1>VTTA D&D Beyond Integration v${game.modules.get("vtta-dndbeyond").data.version}</h1>
-        <p>Please note that D&D Beyond has removed access to the URLs we used get the raw character data for the imports. Fear not! We found a (temporary?) solution:
-        <p>Instead of <code>https://www.dndbeyond.com/[profile]/characters/[characterName]/json</code> you can now use the following URL to retrieve the JSON:</p>
-        <ol>
-        <li><code>https://character-service.dndbeyond.com/character/v3/character/<b>[number]</b></code></li>
-        </ol>
-        <p>Replace <code><b>[number]</b></code> with the number found at the end of the URL of your D&D Beyond character sheet, e.g.
-        <p style="text-align: center"><code>https://www.dndbeyond.com/profile/SolFolango/characters/<b>17238039</b></code></p><p> yields</p> <p style="text-align: center"><code>https://character-service.dndbeyond.com/character/v3/character/<b>17238039</b></code></p>
-        
-        <p><b>Note:</b> You need to switch your Character Privacy to "Public". You can do this by entering the D&D Beyond editing mode, head to the first page (Home) and change the setting at the very bottom.</p>
-        <hr />
-        <p>Holding ALT while clicking on the [B] on the Foundry character sheet (and if you inserted your character sheet URL in the import dialog), you will be automatically redirected to the correct, new URL as usual.</p>
-        <p>Please <a href="https://discord.gg/RjW74a3">join the Discord</a> to stay up-to-date on these changes, <a href="https://www.dndbeyond.com/forums/d-d-beyond-general/d-d-beyond-feedback/71065-removed-undocumented-api-endpoints-regarding" target="_blank">my thread on the official D&D Beyond forums</a> is worth a visit, too.</p>
+    <h2>Character Import</h2>
+    <p>Please note that the character import URL changed to</p>
+    <p><code>https://www.dndbeyond.com/profile/SolFolango/characters/<b>[number]</b></code></p>
+    <p>You can find the number at the end of the URL from your regular D&amp;D Beyond character sheet.</p>
+    <h2>Module Import</h2>
+    <ol>
+      <li>Re-import of scenes will update existing Journal Entries and Scenes instead of generating duplicates</li>
+      <li>All scenes have their respective Journal Entries assigned now and will import correctly.</li>
+      <li>Numbering of the Journal Entry <b>names</b> is harmonized: [1K, 2K, ...], [A, B, ...] or [Area 1, Area 2, ...] will now changed to a numeric ordering: [01, 02, 03, ...].</p>
+      <li>Map Notes based on the imported Journal Entries will now be displayed with a numeric icon corresponding to the harmonized numbering scheme.</li>
+    </ol>
+    <h2>Scene Sharing</h2>
+    <p>While logged in and being a Patreon, you can access Scene Sharing in the context menu of the scene navigation on top of the screen. You can use that to submit your scene adjustments for review and for a possible update for future imports of that scene. Walls, Lights, Map Notes and grid/ image dimensions adjustments will be transferred.</p>
     <hr />
        `,
     {
@@ -37,8 +35,13 @@ export default async () => {
         selector: '#sidebar-tabs a[data-tab="compendium"]',
         event: "click",
       },
-      buttons: ["Close"],
+      buttons: ["Dismiss until updated", "Close"],
       width: window.innerWidth / 2,
     }
   );
+
+  if (result !== "Close") {
+    // set the version number for the popup to be shown to this version
+    game.settings.set("vtta-dndbeyond", "popup-version", game.modules.get("vtta-dndbeyond").data.version);
+  }
 };
