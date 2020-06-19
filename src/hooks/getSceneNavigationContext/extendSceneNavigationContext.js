@@ -149,10 +149,10 @@ const getSceneRelatedJournalEntries = (sceneId) => {
  */
 const collectSceneData = (scene) => {
   if (!scene.data.flags.vtta || !scene.data.flags.vtta.sceneId) {
-    return "Scene share failed: No VTTA imported scene";
+    return "Scene submission failed: No VTTA imported scene";
   }
   if (!window.vtta.pid) {
-    return "Scene share failed: No Collaborateur flag found";
+    return "Scene submission failed: No Collaborateur flag found";
   }
 
   /**
@@ -204,15 +204,6 @@ const collectSceneData = (scene) => {
       .map((note) => ({ label: note.label, positions: note.positions }));
 
     return notes;
-
-    // let indices = notes.reduce((indices, note) => {
-    //   if (!indices.includes(note.index)) indices.push(index);
-    //   return indices.sort();
-    // }, []);
-    // let result = [];
-    // for (let index of indices) {
-    //   let indexNotes = notes.filter((note) => NodeIterator.index === index).map();
-    // }
   };
 
   let notes;
@@ -264,8 +255,8 @@ const collectSceneData = (scene) => {
 };
 
 const uploadSceneSubmission = (data) => {
-  //const API = 'https://www.vttassets.com/api/v2/dndbeyond/scene/submission'
-  const API = "http://localhost:3001/api/dndbeyond/scene/submission";
+  const API = "https://www.vttassets.com/api/v2/dndbeyond/scene/submission";
+  //const API = "http://localhost:3001/api/dndbeyond/scene/submission";
   const URL = API + `?pid=${data.pid}&sceneId=${data.sceneId}`;
 
   try {
@@ -280,7 +271,7 @@ const uploadSceneSubmission = (data) => {
         }
 
         const SUBMIT_BUTTON = "Submit Scene";
-        const CLOSE_BUTTON = "Close";
+        const CANCEL_BUTTON = "Cancel";
 
         let username = game.settings.get("vtta-dndbeyond", "scene-submission-username");
         if (username === "") {
@@ -325,7 +316,7 @@ const uploadSceneSubmission = (data) => {
         // Welcome - hidden on "Next"
         let result = await window.vtta.hint.show(text, {
           align: "CENTER",
-          buttons: [SUBMIT_BUTTON, CLOSE_BUTTON],
+          buttons: [CANCEL_BUTTON, SUBMIT_BUTTON],
           width: window.innerWidth * 0.5,
         });
 
@@ -358,6 +349,9 @@ const uploadSceneSubmission = (data) => {
             .then((response) => response.json())
             .then((data) => {
               console.log("Scene updated successfully");
+              window.vtta.notification.show(
+                "<h1>Scene submitted</h1><p><b>Thank you!</b> I will review your submission soon."
+              );
             });
         }
       });
