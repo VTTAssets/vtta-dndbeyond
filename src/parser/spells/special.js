@@ -66,6 +66,10 @@ export function fixSpells(ddb, items) {
         spell.data.scaling = { mode: "level", formula: "2d10" };
         break;
       }
+      case "Produce Flame":
+        spell.data.range = { value: 30, units: "ft", long: null };
+        spell.data.target.type = "creature"
+        break;
       // no default
     }
   });
