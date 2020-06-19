@@ -122,7 +122,7 @@ export function getCharacterSpells(ddb, character) {
       items[duplicateSpell] = parseSpell(spell, character);
     } else {
       // we'll emit a console message if it doesn't match this case for future debugging
-      utils.log(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
+      utils.log(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.name}.`);
     }
   });
 
