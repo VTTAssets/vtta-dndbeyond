@@ -1,11 +1,94 @@
-/**
- * Notification area
- */
+/* Notification area */
+#vtta-notifications {
+  display: flex;
+  flex-direction: column-reverse;
 
+  position: fixed;
+  width: 200px;
+  margin: 0;
+  padding: 0;
+  z-index: 160;
+}
+
+/* Single notification */
+#vtta-notifications > div {
+  box-shadow: 0 0 20px #000;
+  flex: 0 0 auto;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 4px solid rgb(31, 31, 31);
+  border-radius: 4px;
+  background: rgb(41, 41, 41);
+}
+
+/* Hint area */
+
+#vtta-hints {
+  display: flex;
+  position: fixed;
+  width: 300px;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  z-index: 170;
+  flex-direction: column;
+}
+
+/* Single Hint */
+#vtta-hints > div {
+  box-shadow: 0 0 20px #000;
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 4px solid rgb(31, 31, 31);
+  border-radius: 4px;
+  background: rgb(41, 41, 41);
+}
+
+/* General styling */
 #vtta-hints,
 #vtta-notifications {
   color: rgb(255, 250, 234);
   font-family: "Roboto", Helvetica, sans-serif;
+  font-size: 0.8rem;
+  line-height: 1rem;
+}
+
+#vtta-notifications h1,
+#vtta-notifications h2,
+#vtta-hints h1,
+#vtta-hints h2 {
+  font-family: "Roboto Condensed", Helvetica, sans-serif;
+  color: rgba(199, 171, 12, 0.801);
+  font-weight: bold;
+  line-height: 1.2em;
+}
+
+#vtta-hints a,
+#vtta-notifications a {
+  color: #d27707;
+  text-decoration: none;
+  margin-right: 4px;
+}
+
+#vtta-hints a:after,
+#vtta-notifications a:after {
+  content: "";
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAbdEVYdFRpdGxlAAogICAgZXh0ZXJuYWwgbGluawogIBOt1cQAAAEVSURBVDiN3ZIxTsNAEEXfrA0ukpakgBMYlHAEhKDiHjlBJEepQoFliwtAx0ECnCG2hOgDCog6ARLD0sTILLFj5I5frfRn38zfHYk950TDJbCNoVb4Luk56m16aAnMmlRKw8UqyC9oMA8R3cvzJfIcbXYvUt5kqszlH53VxhXwUgkU92tN/ZHcAFsmrDRo1K03dJIMARe4ty2rnX2zUqBRt94QtbhG2FtCDl1/Nsl+wFpQ3K81xVrcLiF3YtkHrj+bpH4rmIda5NReH2cxRL7jHLn+9Nmsawdvg8KJbNEKwcrGyastBO2eT58+bXVsxlnZtMgE2D97fSzy04X+80Lm6R+DJPKcMbBTiaIZK6ADPFSBaEXnC69EXlRr7fruAAAAAElFTkSuQmCC")
+    no-repeat;
+  background-size: contain;
+  margin-left: 5px;
+  -webkit-transform: translateY(1px);
+  transform: translateY(1px);
+}
+
+#vtta-hints a:hover,
+#vtta-notifications a:hover {
+  color: #f88d0a;
 }
 
 #vtta-hints hr,
@@ -30,88 +113,6 @@
   font-family: Roboto Condensed, Roboto, Helvetica, sans-serif;
 }
 
-#vtta-notifications > div {
-  box-shadow: 0 0 20px #000;
-  flex: 0 0 auto;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 4px solid rgb(31, 31, 31);
-  border-radius: 4px;
-  background: rgb(41, 41, 41);
-}
-
-#vtta-hints,
-#vtta-notifications {
-  color: rgb(255, 250, 234);
-  font-family: "Roboto", Helvetica, sans-serif;
-}
-
-#vtta-hints p,
-#vtta-notifications p,
-#vtta-hints li #vtta-notifications li {
-  font-family: "Roboto", Helvetica, sans-serif;
-  font-size: 0.8rem;
-  line-height: 1rem;
-}
-
-#vtta-notifications {
-  display: flex;
-  flex-direction: column-reverse;
-
-  position: fixed;
-  width: 200px;
-  margin: 0;
-  padding: 0;
-  z-index: 160;
-}
-
-/**
- * Hints
- */
-
-#vtta-hints {
-  display: flex;
-  position: fixed;
-  width: 300px;
-  height: auto;
-  margin: 0;
-  padding: 0;
-  z-index: 170;
-  flex-direction: column;
-}
-#vtta-hints > div {
-  box-shadow: 0 0 20px #000;
-  flex: 0 0 auto;
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 4px solid rgb(31, 31, 31);
-  border-radius: 4px;
-  background: rgb(41, 41, 41);
-}
-
-#vtta-hints > div {
-  box-shadow: 0 0 20px #000;
-  flex: 0 0 auto;
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 4px solid rgb(31, 31, 31);
-  border-radius: 4px;
-  background: rgb(41, 41, 41);
-  color: rgb(255, 250, 234);
-  font-family: "Roboto", Helvetica, sans-serif;
-}
-
-/* General styling */
-#vtta-notifications > div h1,
-#vtta-notifications > div h2,
-#vtta-hints > div h1,
-#vtta-hints > div h2 {
-  font-family: "Roboto Condensed", Helvetica, sans-serif;
-  color: rgba(199, 171, 12, 0.801);
-  font-weight: bold;
-}
 #vtta-notifications > div b,
 #vtta-hints > div b {
   color: rgba(199, 171, 12, 0.801);
