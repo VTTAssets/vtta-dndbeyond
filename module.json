@@ -4,7 +4,7 @@
   "description": "Bringing your licensed content from D&D Beyond into Foundry VTT",
   "version": "3.0.13",
   "minimumCoreVersion": "0.6.0",
-  "compatibleCoreVersion": "0.6.3",
+  "compatibleCoreVersion": "0.6.2",
   "author": "Sebastian Will",
   "authors": [
     {
