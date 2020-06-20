@@ -93,6 +93,15 @@ export default function () {
   });
 
   /** Character update settings, stored per user and non-configurable in the settings screen */
+  game.settings.register("vtta-dndbeyond", "character-update-policy-new-only", {
+    name: "vtta-dndbeyond.character-update-policy-new-only.name",
+    hint: "vtta-dndbeyond.character-update-policy-new-only.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: false,
+  });
+
   game.settings.register("vtta-dndbeyond", "character-update-policy-class", {
     name: "vtta-dndbeyond.character-update-policy-class.name",
     hint: "vtta-dndbeyond.character-update-policy-class.hint",
@@ -119,6 +128,7 @@ export default function () {
     type: Boolean,
     default: true,
   });
+
   game.settings.register("vtta-dndbeyond", "character-update-policy-equipment", {
     name: "vtta-dndbeyond.character-update-policy-equipment.name",
     hint: "vtta-dndbeyond.character-update-policy-equipment.hint",
@@ -127,6 +137,7 @@ export default function () {
     type: Boolean,
     default: true,
   });
+
   game.settings.register(
     "vtta-dndbeyond",
     "character-update-policy-inventory", // = consumable, tool & loot
