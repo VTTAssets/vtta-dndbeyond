@@ -22,7 +22,11 @@ let getProperties = (data) => {
   let result = {};
   DICTIONARY.weapon.properties.forEach((property) => {
     if (data.definition.properties && Array.isArray(data.definition.properties)) {
-      result[property.value] = data.definition.properties.find((prop) => prop.name === property.name) !== undefined;
+      result[property.value] = data.definition.properties.some((prop) => prop.name === property.name);
+    }
+    if (data.definition.grantedModifiers && Array.isArray(data.definition.grantedModifiers)) {
+      result[property.value] = data.definition.grantedModifiers
+        .some((prop) => prop.type === "weapon-property" && prop.friendlySubtypeName === property.name);
     }
   });
   return result;
