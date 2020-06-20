@@ -68,7 +68,7 @@ export function fixSpells(ddb, items) {
       }
       case "Produce Flame":
         spell.data.range = { value: 30, units: "ft", long: null };
-        spell.data.target.type = "creature"
+        spell.data.target.type = "creature";
         break;
       // no default
     }
