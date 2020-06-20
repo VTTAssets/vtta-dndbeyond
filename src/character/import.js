@@ -21,6 +21,18 @@ const gameFolderLookup = [
   },
 ];
 
+const getCharacterUpdatePolicyTypes = () => {
+  let itemTypes = [];
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) itemTypes.push("class");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) itemTypes.push("feat");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) itemTypes.push("weapon");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) itemTypes.push("equipment");
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
+    validItemTypes = validItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
+  if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) itemTypes.push("spell");
+  return itemTypes;
+};
+
 /**
  * Returns a combined array of all items to process, filtered by the user's selection on what to skip and what to include
  * @param {object} result object containing all character items sectioned as individual properties
@@ -28,15 +40,7 @@ const gameFolderLookup = [
  */
 const filterItemsByUserSelection = (result, sections) => {
   let items = [];
-
-  let validItemTypes = [];
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) validItemTypes.push("class");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) validItemTypes.push("feat");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) validItemTypes.push("weapon");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) validItemTypes.push("equipment");
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
-    validItemTypes = validItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
-  if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) validItemTypes.push("spell");
+  const validItemTypes = getCharacterUpdatePolicyTypes();
 
   for (const section of sections) {
     items = items.concat(result[section]).filter((item) => validItemTypes.includes(item.type));
@@ -268,14 +272,7 @@ export default class CharacterImport extends Application {
    * - spell
    */
   async clearItemsByUserSelection() {
-    let invalidItemTypes = [];
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-class")) invalidItemTypes.push("class");
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-feat")) invalidItemTypes.push("feat");
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) invalidItemTypes.push("weapon");
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) invalidItemTypes.push("equipment");
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
-      invalidItemTypes = invalidItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
-    if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) invalidItemTypes.push("spell");
+    const invalidItemTypes = getCharacterUpdatePolicyTypes();
 
     // collect all items belonging to one of those inventory item categories
     let ownedItems = this.actor.getEmbeddedCollection("OwnedItem");
