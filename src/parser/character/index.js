@@ -95,7 +95,7 @@ export default function getCharacter(ddb) {
   character.data.attributes.spelldc = getSpellDC(ddb, character);
 
   // resources
-  character.data.resources = getResources(ddb);
+  character.data.resources = getResources(ddb, character);
 
   // details
   character.data.details.background = getBackground(ddb);

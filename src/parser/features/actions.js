@@ -48,12 +48,22 @@ function martialArtsDamage(ddb, action) {
   }
 }
 
-function getLimitedUse(action) {
-  if (action.limitedUse && action.limitedUse.maxUses) {
+function getLimitedUse(action, character) {
+  if (action.limitedUse && (action.limitedUse.maxUses || action.limitedUse.statModifierUsesId)) {
     const resetType = DICTIONARY.resets.find((type) => type.id === action.limitedUse.resetType);
+
+    let maxUses;
+    if (action.limitedUse.statModifierUsesId) {
+      const ability = DICTIONARY.character.abilities.find(
+        (ability) => ability.id === action.limitedUse.statModifierUsesId
+      ).value;
+      maxUses = character.data.abilities[ability].mod;
+    } else {
+      maxUses = action.limitedUse.maxUses;
+    }
     return {
-      value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
-      max: action.limitedUse.maxUses,
+      value: maxUses - action.limitedUse.numberUsed,
+      max: maxUses,
       per: resetType ? resetType.value : "",
     };
   } else {
@@ -65,7 +75,7 @@ function getDescription(ddb, character, action) {
   const snippet = action.snippet ? parseTemplateString(ddb, character, action.snippet, action) : "";
   const description = action.description ? parseTemplateString(ddb, character, action.description, action) : "";
   return {
-    value: description !== "" ? description + ((snippet !== "") ? "<h3>Summary</h3>" + snippet : "") : snippet,
+    value: description !== "" ? description + (snippet !== "" ? "<h3>Summary</h3>" + snippet : "") : snippet,
     chat: snippet,
     unidentified: "",
   };
@@ -155,7 +165,7 @@ function getAttackAction(ddb, character, action) {
       weapon.data.damage = martialArtsDamage(ddb, action);
     }
 
-    weapon.data.uses = getLimitedUse(action);
+    weapon.data.uses = getLimitedUse(action, character);
   } catch (err) {
     utils.log(
       `Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`,
@@ -239,7 +249,7 @@ function getOtherActions(ddb, character, items) {
       };
       feat.data.activation = getActivation(action);
       feat.data.description = getDescription(ddb, character, action);
-      feat.data.uses = getLimitedUse(action);
+      feat.data.uses = getLimitedUse(action, character);
 
       return feat;
     });

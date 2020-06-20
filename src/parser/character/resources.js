@@ -1,14 +1,26 @@
-export function getResources(data) {
+import DICTIONARY from "../dictionary.js";
+
+export function getResources(data, character) {
   // get all resources
   let resources = [data.character.actions.race, data.character.actions.class, data.character.actions.feat]
     .flat()
     // let resources = data.character.actions.class
-    .filter((action) => action.limitedUse && action.limitedUse.maxUses)
+    .filter((action) => action.limitedUse && (action.limitedUse.maxUses || action.limitedUse.statModifierUsesId))
     .map((action) => {
+      let maxUses;
+      if (action.limitedUse.statModifierUsesId) {
+        const ability = DICTIONARY.character.abilities.find(
+          (ability) => ability.id === action.limitedUse.statModifierUsesId
+        ).value;
+        maxUses = character.data.abilities[ability].mod;
+      } else {
+        maxUses = action.limitedUse.maxUses;
+      }
+
       return {
         label: action.name,
-        value: action.limitedUse.maxUses - action.limitedUse.numberUsed,
-        max: action.limitedUse.maxUses,
+        value: maxUses - action.limitedUse.numberUsed,
+        max: maxUses,
         sr: action.limitedUse.resetType === 1,
         lr: action.limitedUse.resetType === 1 || action.limitedUse.resetType === 2,
       };
