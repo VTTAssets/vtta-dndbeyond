@@ -28,7 +28,7 @@ const getCharacterUpdatePolicyTypes = () => {
   if (game.settings.get("vtta-dndbeyond", "character-update-policy-weapon")) itemTypes.push("weapon");
   if (game.settings.get("vtta-dndbeyond", "character-update-policy-equipment")) itemTypes.push("equipment");
   if (game.settings.get("vtta-dndbeyond", "character-update-policy-inventory"))
-    validItemTypes = validItemTypes.concat(["consumable", "tool", "loot", "backpack"]);
+    itemTypes = itemTypes.concat(["consumable", "tool", "loot", "backpack"]);
   if (game.settings.get("vtta-dndbeyond", "character-update-policy-spell")) itemTypes.push("spell");
   return itemTypes;
 };
