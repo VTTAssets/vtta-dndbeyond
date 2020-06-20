@@ -288,6 +288,7 @@ const DICTIONARY = {
       { name: "Antimatter Rifle", type: "Weapon", subType: "Martial Weapon" },
       { name: "Laser Rifle", type: "Weapon", subType: "Martial Weapon" },
       { name: "Double-Bladed Scimitar", type: "Weapon", subType: "Martial Weapon" },
+      { name: "Revenant Double-Bladed Scimitar", type: "Weapon", subType: "Martial Weapon" },
       { name: "Ammunition", type: "Weapon", subType: "Simple Weapon" },
 
       // Tools and Instruments and Stuff

@@ -82,6 +82,10 @@ let parseMatch = (ddb, character, match, feature) => {
     }
   }
 
+  if (result.includes("characterlevel")) {
+    result = result.replace("characterlevel", character.flags.vtta.dndbeyond.totalLevels);
+  }
+
   if (result.includes("proficiency")) {
     const profBonus = character.data.attributes.prof;
     result = result.replace("proficiency", profBonus);
