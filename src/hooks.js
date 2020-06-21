@@ -16,7 +16,7 @@ import extendSceneNavigationContext from "./hooks/getSceneNavigationContext/exte
 // other hooks
 import addFolderLabel from "./hooks/renderSidebarTab/addFolderLabel.js";
 import linkImages from "./hooks/renderJournalSheet/linkImages.js";
-import { tutorialSetup, tutorialConnectToFoundry } from "./tutorial/index.js";
+import { tutorialSetup } from "./tutorial/index.js";
 import showPopup from "./popup.js";
 import checkVersion from "./hooks/init/checkVersion.js";
 import checkElectron from "./hooks/ready/checkElectron.js";

@@ -47,4 +47,5 @@ export default async () => {
     // set the version number for the popup to be shown to this version
     game.settings.set("vtta-dndbeyond", "popup-version", game.modules.get("vtta-dndbeyond").data.version);
   }
+  return result;
 };

@@ -136,13 +136,9 @@ const addJournalEntry = async (structure, sourcebook, namePrefix, name, content,
   };
 
   const folder = await getFolder(structure, "JournalEntry", sourcebook);
-  console.log("Folder: ");
-  console.log(folder);
   let entry = game.journal.find(
     (entry) => entry.data.folder === folder.data._id && entry.name === namePrefix + " " + cleanLabel(name)
   );
-  console.log("JE: Entry");
-  console.log(entry);
   if (entry) {
     await JournalEntry.update({
       _id: entry._id,
@@ -192,14 +188,13 @@ const addJournalEntries = async (data, scenes) => {
     const entries = s.entries.filter((entry) => entry !== null);
     // get the created scene based on internal scene id
     const VTTAID = s.sceneId;
-    console.log("VTTA Scene ID: " + VTTAID);
     // find the corresponding created scene
     const scene = scenes.find(
       (myScene) =>
         myScene.data.flags.vtta && myScene.data.flags.vtta.sceneId && myScene.data.flags.vtta.sceneId === VTTAID // s.id is the vtta id
     );
     // delete all VTTA created notes
-    await scene.deleteEmbeddedEntity(
+    scene.deleteEmbeddedEntity(
       "Note",
       scene
         .getEmbeddedCollection("Note")
@@ -212,8 +207,7 @@ const addJournalEntries = async (data, scenes) => {
     for (let [index, entry] of entries.entries()) {
       const prefix = ("" + (index + 1)).padStart(2, "0");
       let je = await addJournalEntry([data.title, scene.name], data.book, prefix, entry.name, entry.content, VTTAID);
-      console.log("Position: ");
-      console.log(entry.position);
+
       if (entry.positions) {
         entry.positions.forEach((position) => {
           notes.push({
@@ -227,7 +221,7 @@ const addJournalEntries = async (data, scenes) => {
         });
       }
     }
-    console.log("Placing entry on scene");
+
     if (notes.length > 0) scene.createEmbeddedEntity("Note", notes);
   }
 };
@@ -258,7 +252,7 @@ const updateScene = async (scene, folder) => {
     "globalLight",
   ];
   for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
-    if (!!scene[prop]) {
+    if (scene[prop]) {
       update[prop] = scene[prop];
     }
   }
@@ -301,9 +295,9 @@ const createScene = async (scene, folder) => {
 
   // upload player map
   let targetFilename = scene.playerLocal.replace(/\//g, "-").replace(".webp", "");
-  if (uploadDirectory === SCENE_FORMAT_ORIG) {
+  if (uploadFileFormat === SCENE_FORMAT_ORIG) {
     // replace webp with the desired file extension
-    //&targetFilename.replace(".webp", ""); //"." + scene.playerSrc.split(".").pop());
+    // &targetFilename.replace(".webp", ""); //"." + scene.playerSrc.split(".").pop());
     playerSrc = await utils.uploadImage(scene.playerSrc, uploadDirectory, targetFilename);
   } else {
     playerSrc = await utils.uploadImage(
@@ -317,7 +311,7 @@ const createScene = async (scene, folder) => {
   // upload GM map
   if (UNLOCK_GM_MAPS && scene.gmSrc && scene.gmLocal) {
     let targetFilename = scene.gmLocal.replace(/\//g, "-").replace(".webp", "");
-    switch (uploadDirector) {
+    switch (uploadDirectory) {
       case SCENE_FORMAT_ORIG:
         gmSrc = await utils.uploadImage(scene.gmSrc, uploadDirectory, targetFilename);
         break;
@@ -383,7 +377,7 @@ const createScene = async (scene, folder) => {
     "globalLight",
   ];
   for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
-    if (!!scene[prop]) {
+    if (scene[prop]) {
       create[prop] = scene[prop];
     }
   }
@@ -424,7 +418,7 @@ const addScenes = async (data) => {
       scenes.push(createScene(scene, folder));
     }
   }
-  return await Promise.all(scenes);
+  return Promise.all(scenes);
 };
 
 const addRollTable = async (table, folder) => {

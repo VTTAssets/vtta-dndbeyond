@@ -1,7 +1,6 @@
 const onSocketMessage = (sender, data) => {
   switch (data.action) {
     case "showImage": {
-      console.log(data);
       const src = data.src;
       const type = data.type.toLowerCase();
 
