@@ -180,6 +180,11 @@ class EventPort {
         // display the connection version to Foundry
         if (body && body.version) {
           window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");
+          window.vtta.isConnected = true;
+          window.vtta.pid = body.pid;
+
+          // display an indicator to the user that the connection is established
+          $("#players").find("h3").addClass("vttaConnected");
         }
         // answer back to the extensions wanting to establish communications
         this.send("ping").then((response) => utils.log(response, "communication"));

@@ -8,9 +8,7 @@ const queryId = async () => {
             ...new Set(
               game.scenes.active.data.tokens
                 .filter((token) => {
-                  return (
-                    token.actorId === actor.id && token.name !== actor.name
-                  );
+                  return token.actorId === actor.id && token.name !== actor.name;
                 })
                 .map((token) => token.name)
             ),
@@ -23,9 +21,6 @@ const queryId = async () => {
         aliases: aliases,
       };
     });
-
-  // display an indicator to the user that the connection is established
-  $("#players").find("h3").addClass("vttaConnected");
 
   return {
     user: {

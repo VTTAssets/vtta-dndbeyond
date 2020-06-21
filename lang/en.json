@@ -35,5 +35,10 @@
   "vtta-dndbeyond.scenes.player-enable": "Enable Player Map",
   "vtta-dndbeyond.scenes.player-enabled": "Player Map",
   "vtta-dndbeyond.scenes.gm-enable": "Enable GM Map",
-  "vtta-dndbeyond.scenes.gm-enabled": "GM Map"
+  "vtta-dndbeyond.scenes.gm-enabled": "GM Map",
+  "vtta-dndbeyond.scenes.share": "Submit Scene",
+  "vtta-dndbeyond.scene-format.name": "Scene image format",
+  "vtta-dndbeyond.scene-format.hint": "Sets the scene image format. WEBP is recommended due to smaller file size and faster loading speeds.",
+  "vtta-dndbeyond.scene-format.0": "WEBP (smaller file sizes)",
+  "vtta-dndbeyond.scene-format.1": "PNG/JPEG (original, larger file sizes)"
 }

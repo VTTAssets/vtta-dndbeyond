@@ -16,10 +16,14 @@ import extendSceneNavigationContext from "./hooks/getSceneNavigationContext/exte
 // other hooks
 import addFolderLabel from "./hooks/renderSidebarTab/addFolderLabel.js";
 import linkImages from "./hooks/renderJournalSheet/linkImages.js";
-import startTutorial from "./tutorial/index.js";
+import { tutorialSetup } from "./tutorial/index.js";
 import showPopup from "./popup.js";
 import checkVersion from "./hooks/init/checkVersion.js";
 import checkElectron from "./hooks/ready/checkElectron.js";
+import displayConnectionIndicator from "./hooks/renderPlayerList/displayConnectionIndicator.js";
+
+// renderNoteConfig
+import addNumberedIcons from "./hooks/renderNoteConfig/addNumberedIcons.js";
 
 // socket messaging
 import onSocketMessage from "./hooks/socket/onSocketMessage.js";
@@ -61,7 +65,7 @@ export function onceReady() {
     // send a notification to dndbeyond that it should update the actor data
     Hooks.on("preUpdateActor", com.updateActorHP);
 
-    showPopup().then(() => startTutorial());
+    showPopup().then(() => tutorialSetup());
   }, 500);
 }
 
@@ -90,4 +94,13 @@ export function renderJournalSheet(sheet, html, data) {
 export function getSceneNavigationContext(html, contextItems) {
   extendSceneNavigationContext(html, contextItems);
 }
+
+export function renderPLayerList(app, html) {
+  displayConnectionIndicator(app, html);
+}
+
+export function renderNoteConfig(app, html, data) {
+  addNumberedIcons(app, html, data);
+}
+
 /* eslint-enable no-unused-vars */

@@ -5,8 +5,13 @@ const MARGIN = 10;
 
 const registerNotifications = () => {
   // register the notification global object
-  $("body").append(`<div id="vtta-notifications"></div>`);
-  $("body").append(`<div id="vtta-hints"></div>`);
+
+  if ($("#vtta-notifications").length === 0) {
+    $("body").append(`<div id="vtta-notifications"></div>`);
+  }
+  if ($("#vtta-hints").length === 0) {
+    $("body").append(`<div id="vtta-hints"></div>`);
+  }
 
   window.vtta = window.vtta || {
     notification: {
@@ -20,7 +25,7 @@ const registerNotifications = () => {
         // prettier-ignore
         $("#vtta-notifications").css("bottom", $("#players").height() + (2 * MARGIN));
 
-        let note = $(`<div style="display: none">${message}</div>`);
+        let note = $(`<div style="display: none"></div>`).append(message);
         $("#vtta-notifications").append(note);
         $(note).fadeIn(200);
 
@@ -51,7 +56,9 @@ const registerNotifications = () => {
           $("#vtta-hints").css("width", options.width ? options.width : 300);
 
           // construct the note
-          let note = $(`<div style="display: none">${message}<div class="buttons"></div></div>`);
+          let note = $(`<div style="display: none"></div>`);
+          $(note).append(message);
+          $(note).append('<div class="buttons"></div>');
           $("#vtta-hints").append(note);
           $(note).fadeIn(200);
 

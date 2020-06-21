@@ -121,18 +121,55 @@ const insertRollTables = (content) => {
   return $(orig).html();
 };
 
-const addJournalEntry = async (structure, sourcebook, name, content) => {
+const addJournalEntry = async (structure, sourcebook, namePrefix, name, content, sceneId = null) => {
+  const cleanLabel = (label) => {
+    // remove all dots from the end of the string
+    while (label.length && label.trim().search(/\.$/) !== -1) {
+      label = label.trim();
+      label = label.substr(0, label.length - 1);
+    }
+
+    // remove the prefix
+    const parts = label.split(".");
+    label = parts.length === 1 ? parts[0] : parts[1];
+    return label.trim();
+  };
+
   const folder = await getFolder(structure, "JournalEntry", sourcebook);
-  const entry = await JournalEntry.create({
-    folder: folder._id,
-    name: name,
-    content: insertRollTables(content),
-    img: null,
-  });
+  let entry = game.journal.find(
+    (entry) => entry.data.folder === folder.data._id && entry.name === namePrefix + " " + cleanLabel(name)
+  );
+  if (entry) {
+    await JournalEntry.update({
+      _id: entry._id,
+      content: insertRollTables(content),
+      flags: {
+        vtta: {
+          name: name,
+          sceneId: sceneId,
+        },
+      },
+    });
+    // not sure if returning the entry here is okay. perhaps fetchting the updated one is better
+    return entry;
+  } else {
+    entry = await JournalEntry.create({
+      folder: folder._id,
+      name: namePrefix + " " + cleanLabel(name),
+      content: insertRollTables(content),
+      img: null,
+      flags: {
+        vtta: {
+          name: name,
+          sceneId: sceneId,
+        },
+      },
+    });
+  }
   return entry;
 };
 
-const addJournalEntries = async (data) => {
+const addJournalEntries = async (data, scenes) => {
   // create the folders for all content before we import
   await getFolder([data.title], "JournalEntry", data.book);
   await Promise.all(
@@ -143,30 +180,83 @@ const addJournalEntries = async (data) => {
   );
 
   // add main journal entry
-  addJournalEntry([data.title], data.book, data.title, data.content);
+  addJournalEntry([data.title], data.book, "", data.title, data.content);
 
   // create sub-entries for all scenes
-  for (let scene of data.scenes) {
-    for (let entry of scene.entries.filter((entry) => entry !== null)) {
-      addJournalEntry([data.title, scene.name], data.book, entry.name, entry.content);
+  for (let s of data.scenes) {
+    // filter malformed entries out (note: should not be the case anymore)
+    const entries = s.entries.filter((entry) => entry !== null);
+    // get the created scene based on internal scene id
+    const VTTAID = s.sceneId;
+    // find the corresponding created scene
+    const scene = scenes.find(
+      (myScene) =>
+        myScene.data.flags.vtta && myScene.data.flags.vtta.sceneId && myScene.data.flags.vtta.sceneId === VTTAID // s.id is the vtta id
+    );
+    // delete all VTTA created notes
+    scene.deleteEmbeddedEntity(
+      "Note",
+      scene
+        .getEmbeddedCollection("Note")
+        .filter((note) => note.flags && note.flags.vtta)
+        .map((note) => note._id)
+    );
+
+    // create the entities and place them on the scene, if possible
+    const notes = [];
+    for (let [index, entry] of entries.entries()) {
+      const prefix = ("" + (index + 1)).padStart(2, "0");
+      let je = await addJournalEntry([data.title, scene.name], data.book, prefix, entry.name, entry.content, VTTAID);
+
+      if (entry.positions) {
+        entry.positions.forEach((position) => {
+          notes.push({
+            entryId: je.data._id,
+            flags: { vtta: { sceneId: VTTAID } },
+            icon: "modules/vtta-dndbeyond/icons/" + prefix + ".svg",
+            x: position.x,
+            y: position.y,
+            iconSize: Math.round(scene.data.grid * 0.75),
+          });
+        });
+      }
     }
+
+    if (notes.length > 0) scene.createEmbeddedEntity("Note", notes);
   }
 };
 
 const updateScene = async (scene, folder) => {
   utils.log("Scene " + scene.name + " does exist already, updating...");
   let existing = await game.scenes.entities.find((s) => s.name === scene.name && s.data.folder === folder.data._id);
+
   let update = {
-    width: scene.width,
-    height: scene.height,
-    backgroundColor: scene.backgroundColor,
+    flags: {
+      vtta: {
+        sceneId: scene.sceneId,
+        width: scene.width,
+        height: scene.height,
+        thumb: scene.thumb,
+      },
+    },
   };
-  if (scene.shiftX) update.shiftX = scene.shiftX;
-  if (scene.shiftY) update.shiftY = scene.shiftY;
-  if (scene.grid) update.grid = scene.grid;
-  if (scene.gridDistance) update.gridDistance = scene.gridDistance;
-  if (scene.gridType) update.gridType = scene.gridType;
-  if (scene.globalLight) update.globalLight = scene.globalLight;
+  let autoKeys = [
+    "width",
+    "height",
+    "backgroundColor",
+    "shiftX",
+    "shiftY",
+    "grid",
+    "gridDistance",
+    "gridType",
+    "globalLight",
+  ];
+  for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
+    if (scene[prop]) {
+      update[prop] = scene[prop];
+    }
+  }
+
   await existing.update(update);
 
   // remove existing walls, add from import
@@ -186,39 +276,113 @@ const updateScene = async (scene, folder) => {
     );
     await existing.createEmbeddedEntity("AmbientLight", scene.lights);
   }
+  return existing;
 };
 
 const createScene = async (scene, folder) => {
-  const uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
-  scene.src.split(".").pop();
-  const baseFilename = scene.name
-    .replace(/’s/, "s")
-    .replace(/'s/, "s")
-    .replace(/\W/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/_$/, "")
-    .toLowerCase();
+  // this flag can be set to true if all GM maps are having the same dimensions as the player maps
+  // and if Foundry stops resetting the scene dimensions to the original file dimensions if we stretched
+  // the image on purpose to get the grids right
+  const UNLOCK_GM_MAPS = false;
+  const SCENE_FORMAT_WEBP = 0;
+  const SCENE_FORMAT_ORIG = 1; // BOO!
 
-  // get img and thumb from the proxy
-  const src = await utils.uploadImage(scene.src, uploadDirectory, baseFilename);
-  const thumb = await utils.uploadImage(scene.src + "&thumb", uploadDirectory, baseFilename + ".thumb");
-  let createData = {
-    name: scene.name,
-    img: src,
+  const uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
+  const uploadFileFormat = game.settings.get("vtta-dndbeyond", "scene-format");
+
+  let playerSrc = null,
+    gmSrc = null;
+
+  // upload player map
+  let targetFilename = scene.playerLocal.replace(/\//g, "-").replace(".webp", "");
+  if (uploadFileFormat === SCENE_FORMAT_ORIG) {
+    // replace webp with the desired file extension
+    // &targetFilename.replace(".webp", ""); //"." + scene.playerSrc.split(".").pop());
+    playerSrc = await utils.uploadImage(scene.playerSrc, uploadDirectory, targetFilename);
+  } else {
+    playerSrc = await utils.uploadImage(
+      "https://cdn.vttassets.com/scenes/" + scene.playerLocal,
+      uploadDirectory,
+      targetFilename,
+      false
+    );
+  }
+
+  // upload GM map
+  if (UNLOCK_GM_MAPS && scene.gmSrc && scene.gmLocal) {
+    let targetFilename = scene.gmLocal.replace(/\//g, "-").replace(".webp", "");
+    switch (uploadDirectory) {
+      case SCENE_FORMAT_ORIG:
+        gmSrc = await utils.uploadImage(scene.gmSrc, uploadDirectory, targetFilename);
+        break;
+      case SCENE_FORMAT_WEBP:
+        gmSrc = await utils.uploadImage(
+          "https://cdn.vttassets.com/scenes/" + scene.gmLocal,
+          uploadDirectory,
+          targetFilename,
+          false
+        );
+        break;
+      default:
+        gmSrc = await utils.uploadImage(
+          "https://cdn.vttassets.com/scenes/" + scene.gmLocal,
+          uploadDirectory,
+          targetFilename,
+          false
+        );
+    }
+  }
+
+  // upload Thumbnail
+  const thumb = await utils.uploadImage(
+    "https://cdn.vttassets.com/scenes/" + scene.thumb,
+    uploadDirectory,
+    scene.thumb.replace(/\//g, "-").replace(".webp", ""),
+    false
+  );
+
+  let create = {
+    img: playerSrc,
     thumb: thumb,
     folder: folder._id,
-    width: scene.width,
-    height: scene.height,
-    backgroundColor: scene.backgroundColor,
-    globalLight: scene.globalLight ? scene.globalLight : true,
+    navigation: false,
+    flags: {
+      vtta: {
+        sceneId: scene.sceneId,
+        width: scene.width,
+        height: scene.height,
+        thumb: scene.thumb,
+      },
+    },
   };
-  if (scene.shiftX) createData.shiftX = scene.shiftX;
-  if (scene.shiftY) createData.shiftY = scene.shiftY;
-  if (scene.grid) createData.grid = scene.grid;
-  if (scene.gridDistance) createData.gridDistance = scene.gridDistance;
-  if (scene.gridType) createData.gridType = scene.gridType;
 
-  let existing = await Scene.create(createData);
+  // enable map switching
+  if (playerSrc && gmSrc) {
+    create.flags.vtta.alt = {
+      GM: gmSrc,
+      Player: playerSrc,
+    };
+  }
+
+  let autoKeys = [
+    "name",
+    "width",
+    "height",
+    "backgroundColor",
+    "shiftX",
+    "shiftY",
+    "grid",
+    "gridDistance",
+    "gridType",
+    "globalLight",
+  ];
+  for (let prop of Object.keys(scene).filter((prop) => autoKeys.includes(prop))) {
+    if (scene[prop]) {
+      create[prop] = scene[prop];
+    }
+  }
+
+  let existing = await Scene.create(create);
 
   if (scene.walls && scene.walls.length > 0) {
     await existing.createEmbeddedEntity("Wall", scene.walls);
@@ -226,6 +390,8 @@ const createScene = async (scene, folder) => {
   if (scene.lights && scene.lights.length > 0) {
     await existing.createEmbeddedEntity("AmbientLight", scene.lights);
   }
+
+  return existing;
 };
 
 const addScenes = async (data) => {
@@ -244,13 +410,15 @@ const addScenes = async (data) => {
   );
 
   // check if the scene already exists
+  const scenes = [];
   for (let scene of data.scenes) {
     if (existingScenes && existingScenes.includes(scene.name)) {
-      updateScene(scene, folder);
+      scenes.push(updateScene(scene, folder));
     } else {
-      createScene(scene, folder);
+      scenes.push(createScene(scene, folder));
     }
   }
+  return Promise.all(scenes);
 };
 
 const addRollTable = async (table, folder) => {
@@ -290,9 +458,11 @@ const parsePage = async (data) => {
   if (data.rollTables && data.rollTables.length > 0) {
     tables = await addRollTables(data);
   }
+
+  const scenes = await addScenes(data);
+
   // add all Journal Entries
-  var journals = await addJournalEntries(data);
-  var scenes = await addScenes(data);
+  var journals = await addJournalEntries(data, scenes);
 
   return [tables, journals, scenes];
 };
