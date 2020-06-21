@@ -286,11 +286,6 @@ export default class CharacterImport extends Application {
   getData() {
     const importPolicies = [
       {
-        name: "new",
-        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-new-only"),
-        description: "Import new only (no delete or update)",
-      },
-      {
         name: "class",
         isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-class"),
         description: "Classes",
@@ -319,6 +314,11 @@ export default class CharacterImport extends Application {
         name: "spell",
         isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-spell"),
         description: "Spells",
+      },
+      {
+        name: "new",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-new"),
+        description: "Import new only (no delete or update)",
       },
     ];
 

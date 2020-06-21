@@ -93,9 +93,9 @@ export default function () {
   });
 
   /** Character update settings, stored per user and non-configurable in the settings screen */
-  game.settings.register("vtta-dndbeyond", "character-update-policy-new-only", {
-    name: "vtta-dndbeyond.character-update-policy-new-only.name",
-    hint: "vtta-dndbeyond.character-update-policy-new-only.hint",
+  game.settings.register("vtta-dndbeyond", "character-update-policy-new", {
+    name: "vtta-dndbeyond.character-update-policy-new.name",
+    hint: "vtta-dndbeyond.character-update-policy-new.hint",
     scope: "player",
     config: false,
     type: Boolean,
