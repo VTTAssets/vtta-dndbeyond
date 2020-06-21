@@ -109,6 +109,19 @@ export default class CharacterImport extends Application {
   }
 
   /**
+   * Loops through a characters items and updates flags
+   * @param {*} items
+   */
+  async removeExistingItems(items) {
+    const newItems = items.filter((item) =>
+      !this.actorOriginal.items.some(
+        (originalItem) => item.name === originalItem.name && item.type === originalItem.type
+      )
+    );
+    return newItems;
+  }
+
+  /**
    * Updates a compendium, provide the type.
    * @param {*} type
    */
@@ -458,9 +471,11 @@ export default class CharacterImport extends Application {
         CharacterImport.showCurrentTask(html, "Updating basic character information");
         await this.actor.update(this.result.character);
 
-        // // clear items
-        CharacterImport.showCurrentTask(html, "Clearing inventory");
-        await this.clearItemsByUserSelection();
+        // clear items
+        if (!game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
+          CharacterImport.showCurrentTask(html, "Clearing inventory");
+          await this.clearItemsByUserSelection();
+        }
 
         // store all spells in the folder specific for Dynamic Items
         if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
@@ -501,16 +516,23 @@ export default class CharacterImport extends Application {
           items = items.flat();
         }
 
-        CharacterImport.showCurrentTask(html, "Copying existing flags");
-        await this.copySupportedCharacterItemFlags(items);
+        if (game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
+          items = await this.removeExistingItems(items);
+        }
 
-        utils.log("Character items", "character");
-        utils.log(items, "character");
+        // if we still have items to add, add them
+        if (items.length > 0) {
+          CharacterImport.showCurrentTask(html, "Copying existing flags");
+          await this.copySupportedCharacterItemFlags(items);
 
-        CharacterImport.showCurrentTask(html, "Adding items to character");
-        await this.actor.createEmbeddedEntity("OwnedItem", items, {
-          displaySheet: false,
-        });
+          utils.log("Character items", "character");
+          utils.log(items, "character");
+
+          CharacterImport.showCurrentTask(html, "Adding items to character");
+          await this.actor.createEmbeddedEntity("OwnedItem", items, {
+            displaySheet: false,
+          });
+        }
 
         // We loop back over the spell slots to update them to our computed
         // available value as per DDB.
