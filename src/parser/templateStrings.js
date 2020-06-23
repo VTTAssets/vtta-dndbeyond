@@ -33,18 +33,23 @@ let parseMatch = (ddb, character, match, feature) => {
   }
 
   // savedc:int
+  // savedc:str,dex
   if (result.includes("savedc")) {
-    const regexp = /savedc:([a-z]{3})/g;
-    // creates array from match groups and dedups
-    const saves = [...new Set(Array.from(result.matchAll(regexp), (m) => m[1]))];
+    const regexp = /savedc:([a-z]{3})(?:,)?([a-z]{3})?/g;
+    const matches = [...result.matchAll(regexp)];
 
-    saves.forEach((save) => {
-      const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
-      // not sure if we should add this, probably not.
-      // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
-      const dc = 8 + character.data.attributes.prof + abilityModifier;
-      const saveRegexp = RegExp(`savedc:${save}`, "g");
-      result = result.replace(saveRegexp, dc);
+    matches.forEach((match) => {
+      // const saves = [...new Set(Array.from(match, (m) => m.slice(1)))];
+      const saves = match.slice(1);
+      const saveDCs = saves.map((save) => {
+        const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
+        // not sure if we should add this, probably not.
+        // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
+        const dc = 8 + character.data.attributes.prof + abilityModifier;
+        return dc;
+      });
+      const saveRegexp = RegExp(match[0], "g");
+      result = result.replace(saveRegexp, Math.max(...saveDCs));
     });
   }
 
