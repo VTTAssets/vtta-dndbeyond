@@ -139,9 +139,6 @@ export function getArmorClass(data, character) {
   // lets get the AC for all our non-armored gear, we'll add this later
   const gearAC = getEquippedAC(equippedGear);
 
-  utils.log("Calculated GearAC: " + gearAC);
-  utils.log("Unarmoured AC Bonus:" + unarmoredACBonus);
-
   // While not wearing armor, lets see if we have special abilities
   if (!isArmored(data)) {
     // unarmored abilities from Class/Race?
@@ -176,8 +173,6 @@ export function getArmorClass(data, character) {
     miscACBonus += bonus.value;
   });
 
-  utils.log("Calculated MiscACBonus: " + miscACBonus);
-
   // Each racial armor appears to be slightly different!
   // We care about Tortles and Lizardfolk here as they can use shields, but their
   // modifier is set differently
@@ -194,14 +189,15 @@ export function getArmorClass(data, character) {
       equippedArmor.push(getBaseArmor(baseAC, "Unarmored"));
   }
 
-  const shields = equippedArmor.filter(
-    (shield) => shield.definition.type === "Shield" || shield.definition.armorTypeId === 4
-  );
-  const armors = equippedArmor.filter(
-    (shield) => shield.definition.type !== "Shield" || shield.definition.armorTypeId !== 4
-  );
+  const shields = equippedArmor.filter((shield) => shield.definition.armorTypeId === 4);
+  const armors = equippedArmor.filter((shield) => shield.definition.armorTypeId !== 4);
 
+  utils.log("Calculated GearAC: " + gearAC);
+  utils.log("Unarmoured AC Bonus:" + unarmoredACBonus);
+  utils.log("Calculated MiscACBonus: " + miscACBonus);
   utils.log("Equipped AC Options: " + JSON.stringify(equippedArmor));
+  utils.log("Armors: " + JSON.stringify(armors));
+  utils.log("Shields: " + JSON.stringify(shields));
 
   // the presumption here is that you can only wear a shield and a single
   // additional 'armor' piece. in DDB it's possible to equip multiple armor
@@ -210,12 +206,14 @@ export function getArmorClass(data, character) {
   // we might have multiple shields "equipped" by accident, so work out
   // the best one
   for (var armor = 0; armor < armors.length; armor++) {
-    let armorAC = null;
+    let armorAC = 0;
     if (shields.length === 0) {
+      // getEquippedAC fetches any magical AC boost on the items passed
       armorAC = getEquippedAC([armors[armor]]);
     } else {
       for (var shield = 0; shield < shields.length; shield++) {
-        armorAC = getEquippedAC([armors[armor], shields[shield]]);
+        const combinedAC = getEquippedAC([armors[armor], shields[shield]]);
+        if (combinedAC > armorAC) armorAC = combinedAC;
       }
     }
 
@@ -228,10 +226,9 @@ export function getArmorClass(data, character) {
     switch (armors[armor].definition.type) {
       case "Natural Armor":
       case "Unarmored Defense":
-        if (shields.length === 0) armorAC += unarmoredACBonus;
         armorClassValues.push({
           name: armors[armor].definition.name,
-          value: armorAC + gearAC + miscACBonus,
+          value: armorAC + gearAC + miscACBonus + unarmoredACBonus,
         });
         break;
       case "Heavy Armor":
@@ -261,6 +258,7 @@ export function getArmorClass(data, character) {
     }
   }
 
+  utils.log(armorClassValues);
   // get the max AC we can use from our various computed values
   const max = Math.max(...armorClassValues.map((type) => type.value));
 
