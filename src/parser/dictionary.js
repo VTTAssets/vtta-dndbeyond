@@ -102,12 +102,12 @@ const DICTIONARY = {
       { id: 9, name: "Chaotic Evil", value: "ce" },
     ],
     actorSizes: [
-      { name: "Tiny", value: "tiny" },
-      { name: "Small", value: "sm" },
-      { name: "Medium", value: "med" },
-      { name: "Large", value: "lg" },
-      { name: "Huge", value: "huge" },
-      { name: "Gargantuan", value: "grg" },
+      { id: 2, name: "Tiny", value: "tiny" }, // wild guess
+      { id: 3, name: "Small", value: "sm" }, // consistent
+      { id: 4, name: "Medium", value: "med" }, // consistent
+      { id: 5, name: "Large", value: "lg" }, // wild guess
+      { id: 6, name: "Huge", value: "huge" }, // wild guess
+      { id: 7, name: "Gargantuan", value: "grg" }, // wild guess
     ],
     senses: [
       { id: 1, name: "Blindsight" },
@@ -218,7 +218,7 @@ const DICTIONARY = {
       { id: 14, type: 1, kind: "immunity", name: "Stunned", value: "stunned" },
       { id: 15, type: 1, kind: "immunity", name: "Unconscious", value: "unconscious" },
       // In DDB it is disease, but in FVTT ut is diseased
-      { id: 16, type: 1, kind: "immunity", name: "Diseased", value: "disease", vttaValue: "diseased", },
+      { id: 16, type: 1, kind: "immunity", name: "Diseased", value: "disease", vttaValue: "diseased" },
     ],
     proficiencies: [
       // Armor
@@ -434,7 +434,7 @@ const DICTIONARY = {
     aoeType: [
       { id: 1, value: "cone" },
       // presumably others here too! add when found
-    ]
+    ],
   },
   spell: {
     progression: [

@@ -288,7 +288,7 @@ const createScene = async (scene, folder) => {
   const SCENE_FORMAT_ORIG = 1; // BOO!
 
   const uploadDirectory = game.settings.get("vtta-dndbeyond", "scene-upload-directory");
-  const uploadFileFormat = game.settings.get("vtta-dndbeyond", "scene-format");
+  const uploadFileFormat = parseInt(game.settings.get("vtta-dndbeyond", "scene-format"));
 
   let playerSrc = null,
     gmSrc = null;
