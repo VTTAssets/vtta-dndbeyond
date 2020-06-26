@@ -118,8 +118,8 @@ let parseItem = (ddb, data, character) => {
     if (data.definition.filterType) {
       switch (data.definition.filterType) {
         case "Weapon": {
-          if (data.definition.type === "Ammunition") {
-            item = parseAmmunition(data, character);
+          if (data.definition.type === "Ammunition" || data.definition.subType === "Ammunition") {
+            item = parseAmmunition(data);
           } else {
             const flags = getWeaponFlags(ddb, data, character);
             item = parseWeapon(data, character, flags);
@@ -151,6 +151,9 @@ let parseItem = (ddb, data, character) => {
               break;
             case "Tool":
               item = parseTool(data, character);
+              break;
+            case "Ammunition":
+              item = parseAmmunition(data);
               break;
             default:
               item = parseLoot(data);
