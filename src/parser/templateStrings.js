@@ -39,9 +39,11 @@ let parseMatch = (ddb, character, match, feature) => {
     const matches = [...result.matchAll(regexp)];
 
     matches.forEach((match) => {
-      // const saves = [...new Set(Array.from(match, (m) => m.slice(1)))];
       const saves = match.slice(1);
-      const saveDCs = saves.map((save) => {
+      const saveDCs = saves
+      .filter((save) => save)
+      .map((save) => {
+        console.log(save);
         const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
         // not sure if we should add this, probably not.
         // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
