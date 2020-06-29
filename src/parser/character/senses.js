@@ -3,28 +3,44 @@ import utils from "../../utils.js";
 
 export function getSensesLookup(data) {
   let senses = [];
-  let hasDarkvision = false;
   // custom senses
   if (data.character.customSenses) {
     data.character.customSenses
       .filter((sense) => !sense.distance)
       .forEach((sense) => {
         const s = DICTIONARY.character.senses.find((s) => s.id === sense.senseId);
-
         const senseName = s ? s.name : null;
-        // remember that this darkvision has precedence
-        if (senseName === "Darkvision") hasDarkvision = true;
-
-        // remember this sense
         senses.push({ name: senseName, value: sense.distance });
       });
   }
 
-  if (!hasDarkvision) {
-    utils.filterBaseModifiers(data, "set-base", "darkvision").forEach((sense) => {
+  // Darkvision
+  utils.filterBaseModifiers(data, "set-base", "darkvision").forEach((sense) => {
+    let existing = senses.findIndex((s) => s.name === "Darkvision");
+    if (existing !== -1) {
+      if (sense.value > senses[existing].value) {
+        senses[existing].value = sense.value;
+      }
+    } else {
       senses.push({ name: sense.friendlySubtypeName, value: sense.value });
+    }
+  });
+
+  // Devils Sight gives bright light to 120 foot instead of normal darkvision
+  utils
+    .filterBaseModifiers(data, "set-base", "darkvision", [
+      "You can see normally in darkness, both magical and nonmagical",
+    ])
+    .forEach((sense) => {
+      let existing = senses.findIndex((s) => s.name === "Devils Sight");
+      if (existing !== -1) {
+        if (sense.value > senses[existing].value) {
+          senses[existing].value = sense.value;
+        }
+      } else {
+        senses.push({ name: "Devils Sight", value: sense.value });
+      }
     });
-  }
 
   // Magical bonuses
   utils
@@ -41,7 +57,6 @@ export function getSensesLookup(data) {
       if (sense) {
         sense.value += mod.value;
       } else {
-        if (mod.name === "Darkvision") hasDarkvision = true;
         senses.push({ name: mod.name, value: mod.value });
       }
     });
