@@ -9,17 +9,20 @@ export function getToken(data) {
 
   let senses = getSensesLookup(data);
 
-  // Blindsight/Truesight
-  if (senses.find((sense) => sense.name === "Truesight" || sense.name === "Blindsight") !== undefined) {
+  // These values in senses grant bright sight
+  const brightSightValues = ["Truesight", "Blindsight", "Devils Sight"];
+
+  if (senses.some((sense) => brightSightValues.includes(sense.name))) {
     let value = senses
-      .filter((sense) => sense.name === "Truesight" || sense.name === "Blindsight")
+      .filter((sense) => brightSightValues.includes(sense.name))
       .reduce((prev, cur) => (prev > cur.value ? prev : cur.value), 0);
     tokenData.brightSight = value;
   }
 
   // Darkvision
-  if (senses.find((sense) => sense.name === "Darkvision") !== undefined) {
+  if (senses.some((sense) => sense.name === "Darkvision")) {
     tokenData.dimSight = senses.find((sense) => sense.name === "Darkvision").value;
   }
+
   return tokenData;
 }
