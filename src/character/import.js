@@ -512,7 +512,7 @@ export default class CharacterImport extends Application {
         // store all spells in the folder specific for Dynamic Items
         if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
           CharacterImport.showCurrentTask(html, "Preparing magicitem spells");
-          this.updateWorldItems();
+          await this.updateWorldItems();
         }
 
         // Update compendium packs with spells and inventory
@@ -532,6 +532,7 @@ export default class CharacterImport extends Application {
         }
 
         if (game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
+          // removed existing items from those to be imported
           items = await this.removeExistingItems(items);
         }
 
