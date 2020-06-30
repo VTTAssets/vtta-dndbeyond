@@ -43,7 +43,6 @@ let parseMatch = (ddb, character, match, feature) => {
       const saveDCs = saves
       .filter((save) => save)
       .map((save) => {
-        console.log(save);
         const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
         // not sure if we should add this, probably not.
         // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
@@ -175,6 +174,14 @@ const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 };
 
+const getNumber = (theNumber) => {
+    if (theNumber >= 0) {
+        return "+" + theNumber;
+    } else {
+        return theNumber.toString();
+    }
+};
+
 /**
  * This will parse a snippet/description with template boilerplate in from DDB.
  * e.g. Each creature in the area must make a DC {{savedc:con}} saving throw.
@@ -207,9 +214,9 @@ export default function parseTemplateString(ddb, character, text, feature) {
         /* eslint-enable no-eval */
         if (splitMatchAt.length > 1) {
           const constraintAdjusted = applyConstraint(evalMatch, splitMatchAt[1]);
-          result = result.replace(replacePattern, constraintAdjusted);
+          result = result.replace(replacePattern, getNumber(constraintAdjusted));
         } else {
-          result = result.replace(replacePattern, evalMatch);
+          result = result.replace(replacePattern, getNumber(evalMatch));
         }
       } catch (err) {
         utils.log(err);
