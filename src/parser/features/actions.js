@@ -96,6 +96,12 @@ function getActivation(action) {
   return {};
 }
 
+function getWeaponType(action) {
+  const entry = DICTIONARY.actions.attackTypes.find((type) => type.attackSubtype === action.attackSubtype);
+  const range = DICTIONARY.weapon.weaponRange.find((type) => type.attackType === action.attackTypeRange);
+  return entry ? entry.value : range ? `simple${range.value}` : "simpleM";
+}
+
 function getAttackAction(ddb, character, action) {
   let weapon = {
     name: action.name,
@@ -165,6 +171,7 @@ function getAttackAction(ddb, character, action) {
       weapon.data.damage = martialArtsDamage(ddb, action);
     }
 
+    weapon.data.weaponType = getWeaponType(action);
     weapon.data.uses = getLimitedUse(action, character);
   } catch (err) {
     utils.log(
@@ -221,7 +228,7 @@ function getUnarmedStrike(ddb, character) {
 function getAttackActions(ddb, character) {
   return [ddb.character.actions.class, ddb.character.actions.race, ddb.character.actions.feat]
     .flat()
-    .filter((action) => action.displayAsAttack && action.displayAsAttack === true)
+    .filter((action) => action.displayAsAttack)
     .map((action) => {
       return getAttackAction(ddb, character, action);
     });
@@ -258,6 +265,11 @@ function getOtherActions(ddb, character, items) {
   return actions;
 }
 
+// get actions from ddb.character.customActions
+// function getCustomActions(ddb, character) {
+//   return [];
+// }
+
 export default function parseActions(ddb, character) {
   let actions = [
     // Get Attack Actions that we know about, typically natural attacks etc
@@ -269,6 +281,7 @@ export default function parseActions(ddb, character) {
     ...actions,
     // Try and parse other relevant actions
     ...getOtherActions(ddb, character, actions),
+//    ...getCustomActions(ddb, character),
   ];
 
   // sort alphabetically, then by action type
