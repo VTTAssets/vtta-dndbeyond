@@ -15,7 +15,9 @@ export function getItemSpells(ddb, character) {
   // feat spells are handled slightly differently
   ddb.character.spells.item.forEach((spell) => {
     if (!spell.definition) return;
+
     const itemInfo = lookups.item.find((it) => it.id === spell.componentId);
+    if (!itemInfo) return;
 
     const active =
       (!itemInfo.canEquip && !itemInfo.canAttune) || // if item just gives a thing
