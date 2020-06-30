@@ -7,12 +7,15 @@ import utils from "../../utils.js";
  * @param {obj} data item data
  */
 let getWeaponType = (data) => {
-  let weaponBehavior = data.definition.weaponBehaviors[0];
-  let entry = DICTIONARY.weapon.weaponType.find(
-    (type) => type.categoryId === weaponBehavior.categoryId && type.attackType === weaponBehavior.attackType
-  );
+  const weaponBehavior = data.definition.weaponBehaviors[0];
+  const type = DICTIONARY.weapon.weaponType.find((type) => type.categoryId === weaponBehavior.categoryId);
+  const range = DICTIONARY.weapon.weaponRange.find((type) => type.attackType === weaponBehavior.attackType);
 
-  return entry !== undefined ? entry.value : "simpleM";
+  if (type && range) {
+    return `${type.value}${range.value}`;
+  } else {
+    return "simpleM";
+  }
 };
 
 /**

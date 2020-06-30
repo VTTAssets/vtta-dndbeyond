@@ -7,11 +7,18 @@ import utils from "../../utils.js";
  * @param {obj} data item data
  */
 let getWeaponType = (data) => {
-  let entry = DICTIONARY.weapon.weaponType.find(
-    (type) => type.categoryId === data.definition.categoryId && type.attackType === data.definition.attackType
+  const type = DICTIONARY.weapon.weaponType.find(
+    (type) => type.categoryId === data.definition.categoryId
+  );
+  const range = DICTIONARY.weapon.weaponRange.find(
+    (type) => type.attackType === data.definition.attackType
   );
 
-  return entry !== undefined ? entry.value : "simpleM";
+  if (type && range) {
+    return `${type.value}${range.value}`;
+  } else {
+    return "simpleM";
+  }
 };
 
 /**
@@ -24,9 +31,14 @@ let getProperties = (data) => {
     if (data.definition.properties && Array.isArray(data.definition.properties)) {
       result[property.value] = data.definition.properties.some((prop) => prop.name === property.name);
     }
-    if (data.definition.grantedModifiers && Array.isArray(data.definition.grantedModifiers)) {
-      result[property.value] = data.definition.grantedModifiers
-        .some((prop) => prop.type === "weapon-property" && prop.friendlySubtypeName === property.name);
+    if (
+      !result[property.value] &&
+      data.definition.grantedModifiers &&
+      Array.isArray(data.definition.grantedModifiers)
+    ) {
+      result[property.value] = data.definition.grantedModifiers.some(
+        (prop) => prop.type === "weapon-property" && prop.friendlySubtypeName === property.name
+      );
     }
   });
   return result;
@@ -40,7 +52,10 @@ let getProperties = (data) => {
  */
 let getProficient = (data, weaponType, proficiencies) => {
   // if it's a simple weapon and the character is proficient in simple weapons:
-  if (proficiencies.find((proficiency) => proficiency.name === "Simple Weapons") && weaponType.indexOf("simple") !== -1) {
+  if (
+    proficiencies.find((proficiency) => proficiency.name === "Simple Weapons") &&
+    weaponType.indexOf("simple") !== -1
+  ) {
     return true;
   } else if (
     proficiencies.find((proficiency) => proficiency.name === "Martial Weapons") &&
@@ -128,7 +143,7 @@ let getAbility = (weaponProperties, weaponRange, abilities) => {
     return "str";
   }
 
-  // if it's a ranged weapon, and hot a reach weapon (long = 10 (?))
+  // if it's a ranged weapon, and not a reach weapon (long = 10 (?))
   if (weaponRange.long !== 5 && !weaponProperties.rch) {
     return "dex";
   }

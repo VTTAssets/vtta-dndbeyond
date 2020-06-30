@@ -377,22 +377,24 @@ const DICTIONARY = {
     ],
   },
   weapon: {
+    weaponRange: [
+      { attackType: 1, value: "M" },
+      { attackType: 2, value: "R" },
+      { attackType: null, value: "R" },
+    ],
     weaponType: [
-      { categoryId: 1, attackType: 1, value: "simpleM" },
-      { categoryId: 1, attackType: 2, value: "simpleR" },
-      { categoryId: 2, attackType: 1, value: "martialM" },
-      { categoryId: 2, attackType: 2, value: "martialR" },
-
-      { categoryId: 3, attackType: 2, value: "martialR" }, // this is not 100% correct. a martialF for "Martial Firearms" would be better
-      { categoryId: 0, attackType: null, value: "simpleR" }, // this is totally incorrect, this is of type ammunition
+      { categoryId: 1, value: "simple" },
+      { categoryId: 2, value: "martial" },
+      { categoryId: 3, value: "martial" }, // this is not 100% correct. a martialF for "Martial Firearms" would be better
+      { categoryId: 0, value: "simple" }, // this is totally incorrect, this is of type ammunition
     ],
     properties: [
       { name: "Ammunition", value: "amm" },
-      { name: "Ammunition (Firearms)", value: "amm" },
+      { name: "Ammunition (Firearms)", value: "fir" },
       { name: "Finesse", value: "fin" },
       { name: "Heavy", value: "hvy" },
       { name: "Light", value: "lgt" },
-      { name: "Loading", value: "rel" },
+      { name: "Loading", value: "lod" },
       { name: "Range", value: "fir" },
       { name: "Reach", value: "rch" },
       { name: "Reload", value: "rel" },
@@ -400,6 +402,8 @@ const DICTIONARY = {
       { name: "Thrown", value: "thr" },
       { name: "Two-Handed", value: "two" },
       { name: "Versatile", value: "ver" },
+      { name: "Returning", value: "ret" },
+      { name: "Focus", value: "foc" },
     ],
   },
   actions: {
@@ -413,6 +417,12 @@ const DICTIONARY = {
       { id: 6, value: "minute" },
       { id: 7, value: "hour" },
       { id: 8, value: "special" },
+    ],
+    attackTypes: [
+      //  natural improv
+      // { attackSubtype: 1, value: "" },
+      { attackSubtype: 2, value: "natural" },
+      { attackSubtype: 3, value: "simpleM" }, // unarmed
     ],
     damageType: [
       { name: "bludgeoning", id: 1 },
