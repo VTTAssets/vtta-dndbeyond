@@ -619,11 +619,12 @@ let utils = {
       // replace non-null values with the complete entity from the compendium
       let entities = await Promise.all(
         indices.map((entry) => {
-          return new Promise(async (resolve) => {
+          return new Promise((resolve) => {
             if (entry) {
-              let entity = await compendium.getEntity(entry._id);
-              entity.data.name = entry.name; // transfer restrictions over, if any
-              resolve(entity);
+              compendium.getEntity(entry._id).then((entity) => {
+                entity.data.name = entry.name; // transfer restrictions over, if any
+                resolve(entity);
+              });
             } else {
               resolve(null);
             }
