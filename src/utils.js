@@ -581,17 +581,55 @@ let utils = {
 
     // retrieve the compendium index
     let index = await compendium.getIndex();
+    index = index.map((entry) => {
+      entry.normalizedName = utils.normalizeString(entry.name);
+      return entry;
+    });
 
     // get the indices of all the entitynames, filter un
     let indices = entityNames
-      .map((entityName) => utils.normalizeString(entityName))
-      .map((entityName) => index.find((entity) => utils.normalizeString(entity.name) === entityName))
-      // replace values that are not found with null to ensure JSON serialization
-      .map((entity) => (entity === undefined ? null : entity));
+      .map((entityName) => {
+        // sometimes spells do have restricted use in paranthesis after the name. Let's try to find those restrictions and add them later
+        if (entityName.search(/(.+)\(([^()]+)\)*/) !== -1) {
+          const match = entityName.match(/(.+)\(([^()]+)\)*/);
+          return {
+            name: utils.normalizeString(match[1].trim()),
+            restriction: match[2].trim(),
+          };
+        } else {
+          return {
+            name: utils.normalizeString(entityName),
+            restriction: null,
+          };
+        }
+      })
+      .map((data) => {
+        let entry = index.find((entity) => entity.normalizedName === data.name);
+        if (entry) {
+          return {
+            _id: entry._id,
+            name: data.restriction ? `${entry.name} (${data.restriction})` : entry.name,
+          };
+        } else {
+          return null;
+        }
+      });
 
     if (getEntities) {
       // replace non-null values with the complete entity from the compendium
-      let entities = await Promise.all(indices.map((entry) => (entry ? compendium.getEntity(entry._id) : null)));
+      let entities = await Promise.all(
+        indices.map((entry) => {
+          return new Promise(async (resolve) => {
+            if (entry) {
+              let entity = await compendium.getEntity(entry._id);
+              entity.data.name = entry.name; // transfer restrictions over, if any
+              resolve(entity);
+            } else {
+              resolve(null);
+            }
+          });
+        })
+      );
       return entities;
     }
     return indices;
