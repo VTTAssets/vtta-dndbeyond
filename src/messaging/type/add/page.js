@@ -131,7 +131,9 @@ const addJournalEntry = async (structure, sourcebook, namePrefix, name, content,
 
     // remove the prefix
     const parts = label.split(".");
-    label = parts.length === 1 ? parts[0] : parts[1];
+    const [first, ...rest] = parts;
+    label = parts.length === 1 ? first : rest.join(".");
+    parts.splice();
     return label.trim();
   };
 
@@ -171,16 +173,16 @@ const addJournalEntry = async (structure, sourcebook, namePrefix, name, content,
 
 const addJournalEntries = async (data, scenes) => {
   // create the folders for all content before we import
-  await getFolder([data.title], "JournalEntry", data.book);
+  await getFolder([data.book.name, data.title], "JournalEntry", data.book);
   await Promise.all(
     data.scenes.map(async (scene) => {
-      const structure = [data.title, scene.name];
+      const structure = [data.book.name, data.title, scene.name];
       return getFolder(structure, "JournalEntry", data.book);
     })
   );
 
   // add main journal entry
-  addJournalEntry([data.title], data.book, "", data.title, data.content);
+  addJournalEntry([data.book.name, data.title], data.book, "", data.title, data.content);
 
   // create sub-entries for all scenes
   for (let s of data.scenes) {
@@ -423,7 +425,8 @@ const addScenes = async (data) => {
 };
 
 const addRollTable = async (table, folder) => {
-  let rollTable = await RollTable.create({
+  // find an existing rolltable
+  const data = {
     name: table.name,
     formula: `1d${table.max}`,
     folder: folder._id,
@@ -434,9 +437,29 @@ const addRollTable = async (table, folder) => {
         },
       },
     },
-  });
-  await rollTable.createEmbeddedEntity("TableResult", table.results);
-  return rollTable;
+  };
+  let existing = game.tables.find(
+    (t) =>
+      // we are not comparing the name so users can rename the tables
+      t.data.folder === folder._id &&
+      t.data.flags &&
+      t.data.flags.vtta &&
+      t.data.flags.vtta.dndbeyond &&
+      t.data.flags.vtta.dndbeyond.rollTableId === table.id
+  );
+  if (existing) {
+    await existing.update({ data: data });
+    await existing.deleteEmbeddedEntity(
+      "TableResult",
+      existing.getEmbeddedCollection("TableResult").map((tr) => tr._id)
+    );
+    await existing.createEmbeddedEntity("TableResult", table.results);
+    return existing;
+  } else {
+    let rollTable = await RollTable.create(data);
+    await rollTable.createEmbeddedEntity("TableResult", table.results);
+    return rollTable;
+  }
 };
 
 const addRollTables = async (data) => {
@@ -444,7 +467,7 @@ const addRollTables = async (data) => {
   const folderName = data.title;
   const rollTables = data.rollTables;
 
-  let folder = await getFolder([folderName], "RollTable", data.book);
+  let folder = await getFolder([data.book.name, folderName], "RollTable", data.book);
 
   const tables = await Promise.all(
     rollTables.map(async (table) => {
