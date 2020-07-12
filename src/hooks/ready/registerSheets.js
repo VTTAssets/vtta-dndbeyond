@@ -1,10 +1,28 @@
 import CharacterImport from "../../character/import.js";
 
-export default function () {
-  // reference to the D&D Beyond popup
-  let dndBeyondPopup = null;
-  let dndBeyondJsonPopup = null;
+// reference to the D&D Beyond popup
+const POPUPS = {
+  json: null,
+  web: null,
+};
+const renderPopup = (type, url) => {
+  if (POPUPS[type] && !POPUPS[type].close) {
+    POPUPS[type].focus();
+    POPUPS[type].location.href = url;
+  } else {
+    const ratio = window.innerWidth / window.innerHeight;
+    const width = Math.round(window.innerWidth * 0.5);
+    const height = Math.round(window.innerWidth * 0.5 * ratio);
+    POPUPS[type] = window.open(
+      url,
+      "ddb_sheet_popup",
+      `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
+    );
+  }
+  return true;
+};
 
+export default function () {
   /**
    * Character sheets
    */
@@ -38,49 +56,40 @@ export default function () {
           url = app.entity.data.flags.vtta.dndbeyond.url;
         }
 
-        if (event.shiftKey) {
-          event.preventDefault();
-          if (dndBeyondPopup && !dndBeyondPopup.closed) {
-            dndBeyondPopup.focus();
-            dndBeyondPopup.location.href = url;
-          } else {
-            let ratio = window.innerWidth / window.innerHeight;
-            let width = Math.round(window.innerWidth * 0.5);
-            let height = Math.round(window.innerWidth * 0.5 * ratio);
-            dndBeyondPopup = window.open(
-              url,
-              "ddb_sheet_popup",
-              `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
-            );
-          }
+        let jsonURL = null;
+        if (
+          app.entity.data.flags.vtta &&
+          app.entity.data.flags.vtta.dndbeyond &&
+          app.entity.data.flags.vtta.dndbeyond.json
+        ) {
+          jsonURL = app.entity.data.flags.vtta.dndbeyond.json;
         }
 
-        if (event.altKey) {
+        if (event.shiftKey) {
+          event.preventDefault();
+          return renderPopup("web", url);
+        }
+
+        if (event.altKey && jsonURL) {
+          event.preventDefault();
+          return renderPopup("json", jsonURL);
+        }
+        if (event.altKey && !jsonURL) {
           // get the character ID
           const characterId = url.split("/").pop();
           if (characterId) {
-            const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
             event.preventDefault();
-            if (dndBeyondJsonPopup && !dndBeyondJsonPopup.closed) {
-              dndBeyondJsonPopup.focus();
-              dndBeyondPopup.location.href = url;
-            } else {
-              let ratio = window.innerWidth / window.innerHeight;
-              let width = Math.round(window.innerWidth * 0.5);
-              let height = Math.round(window.innerWidth * 0.5 * ratio);
-              dndBeyondJsonPopup = window.open(
-                jsonUrl,
-                "ddb_sheet_popup",
-                `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
-              );
-            }
+            return renderPopup("json", "https://character-service.dndbeyond.com/character/v3/character/" + characterId);
           }
         }
 
         if ((!event.shiftKey && !event.ctrlKey && !event.altKey) || url === null) {
           characterImport = new CharacterImport(CharacterImport.defaultOptions, data.actor);
           characterImport.render(true);
+          return true;
         }
+
+        return false;
       });
 
       let wrap = $('<div class="ddbCharacterName"></div>');
@@ -113,18 +122,7 @@ export default function () {
           url = app.entity.data.flags.vtta.dndbeyond.url;
 
           event.preventDefault();
-          if (dndBeyondPopup && !dndBeyondPopup.closed) {
-            dndBeyondPopup.focus();
-          } else {
-            let ratio = window.innerWidth / window.innerHeight;
-            let width = Math.round(window.innerWidth * 0.5);
-            let height = Math.round(window.innerWidth * 0.5 * ratio);
-            dndBeyondPopup = window.open(
-              url,
-              "ddb_sheet_popup",
-              `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
-            );
-          }
+          renderPopup("web", url);
         });
       }
 

@@ -267,25 +267,28 @@ const updateScene = async (scene, folder) => {
     }
   }
 
-  await existing.update(update);
-
   // remove existing walls, add from import
   if (scene.walls && scene.walls.length > 0) {
-    await existing.deleteEmbeddedEntity(
-      "Wall",
-      existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
-    );
-    await existing.createEmbeddedEntity("Wall", scene.walls);
+    update.walls = scene.walls;
+    // await existing.deleteEmbeddedEntity(
+    //   "Wall",
+    //   existing.getEmbeddedCollection("Wall").map((wall) => wall._id)
+    // );
+    // await existing.createEmbeddedEntity("Wall", scene.walls);
   }
 
   // remove existing lights, add from import
   if (scene.lights && scene.lights.length > 0) {
-    await existing.deleteEmbeddedEntity(
-      "AmbientLight",
-      existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
-    );
-    await existing.createEmbeddedEntity("AmbientLight", scene.lights);
+    update.lights = scene.lights;
+    // await existing.deleteEmbeddedEntity(
+    //   "AmbientLight",
+    //   existing.getEmbeddedCollection("AmbientLight").map((light) => light._id)
+    // );
+    // await existing.createEmbeddedEntity("AmbientLight", scene.lights);
   }
+
+  await existing.update(update);
+
   return existing;
 };
 

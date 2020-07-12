@@ -1,6 +1,46 @@
 import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 
+/**
+ * Checks a given URL to see if it is of one of the supported formats:
+ * - regular character sheet
+ * - public sharing link
+ * - direct link to the endpoint already
+ * @param {string} url a given URL
+ * @returns {string|boolean} false if the given URL is not recognized/ supported, or the API endpoint pointing to that character otherwise
+ */
+const getCharacterAPIEndpoint = (url) => {
+  let matches;
+  const CONFIGS = [
+    () => {
+      const PATTERN = /.*dndbeyond\.com\/profile\/[\w-_]+\/characters\/(\d+)/;
+      matches = url.match(PATTERN);
+      if (matches) {
+        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+      }
+      return false;
+    },
+    () => {
+      const PATTERN = /ddb.ac\/characters\/(\d+)\/[\w-_]+/;
+      matches = url.match(PATTERN);
+      if (matches) {
+        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+      }
+      return false;
+    },
+    () => {
+      const PATTERN = /character-service.dndbeyond.com\/character\/v3\/character\/(\d+)/;
+      matches = url.match(PATTERN);
+      if (matches) {
+        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+      }
+      return false;
+    },
+  ];
+
+  return CONFIGS.map((fn) => fn(url)).reduce((prev, cur) => (!prev && cur ? cur : prev), false);
+};
+
 // a mapping of compendiums with content type
 const compendiumLookup = [
   {
@@ -113,10 +153,11 @@ export default class CharacterImport extends Application {
    * @param {*} items
    */
   async removeExistingItems(items) {
-    const newItems = items.filter((item) =>
-      !this.actorOriginal.items.some(
-        (originalItem) => item.name === originalItem.name && item.type === originalItem.type
-      )
+    const newItems = items.filter(
+      (item) =>
+        !this.actorOriginal.items.some(
+          (originalItem) => item.name === originalItem.name && item.type === originalItem.type
+        )
     );
     return newItems;
   }
@@ -331,9 +372,7 @@ export default class CharacterImport extends Application {
               item.flags.magicitems.spells[i][key] = value;
             }
           } else if (!game.user.can("ITEM_CREATE")) {
-            ui.notifications.warn(
-              `Magic Item ${item.name} cannot be enriched because of lacking player permissions`
-            );
+            ui.notifications.warn(`Magic Item ${item.name} cannot be enriched because of lacking player permissions`);
           }
         }
       }
@@ -566,8 +605,11 @@ export default class CharacterImport extends Application {
     $(html)
       .find("input[name=dndbeyond-url]")
       .on("input", async (event) => {
-        let matches = event.target.value.match(/.*(dndbeyond\.com\/profile\/[\w-_]+\/characters\/\d+)/);
-        if (matches) {
+        let URL = event.target.value;
+        if (URL.indexOf("https://") === -1) URL = "https://" + URL;
+        const API_ENDPOINT_CHARACTER = getCharacterAPIEndpoint(URL);
+
+        if (API_ENDPOINT_CHARACTER !== false) {
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith('<i class="fas fa-check-circle" style="color: green"></i>');
@@ -576,7 +618,8 @@ export default class CharacterImport extends Application {
             flags: {
               vtta: {
                 dndbeyond: {
-                  url: "https://www." + matches[1],
+                  url: URL,
+                  json: API_ENDPOINT_CHARACTER,
                 },
               },
             },
