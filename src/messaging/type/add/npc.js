@@ -166,18 +166,32 @@ let buildNPC = async (data) => {
     }
   } else {
     if (data.flags.vtta.dndbeyond.img) {
-      // image upload
-      let filename =
-        "npc-" +
-        data.name
-          .replace(/[^a-zA-Z]/g, "-")
-          .replace(/-+/g, "-")
-          .trim();
-
-      let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
+	  let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
       // in this instance I can't figure out how to make this safe, but the risk seems minimal.
-      // eslint-disable-next-line require-atomic-updates
-      data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+	  
+	  if (data.flags.vtta.dndbeyond.img.includes("attachments")) {
+		  let npcType = data.data.details.type;
+		  let filename = "generic-" + npcType
+			  .replace(/[^a-zA-Z]/g, "-")
+			  .replace(/-+/g, "-")
+			  .trim();
+			  
+		  //if (!(await srcExists(uploadDirectory + "/" + filename))) {
+			  // eslint-disable-next-line require-atomic-updates
+			  data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+		  //}
+	  } else {
+		  // image upload
+		  let filename =
+			"npc-" +
+			data.name
+			  .replace(/[^a-zA-Z]/g, "-")
+			  .replace(/-+/g, "-")
+			  .trim();
+
+		  // eslint-disable-next-line require-atomic-updates
+		  data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+	  }
     }
 
     // create the new npc
