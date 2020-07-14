@@ -186,7 +186,7 @@ let buildNPC = async (data) => {
               // eslint-disable-next-line require-atomic-updates
               data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
           } else {
-			  // eslint-disable-next-line require-atomic-updates
+              // eslint-disable-next-line require-atomic-updates
               data.img = utils.getFileUrl(uploadDirectory, filename + "." + ext);
           }
       } else {
