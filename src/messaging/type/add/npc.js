@@ -165,21 +165,29 @@ let buildNPC = async (data) => {
       await npc.createEmbeddedEntity("OwnedItem", spells);
     }
   } else {
-    if (data.flags.vtta.dndbeyond.img) {
+	let dndBeyondImageUrl = data.flags.vtta.dndbeyond.img;
+    if (dndBeyondImageUrl) {
 	  let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
       // in this instance I can't figure out how to make this safe, but the risk seems minimal.
 	  
-	  if (data.flags.vtta.dndbeyond.img.includes("attachments")) {
+	  if (dndBeyondImageUrl.includes("attachments")) {
 		  let npcType = data.data.details.type;
-		  let filename = "generic-" + npcType
+		  let filename = "npc-generic-" + npcType
 			  .replace(/[^a-zA-Z]/g, "-")
 			  .replace(/-+/g, "-")
 			  .trim();
 			  
-		  //if (!(await srcExists(uploadDirectory + "/" + filename))) {
+		  let ext = dndBeyondImageUrl
+			  .split(".")
+			  .pop()
+			  .split(/#|\?|&/)[0];
+			  
+		  if (!(await utils.fileExists(uploadDirectory, filename + "." + ext))) {
 			  // eslint-disable-next-line require-atomic-updates
-			  data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
-		  //}
+			  data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
+		  } else {
+			  data.img = utils.getFileUrl(uploadDirectory, filename + "." +ext);
+		  }
 	  } else {
 		  // image upload
 		  let filename =
@@ -190,7 +198,7 @@ let buildNPC = async (data) => {
 			  .trim();
 
 		  // eslint-disable-next-line require-atomic-updates
-		  data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+		  data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
 	  }
     }
 

@@ -717,6 +717,14 @@ let utils = {
       }
   },
 
+  fileExists: (directoryPath, filename) => {
+	return srcExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
+  },
+
+  getFileUrl: (directoryPath, filename) => {
+	  return DirectoryPicker.parse(directoryPath).current + "/" + filename;
+  },
+
   versionCompare: (v1, v2, options) => {
     var lexicographical = options && options.lexicographical,
       zeroExtend = options && options.zeroExtend,
