@@ -353,7 +353,18 @@ let utils = {
           }
         }
       };
+      
+      http.send();
     });
+  },
+  
+  fileExists: async (directoryPath, filename) => {
+    try {
+        await utils.serverFileExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
+        return true;
+    } catch {
+        return false;
+    }
   },
 
   getTemplate: (type) => {
@@ -715,10 +726,6 @@ let utils = {
         default:
           console.log(`${LOG_PREFIX} | ${section} > ${msg}`); // eslint-disable-line no-console
       }
-  },
-
-  fileExists: (directoryPath, filename) => {
-    return srcExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
   },
 
   getFileUrl: (directoryPath, filename) => {
