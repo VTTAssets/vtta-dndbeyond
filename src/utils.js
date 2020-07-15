@@ -362,7 +362,7 @@ let utils = {
     try {
         await utils.serverFileExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
         return true;
-    } catch {
+    } catch (ignored) {
         return false;
     }
   },
