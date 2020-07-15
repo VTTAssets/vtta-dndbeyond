@@ -170,17 +170,17 @@ let buildNPC = async (data) => {
       let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
       // in this instance I can't figure out how to make this safe, but the risk seems minimal.
 
-      if (dndBeyondImageUrl.includes("attachments")) {
-          let npcType = data.data.details.type;
+      let npcType = data.data.details.type;
+      let ext = dndBeyondImageUrl
+              .split(".")
+              .pop()
+              .split(/#|\?|&/)[0];
+              
+      if (dndBeyondImageUrl.endsWith(npcType + "." + ext)) {
           let filename = "npc-generic-" + npcType
               .replace(/[^a-zA-Z]/g, "-")
               .replace(/-+/g, "-")
               .trim();
-              
-          let ext = dndBeyondImageUrl
-              .split(".")
-              .pop()
-              .split(/#|\?|&/)[0];
               
           if (!(await utils.fileExists(uploadDirectory, filename + "." + ext))) {
               // eslint-disable-next-line require-atomic-updates
