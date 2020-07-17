@@ -6,6 +6,8 @@ import roll from "./type/roll.js";
 import query from "./type/query/index.js";
 import add from "./type/add/index.js";
 
+const REQUIRED_EXTENSION_VERSION = "3.1.6";
+
 /* eslint-disable no-bitwise */
 let uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -179,12 +181,26 @@ class EventPort {
         utils.log(event.detail);
         // display the connection version to Foundry
         if (body && body.version) {
-          window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");
-          window.vtta.isConnected = true;
-          window.vtta.pid = body.pid;
+          // check the version number
+          if (utils.versionCompare(body.version, REQUIRED_EXTENSION_VERSION) === -1) {
+            window.vtta.notification.show(
+              "<h2>Chrome extension outdated</h2>Chrome extension <b>v" +
+                body.version +
+                "</b> connected, but <b>v" +
+                REQUIRED_EXTENSION_VERSION +
+                "</b> is required.</p><p>Please wait for the update to be applied for you in the next couple of hours or uninstall and re-install the extension manually to receive the update.</p>",
+              null
+            );
+            window.vtta.isConnected = true;
+            window.vtta.pid = body.pid;
+          } else {
+            window.vtta.notification.show("Chrome extension <b>v" + body.version + "</b> connected.");
+            window.vtta.isConnected = true;
+            window.vtta.pid = body.pid;
 
-          // display an indicator to the user that the connection is established
-          $("#players").find("h3").addClass("vttaConnected");
+            // display an indicator to the user that the connection is established
+            $("#players").find("h3").addClass("vttaConnected");
+          }
         }
         // answer back to the extensions wanting to establish communications
         this.send("ping").then((response) => utils.log(response, "communication"));

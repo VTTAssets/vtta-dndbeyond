@@ -497,19 +497,19 @@ export default class CharacterImport extends Application {
           }
         }
 
-        // check if the character is set to public
-        if (!data.success) {
-          CharacterImport.showCurrentTask(
-            html,
-            "JSON retrieval failed",
-            `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
-              <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
-              <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
-              `,
-            true
-          );
-          return false;
-        }
+        // // check if the character is set to public
+        // if (!data.success) {
+        //   CharacterImport.showCurrentTask(
+        //     html,
+        //     "JSON retrieval failed",
+        //     `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
+        //       <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
+        //       <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
+        //       `,
+        //     true
+        //   );
+        //   return false;
+        // }
 
         // the expected data structure is
         // data: {

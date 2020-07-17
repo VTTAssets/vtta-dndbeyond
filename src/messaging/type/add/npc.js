@@ -105,12 +105,12 @@ let createNPC = async (npc, options) => {
   // should be aliased again
   let result = await Actor.create(npc, options);
 
-  if (npc.flags.vtta.dndbeyond.spells.length !== 0) {
-    // update existing (1) or overwrite (0)
-    let spells = await retrieveSpells(npc.flags.vtta.dndbeyond.spells);
-    spells = spells.map((spell) => spell.data);
-    await result.createEmbeddedEntity("OwnedItem", spells);
-  }
+  // if (npc.flags.vtta.dndbeyond.spells.length !== 0) {
+  //   // update existing (1) or overwrite (0)
+  //   let spells = await retrieveSpells(npc.flags.vtta.dndbeyond.spells);
+  //   spells = spells.map((spell) => spell.data);
+  //   await result.createEmbeddedEntity("OwnedItem", spells);
+  // }
 
   return result;
 };
@@ -189,6 +189,43 @@ let buildNPC = async (data) => {
   return npc;
 };
 
+const getSpellCompendium = async () => {
+  const compendiumName = await game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
+  if (compendiumName && compendiumName !== "") {
+    const compendium = await game.packs.find((pack) => pack.collection === compendiumName);
+    if (compendium) {
+      return compendium;
+    }
+  }
+  return undefined;
+};
+
+const processSpells = async (spells) => {
+  // decide wether to save it into the compendium
+  if (game.settings.get("vtta-dndbeyond", "entity-import-policy") !== SAVE_NONE) {
+    // update existing (1) or overwrite (0)
+    const compendium = await getSpellCompendium();
+    if (compendium) {
+      let index = await compendium.getIndex();
+      for (let spell of spells) {
+        const spellName = spell.name.toLowerCase();
+        let entity = index.find((entity) => entity.name.toLowerCase() === spellName);
+        if (entity) {
+          if (SAVE_ALL) {
+            const compendiumSpell = JSON.parse(JSON.stringify(spell));
+            compendiumSpell.data._id = entity._id;
+            await compendium.updateEntity(compendiumSpell.data);
+          }
+        } else {
+          await compendium.createEntity(spell);
+        }
+      }
+    } else {
+      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
+    }
+  }
+};
+
 const cleanUp = async (npc) => {
   // cleaning up after imports
   const cleanupAfterImport =
@@ -202,6 +239,7 @@ const cleanUp = async (npc) => {
 
 const parseNPC = async (body) => {
   let npc = await buildNPC(body.data);
+  await processSpells(npc.items.filter((i) => i.type === "spell").map((spell) => spell.data));
   await addNPCToCompendium(npc, body.data.name);
   await cleanUp(npc);
   return npc;

@@ -39,7 +39,8 @@
     "./css/sidebar.css",
     "./css/journal.css",
     "./css/notifications.css",
-    "./css/scene-navigation.css"
+    "./css/scene-navigation.css",
+    "./css/statblock.css"
   ],
   "packs": [],
   "socket": true,
