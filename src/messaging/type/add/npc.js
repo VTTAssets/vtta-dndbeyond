@@ -165,19 +165,42 @@ let buildNPC = async (data) => {
       await npc.createEmbeddedEntity("OwnedItem", spells);
     }
   } else {
-    if (data.flags.vtta.dndbeyond.img) {
-      // image upload
-      let filename =
-        "npc-" +
-        data.name
-          .replace(/[^a-zA-Z]/g, "-")
-          .replace(/-+/g, "-")
-          .trim();
-
+    let dndBeyondImageUrl = data.flags.vtta.dndbeyond.img;
+    if (dndBeyondImageUrl) {
       let uploadDirectory = game.settings.get("vtta-dndbeyond", "image-upload-directory").replace(/^\/|\/$/g, "");
       // in this instance I can't figure out how to make this safe, but the risk seems minimal.
-      // eslint-disable-next-line require-atomic-updates
-      data.img = await utils.uploadImage(data.flags.vtta.dndbeyond.img, uploadDirectory, filename);
+
+      let npcType = data.data.details.type;
+      let ext = dndBeyondImageUrl
+              .split(".")
+              .pop()
+              .split(/#|\?|&/)[0];
+              
+      if (dndBeyondImageUrl.endsWith(npcType + "." + ext)) {
+          let filename = "npc-generic-" + npcType
+              .replace(/[^a-zA-Z]/g, "-")
+              .replace(/-+/g, "-")
+              .trim();
+              
+          if (!(await utils.fileExists(uploadDirectory, filename + "." + ext))) {
+              // eslint-disable-next-line require-atomic-updates
+              data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
+          } else {
+              // eslint-disable-next-line require-atomic-updates
+              data.img = utils.getFileUrl(uploadDirectory, filename + "." + ext);
+          }
+      } else {
+          // image upload
+          let filename =
+            "npc-" +
+            data.name
+              .replace(/[^a-zA-Z]/g, "-")
+              .replace(/-+/g, "-")
+              .trim();
+
+          // eslint-disable-next-line require-atomic-updates
+          data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
+      }
     }
 
     // create the new npc
