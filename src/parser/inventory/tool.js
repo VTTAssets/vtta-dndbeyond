@@ -1,13 +1,40 @@
 import DICTIONARY from "../dictionary.js";
 import utils from "../../utils.js";
 
-/**
- * Checks the proficiency of the character with this specific weapon
- * @param {obj} data Item data
- * @param {array} proficiencies The character's proficiencies as an array of `{ name: 'PROFICIENCYNAME' }` objects
- */
-let getProficient = (data, proficiencies) => {
-  return proficiencies.find((proficiency) => proficiency.name === data.definition.name) !== undefined;
+let isHalfProficiencyRoundedUp = (data, ab) => {
+  const longAbility = DICTIONARY.character.abilities
+    .filter((ability) => ab === ability.value)
+    .map((ability) => ability.long)[0];
+  const roundUp = utils.filterBaseModifiers(data, "half-proficiency-round-up", `${longAbility}-ability-checks`);
+  return Array.isArray(roundUp) && roundUp.length;
+};
+
+let getProficiency = (data, toolName, ability) => {
+  const modifiers = [
+    data.character.modifiers.class,
+    data.character.modifiers.race,
+    utils.getActiveItemModifiers(data),
+    data.character.modifiers.feat,
+    data.character.modifiers.background,
+  ]
+    .flat()
+    .filter((modifier) => modifier.friendlySubtypeName === toolName)
+    .map((mod) => mod.type);
+
+  const halfProficiency =
+    data.character.modifiers.class.find(
+      (modifier) =>
+        // Jack of All trades/half-rounded down
+        (modifier.type === "half-proficiency" && modifier.subType === "ability-checks") ||
+        // e.g. champion for specific ability checks
+        isHalfProficiencyRoundedUp(data, ability)
+    ) !== undefined
+      ? 0.5
+      : 0;
+
+  const proficient = modifiers.includes("expertise") ? 2 : modifiers.includes("proficiency") ? 1 : halfProficiency;
+
+  return proficient;
 };
 
 /**
@@ -51,7 +78,7 @@ let getUses = (data) => {
   }
 };
 
-export default function parseTool(data, character) {
+export default function parseTool(ddb, data) {
   /**
    * MAIN parseTool
    */
@@ -70,7 +97,11 @@ export default function parseTool(data, character) {
 
   /* "ability": "int", */
   // well. How should I know how YOU are using those tools. By pure intellect? Or with your hands?
-  tool.data.ability = "dex";
+  tool.data.ability = DICTIONARY.character.proficiencies
+    .filter((prof) => prof.name === tool.name)
+    .map((prof) => prof.ability);
+
+  if (!tool.data.ability) tool.data.ability = "dex";
 
   // description: {
   //     value: '',
@@ -84,7 +115,7 @@ export default function parseTool(data, character) {
   };
 
   /* proficient: true, */
-  tool.data.proficient = getProficient(data, character.flags.vtta.dndbeyond.proficiencies) ? 1 : 0; // note: here, proficiency is not a bool, but a number (0, 0.5, 1, 2) based on not/jack of all trades/proficient/expert.
+  tool.data.proficient = getProficiency(ddb, tool.name, tool.data.ability);
 
   /* source: '', */
   tool.data.source = utils.parseSource(data.definition);

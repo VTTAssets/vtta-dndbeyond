@@ -111,8 +111,33 @@ let getWeaponFlags = (ddb, data) => {
   return flags;
 };
 
+let otherGear = (ddb, data, character) => {
+  let item = {};
+  switch (data.definition.subType) {
+    case "Potion":
+      item = parsePotion(data);
+      break;
+    case "Tool":
+      item = parseTool(ddb, data);
+      break;
+    case "Ammunition":
+      item = parseAmmunition(data);
+      break;
+    default:
+      // Final exceptions
+      switch (data.definition.name) {
+        case "Thieves' Tools":
+          item = parseTool(ddb, data, character);
+          break;
+        default:
+          item = parseLoot(data);
+      }
+  }
+  return item;
+};
+
 let parseItem = (ddb, data, character) => {
-  try {
+ try {
     // is it a weapon?
     let item = {};
     if (data.definition.filterType) {
@@ -145,19 +170,7 @@ let parseItem = (ddb, data, character) => {
           item = parseScroll(data);
           break;
         case "Other Gear": {
-          switch (data.definition.subType) {
-            case "Potion":
-              item = parsePotion(data);
-              break;
-            case "Tool":
-              item = parseTool(data, character);
-              break;
-            case "Ammunition":
-              item = parseAmmunition(data);
-              break;
-            default:
-              item = parseLoot(data);
-          }
+          item = otherGear(ddb, data, character);
           break;
         }
         default:
