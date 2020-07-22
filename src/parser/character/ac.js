@@ -190,7 +190,7 @@ export function getArmorClass(data, character) {
   }
 
   const shields = equippedArmor.filter((shield) => shield.definition.armorTypeId === 4);
-  const armors = equippedArmor.filter((armor) => armor.definition.armorTypeId !== 4);
+  const armors = equippedArmor.filter((armour) => armour.definition.armorTypeId !== 4);
 
   utils.log("Calculated GearAC: " + gearAC);
   utils.log("Unarmoured AC Bonus:" + unarmoredACBonus);
