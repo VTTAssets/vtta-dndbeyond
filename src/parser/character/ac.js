@@ -219,9 +219,15 @@ export function getArmorClass(data, character) {
 
     // Determine final AC values based on AC Type
     // Light Armor: AC + DEX
-    // Medium ARmor: AC + DEX (max 2)
+    // Medium Armor: AC + DEX (max 2)
     // Heavy Armor: AC only
     // Unarmored Defense: Dex mod already included in calculation
+
+    // sometimes the type field can be blank in DDB
+    if (!armors[armor].definition.type || armors[armor].definition.type === "") {
+      const acType = DICTIONARY.equipment.armorType.find((a) => a.id === armors[armor].definition.armorTypeId);
+      if (acType) armors[armor].definition.type = acType.name;
+    }
 
     switch (armors[armor].definition.type) {
       case "Natural Armor":
