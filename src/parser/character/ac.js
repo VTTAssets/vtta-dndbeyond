@@ -30,7 +30,7 @@ let getBaseArmor = (ac, armorType) => {
       name: "Base Armor - Racial",
       type: armorType,
       armorClass: ac,
-      armorTypeId: DICTIONARY.equipment.armorTypeID.find((id) => id.name === armorType).id,
+      armorTypeId: DICTIONARY.equipment.armorType.find((id) => id.name === armorType).id,
       grantedModifiers: [],
       canAttune: false,
       filterType: "Armor",
@@ -190,7 +190,7 @@ export function getArmorClass(data, character) {
   }
 
   const shields = equippedArmor.filter((shield) => shield.definition.armorTypeId === 4);
-  const armors = equippedArmor.filter((shield) => shield.definition.armorTypeId !== 4);
+  const armors = equippedArmor.filter((armor) => armor.definition.armorTypeId !== 4);
 
   utils.log("Calculated GearAC: " + gearAC);
   utils.log("Unarmoured AC Bonus:" + unarmoredACBonus);
@@ -219,9 +219,15 @@ export function getArmorClass(data, character) {
 
     // Determine final AC values based on AC Type
     // Light Armor: AC + DEX
-    // Medium ARmor: AC + DEX (max 2)
+    // Medium Armor: AC + DEX (max 2)
     // Heavy Armor: AC only
     // Unarmored Defense: Dex mod already included in calculation
+
+    // sometimes the type field can be blank in DDB
+    if (!armors[armor].definition.type || armors[armor].definition.type === "") {
+      const acType = DICTIONARY.equipment.armorType.find((a) => a.id === armors[armor].definition.armorTypeId);
+      if (acType) armors[armor].definition.type = acType.name;
+    }
 
     switch (armors[armor].definition.type) {
       case "Natural Armor":

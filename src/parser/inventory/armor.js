@@ -7,7 +7,8 @@ import utils from "../../utils.js";
  */
 let getArmorType = (data) => {
   // get the generic armor type
-  const entry = DICTIONARY.equipment.armorType.find((type) => type.name === data.definition.type);
+  const nameEntry = DICTIONARY.equipment.armorType.find((type) => type.name === data.definition.type);
+  const idEntry = DICTIONARY.equipment.armorType.find((type) => type.id === data.definition.armorTypeId);
 
   // get the armor class
   const baseArmorClass = data.definition.armorClass;
@@ -33,7 +34,7 @@ let getArmorType = (data) => {
   }
 
   return {
-    type: entry !== undefined ? entry.value : "medium",
+    type: nameEntry !== undefined ? nameEntry.value : idEntry !== undefined ? idEntry.value : "medium",
     value: baseArmorClass + bonusArmorClass,
     dex: maxDexModifier,
   };
