@@ -225,7 +225,8 @@ export function getArmorClass(data, character) {
 
     // sometimes the type field can be blank in DDB
     if (!armors[armor].definition.type || armors[armor].definition.type === "") {
-      const acType = DICTIONARY.equipment.armorType.find((a) => a.id === armors[armor].definition.armorTypeId);
+      const armourTypeId = armors[armor].definition.armorTypeId;
+      const acType = DICTIONARY.equipment.armorType.find((a) => a.id === armourTypeId);
       if (acType) armors[armor].definition.type = acType.name;
     }
 
