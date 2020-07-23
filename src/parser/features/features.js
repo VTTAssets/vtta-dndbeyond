@@ -6,7 +6,7 @@ import parseTemplateString from "../templateStrings.js";
  * @param {string} type character property: "class", "race" etc.
  * @param {object} feat options to search for
  */
-let getChoice = (ddb, type, feat) => {
+let getChoices = (ddb, type, feat) => {
   const id = feat.id;
 
   /**
@@ -29,14 +29,23 @@ let getChoice = (ddb, type, feat) => {
 
   if (ddb.character.choices[type] && Array.isArray(ddb.character.choices[type])) {
     // find a choice in the related choices-array
-    const choice = ddb.character.choices[type].find(
+    const choices = ddb.character.choices[type].filter(
       (characterChoice) => characterChoice.componentId && characterChoice.componentId === id
     );
 
-    // double-check if there are really choices in there and a choice is actually made
-    if (choice !== undefined && choice.options && Array.isArray(choice.options) && choice.optionValue) {
-      const option = choice.options.find((opt) => opt.id === choice.optionValue);
-      if (option) return option;
+    if (choices) {
+      const options = choices
+        .filter(
+          (choice) =>
+            choice.options &&
+            Array.isArray(choice.options) &&
+            choice.optionValue &&
+            choice.options.find((opt) => opt.id === choice.optionValue)
+        )
+        .map((choice) => {
+          return choice.options.find((opt) => opt.id === choice.optionValue);
+        });
+      return options;
     }
   }
   // we could not determine if there are any choices left
@@ -64,15 +73,16 @@ function getDescription(ddb, character, feat) {
   }
 
   return {
-    value: description !== "" ? description + ((snippet !== "") ? "<h3>Summary</h3>" + snippet : "") : snippet,
+    value: description !== "" ? description + (snippet !== "" ? "<h3>Summary</h3>" + snippet : "") : snippet,
     chat: snippet,
     unidentified: "",
   };
 }
 
 function parseFeature(feat, ddb, character, source, type) {
+  let features = [];
   // filter proficiencies and Ability Score Improvement
-  const name = (feat.definition) ? feat.definition.name : feat.name;
+  const name = feat.definition ? feat.definition.name : feat.name;
   let item = {
     name: name,
     type: "feat",
@@ -81,39 +91,51 @@ function parseFeature(feat, ddb, character, source, type) {
       vtta: {
         dndbeyond: {
           requiredLevel: feat.requiredLevel,
-          displayOrder: (feat.definition && feat.definition.displayOrder) ? feat.definition.displayOrder : feat.displayOrder,
-        }
+          displayOrder:
+            feat.definition && feat.definition.displayOrder ? feat.definition.displayOrder : feat.displayOrder,
+        },
       },
     },
   };
 
   // Add choices to the textual description of that feat
-  let choice = getChoice(ddb, type, feat);
-  if (choice) {
-    item.name = choice.label ? `${item.name}: ${choice.label}` : item.name;
-    if (feat.description) {
-      feat.description = choice.description
-        ? feat.description + "<h3>" + choice.label + "</h3>" + choice.description
-        : feat.description;
-    }
-    if (feat.snippet) {
-      feat.snippet = choice.description
-      ? feat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
-      : feat.snippet;
-    }
+  let choices = getChoices(ddb, type, feat);
+  if (choices) {
+    choices.forEach((choice) =>{
+      console.log(item);
+      console.log(feat);
+      let choiceItem = JSON.parse(JSON.stringify(item));
+      let choiceFeat = JSON.parse(JSON.stringify(feat));
+      console.log(choiceItem);
+      console.log(choiceFeat);
+      choiceItem.name = choice.label ? `${choiceItem.name}: ${choice.label}` : choiceItem.name;
+      if (choiceFeat.description) {
+        choiceFeat.description = choice.description
+          ? choiceFeat.description + "<h3>" + choice.label + "</h3>" + choice.description
+          : choiceFeat.description;
+      }
+      if (choiceFeat.snippet) {
+        choiceFeat.snippet = choice.description
+          ? choiceFeat.snippet + "<h3>" + choice.label + "</h3>" + choice.description
+          : choiceFeat.snippet;
+      }
+      choiceItem.data.description = getDescription(ddb, character, choiceFeat);
+      choiceItem.data.source = source;
+
+      features.push(choiceItem);
+    });
+  } else {
+    item.data.description = getDescription(ddb, character, feat);
+    item.data.source = source;
+
+    features.push(item);
   }
 
-  item.data.description = getDescription(ddb, character, feat);
-  item.data.source = source;
-
-  return item;
+  return features;
 }
 
 function isDuplicateFeature(items, item) {
-  return items.some((dup) =>
-    dup.name === item.name &&
-    dup.data.description.value === item.data.description.value
-  );
+  return items.some((dup) => dup.name === item.name && dup.data.description.value === item.data.description.value);
 }
 
 function getNameMatchedFeature(items, item) {
@@ -137,15 +159,20 @@ function parseClassFeatures(ddb, character) {
         !ddb.character.actions.class.some((action) => action.name === feat.name)
     );
     const klassName = klass.definition.name;
-    const klassFeatureList = classFeatures.map((feat) => {
-      let item = parseFeature(feat, ddb, character, klassName, 'class');
-      item.flags.vtta.dndbeyond.class = klassName;
-      // add feature to all features list
-      classesFeatureList.push(JSON.parse(JSON.stringify(item)));
-      return item;
-    }).sort((a, b) => {
-      return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
-    });
+    const klassFeatureList = classFeatures
+      .map((feat) => {
+        let items = parseFeature(feat, ddb, character, klassName, "class");
+        return items.map((item) => {
+          item.flags.vtta.dndbeyond.class = klassName;
+          // add feature to all features list
+          classesFeatureList.push(JSON.parse(JSON.stringify(item)));
+          return item;
+        });
+      })
+      .flat()
+      .sort((a, b) => {
+        return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
+      });
 
     klassFeatureList.forEach((item) => {
       // have we already processed an identical item?
@@ -174,15 +201,20 @@ function parseClassFeatures(ddb, character) {
           !ddb.character.actions.class.some((action) => action.name === feat.name)
       );
       const subKlassName = `${klassName} : ${klass.subclassDefinition.name}`;
-      const subKlassFeatureList = subFeatures.map((feat) => {
-        let item = parseFeature(feat, ddb, character, subKlassName, 'class');
-        item.flags.vtta.dndbeyond.class = subKlassName;
-        // add feature to all features list
-        subClassesFeatureList.push(JSON.parse(JSON.stringify(item)));
-        return item;
-      }).sort((a, b) => {
-        return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
-      });
+      const subKlassFeatureList = subFeatures
+        .map((feat) => {
+          let subClassItems = parseFeature(feat, ddb, character, subKlassName, "class");
+          return subClassItems.map((item) => {
+            item.flags.vtta.dndbeyond.class = subKlassName;
+            // add feature to all features list
+            subClassesFeatureList.push(JSON.parse(JSON.stringify(item)));
+            return item;
+          });
+        })
+        .flat()
+        .sort((a, b) => {
+          return a.flags.vtta.dndbeyond.displayOrder - b.flags.vtta.dndbeyond.displayOrder;
+        });
 
       // parse out duplicate features from class features
       subKlassFeatureList.forEach((item) => {
@@ -216,7 +248,6 @@ function parseClassFeatures(ddb, character) {
   return classItems;
 }
 
-
 export default function parseFeatures(ddb, character) {
   let items = [];
 
@@ -227,10 +258,10 @@ export default function parseFeatures(ddb, character) {
         !["Ability Score Increase", "Age", "Alignment", "Size", "Speed", "Languages"].includes(trait.definition.name) &&
         !ddb.character.actions.race.some((action) => action.name === trait.definition.name)
     )
-    .forEach(
-      (feat) => {
-        const source = utils.parseSource(feat.definition);
-        let item = parseFeature(feat, ddb, character, source, 'race');
+    .forEach((feat) => {
+      const source = utils.parseSource(feat.definition);
+      let features = parseFeature(feat, ddb, character, source, "race");
+      features.forEach((item) => {
         const existingFeature = getNameMatchedFeature(items, item);
         const duplicateFeature = isDuplicateFeature(items, item);
         if (existingFeature && !duplicateFeature) {
@@ -238,6 +269,7 @@ export default function parseFeatures(ddb, character) {
         } else if (!existingFeature) {
           items.push(item);
         }
+      });
     });
 
   // class and subclass traits
@@ -257,13 +289,13 @@ export default function parseFeatures(ddb, character) {
 
   // finally add feats
   ddb.character.feats
-    .filter(
-      (feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name)
-    )
+    .filter((feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name))
     .forEach((feat) => {
       const source = utils.parseSource(feat.definition);
-      let item = parseFeature(feat, ddb, character, source, 'feat');
-      items.push(item);
+      let items = parseFeature(feat, ddb, character, source, "feat");
+      items.forEach((item) => {
+        items.push(item);
+      });
     });
 
   return items;
