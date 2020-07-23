@@ -100,14 +100,12 @@ function parseFeature(feat, ddb, character, source, type) {
 
   // Add choices to the textual description of that feat
   let choices = getChoices(ddb, type, feat);
-  if (choices) {
-    choices.forEach((choice) =>{
-      console.log(item);
-      console.log(feat);
+
+  if (choices.length > 0) {
+    choices.forEach((choice) => {
       let choiceItem = JSON.parse(JSON.stringify(item));
       let choiceFeat = JSON.parse(JSON.stringify(feat));
-      console.log(choiceItem);
-      console.log(choiceFeat);
+
       choiceItem.name = choice.label ? `${choiceItem.name}: ${choice.label}` : choiceItem.name;
       if (choiceFeat.description) {
         choiceFeat.description = choice.description
