@@ -448,16 +448,25 @@ export default class CharacterImport extends Application {
         isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-spell"),
         description: "Spells",
       },
+    ];
+
+    const importConfig = [
       {
         name: "new",
         isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-new"),
-        description: "Import new only (no delete or update)",
+        description: "Import new items only. Doesn't delete or update existing items in Foundry.",
+      },
+      {
+        name: "use-existing",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing"),
+        description: "Use existing items from the compendium, rather than recreating.",
       },
     ];
 
     return {
       actor: this.actor,
       importPolicies: importPolicies,
+      importConfig: importConfig,
     };
   }
 

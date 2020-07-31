@@ -48,7 +48,7 @@
           <li>Select the textarea below and paste the data with CTRL-V</li>
         </ol>
 
-        <p>Alternatively, set the URL in the textfield above and use ALT-Leftclick on the [B] button on the character
+        <p>Alternatively, set the URL in the textfield above and use ALT-Left click on the [B] button on the character
           sheet to open the correct URL for you (see above).</p>
       </div>
       <div class="form-caption">JSON</div>
@@ -59,13 +59,32 @@
     <hr>
   </div>
   <div>
-    <h3>Update settings</h3>
-    <p>The following item types will be deleted and re-created on import (default: everything):</p>
+    <div>
+    <h3>Update selection</h3>
+    <p>The following "items" will be deleted and re-created on import (default: everything):</p>
     <div class="import-policy-group">
       {{#each importPolicies}}
       <div class="import-policy"><input {{#if this.isChecked}}checked{{/if}} type="checkbox"
           name="character-import-policy-{{this.name}}" data-section="{{this.name}}">{{this.description}}</div>
       {{/each}}
+      </div>
+      <hr>
+      <div>
+      <h3>Update configuration</h3>
+      <p>Change delete and re-create policy.</p>
+      {{#each importConfig}}
+      <div class="import-config"><input {{#if this.isChecked}}checked{{/if}} type="checkbox"
+          name="character-import-policy-{{this.name}}" data-section="{{this.name}}">{{this.description}}</div>
+      {{/each}}
+      </div>
+      <hr>
+      <div>
+      <h3>Notes</h3>
+      <p>When using "Import new only" features managed by the Class such as levels and spell progression won't be
+        updated. Some items are always updated. This includes currency, HP, AC, stats, speeds, skills and special
+        traits. Pretty much everything on the attributes page.
+      </p>
+      </div>
     </div>
   </div>
   <div class="task-name">
