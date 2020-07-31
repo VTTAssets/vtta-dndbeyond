@@ -163,6 +163,16 @@ export default class CharacterImport extends Application {
   }
 
   /**
+   * Loops through a characters items and replaces any existing items
+   * @param {*} items
+   */
+  async updateExistingItems(items, type) {
+    // check compendium for item
+    // update matching item
+    return items;
+  }
+
+  /**
    * Updates a compendium, provide the type.
    * @param {*} type
    */
@@ -582,6 +592,12 @@ export default class CharacterImport extends Application {
         if (game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
           // removed existing items from those to be imported
           items = await this.removeExistingItems(items);
+        }
+
+        if (game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing")) {
+          // removed existing items from those to be imported
+          items = await this.useExistingItems(items, "inventory");
+          items = await this.useExistingItems(items, "spells");
         }
 
         // if we still have items to add, add them
