@@ -149,27 +149,45 @@ export default class CharacterImport extends Application {
   }
 
   /**
-   * Loops through a characters items and updates flags
+   * Removes items
    * @param {*} items
+   * @param {*} itemsToRemove
    */
-  async removeExistingItems(items) {
-    const newItems = items.filter(
+  static async removeItems(items, itemsToRemove) {
+    const newItems = await items.filter(
       (item) =>
-        !this.actorOriginal.items.some(
+        !itemsToRemove.some(
           (originalItem) => item.name === originalItem.name && item.type === originalItem.type
         )
     );
     return newItems;
   }
 
+  async importCompendiumItems(compendium, items) {
+    items.forEach((item) => {
+      const compendiumName = compendiumLookup.find((c) => c.type == compendium).compendium;
+      const compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
+      this.actor.importItemFromCollection(compendiumLabel, item._id);
+    });
+  }
+
   /**
-   * Loops through a characters items and replaces any existing items
+   * gets items from compendium
    * @param {*} items
    */
-  async updateExistingItems(items, type) {
-    // check compendium for item
-    // update matching item
-    return items;
+  static async getCompendiumItems(items, type) {
+    const compendiumName = compendiumLookup.find((c) => c.type == type).compendium;
+    const compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
+    const compendium = await game.packs.find((pack) => pack.collection === compendiumLabel);
+    const index = await compendium.getIndex();
+
+    const results = index
+      .filter((i) => items.some((item) => i.name === item.name))
+      .map(async (i) => {
+        // const item = await compendium.getEntry(i._id);
+        return compendium.getEntry(i._id);
+      });
+    return Promise.all(results);
   }
 
   /**
@@ -493,6 +511,15 @@ export default class CharacterImport extends Application {
           event.currentTarget.checked
         );
       });
+    $(html)
+      .find('.import-config input[type="checkbox"]')
+      .on("change", (event) => {
+        game.settings.set(
+          "vtta-dndbeyond",
+          "character-update-policy-" + event.currentTarget.dataset.section,
+          event.currentTarget.checked
+        );
+      });
 
     $(html)
       .find("#json")
@@ -562,7 +589,8 @@ export default class CharacterImport extends Application {
         await this.actor.update(this.result.character);
 
         // clear items
-        if (!game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
+        const importKeepExistingActorItems = game.settings.get("vtta-dndbeyond", "character-update-policy-new");
+        if (!importKeepExistingActorItems) {
           CharacterImport.showCurrentTask(html, "Clearing inventory");
           await this.clearItemsByUserSelection();
         }
@@ -589,15 +617,20 @@ export default class CharacterImport extends Application {
           items = items.flat();
         }
 
-        if (game.settings.get("vtta-dndbeyond", "character-update-policy-new")) {
+        if (importKeepExistingActorItems) {
           // removed existing items from those to be imported
-          items = await this.removeExistingItems(items);
+          items = await this.removeItems(items, this.actorOriginal.items);
         }
 
-        if (game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing")) {
+        const compendiumInventoryItems = await CharacterImport.getCompendiumItems(items, "inventory");
+        const compendiumSpellItems = await CharacterImport.getCompendiumItems(items, "spells");
+        const compendiumItems = compendiumInventoryItems.concat(compendiumSpellItems);
+        const useExistingCompendiumItems = game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing");
+
+        if (useExistingCompendiumItems && compendiumItems) {
+          utils.log("Removing compendium items");
           // removed existing items from those to be imported
-          items = await this.useExistingItems(items, "inventory");
-          items = await this.useExistingItems(items, "spells");
+          items = await CharacterImport.removeItems(items, compendiumItems);
         }
 
         // if we still have items to add, add them
@@ -612,6 +645,15 @@ export default class CharacterImport extends Application {
           await this.actor.createEmbeddedEntity("OwnedItem", items, {
             displaySheet: false,
           });
+        }
+
+        // now import any compendium items that we matched
+        if (useExistingCompendiumItems && compendiumItems) {
+          CharacterImport.showCurrentTask(html, "Importing compendium items");
+          utils.log("Importing compendium items");
+          // these need to be reimported
+          if (compendiumSpellItems) this.importCompendiumItems("spells", compendiumSpellItems);
+          if (compendiumInventoryItems) this.importCompendiumItems("inventory", compendiumInventoryItems);
         }
 
         // We loop back over the spell slots to update them to our computed
