@@ -63,3 +63,8 @@ div.ddbCharacterName {
   display: flex;
   align-items: center;
 }
+
+.vtta .import-config {
+  display: flex;
+  align-items: center;
+}
