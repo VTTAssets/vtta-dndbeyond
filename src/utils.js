@@ -353,17 +353,17 @@ let utils = {
           }
         }
       };
-      
+
       http.send();
     });
   },
-  
+
   fileExists: async (directoryPath, filename) => {
     try {
-        await utils.serverFileExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
-        return true;
+      await utils.serverFileExists(DirectoryPicker.parse(directoryPath).current + "/" + filename);
+      return true;
     } catch (ignored) {
-        return false;
+      return false;
     }
   },
 
@@ -634,7 +634,10 @@ let utils = {
             if (entry) {
               compendium.getEntity(entry._id).then((entity) => {
                 entity.data.name = entry.name; // transfer restrictions over, if any
-                resolve(entity);
+                // remove redudant info
+                delete entity.data._id;
+                delete entity.data.permission;
+                resolve(entity.data);
               });
             } else {
               resolve(null);
