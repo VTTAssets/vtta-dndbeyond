@@ -71,7 +71,9 @@ class DirectoryPicker extends FilePicker {
     $(html)
       .find(`input[data-dtype="Directory"]`)
       .each((index, element) => {
+        // disable the input field raw editing
         $(element).prop("disabled", true);
+
         // if there is no button next to this input element yet, we add it
         if (!$(element).next().length) {
           let picker = new DirectoryPicker({
@@ -92,8 +94,6 @@ class DirectoryPicker extends FilePicker {
   /** @override */
   activateListeners(html) {
     super.activateListeners(html);
-    console.log(this.field);
-    // disable the input field raw editing
 
     // remove unnecessary elements
     $(html).find("ol.files-list").remove();
