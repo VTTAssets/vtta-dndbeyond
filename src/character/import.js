@@ -103,7 +103,7 @@ export default class CharacterImport extends Application {
     const options = super.defaultOptions;
     options.title = game.i18n.localize("vtta-dndbeyond.module-name");
     options.template = "modules/vtta-dndbeyond/src/character/import.hbs";
-    options.width = 600;
+    options.width = 800;
     options.height = "auto";
     options.classes = ["vtta"];
     return options;
@@ -156,9 +156,7 @@ export default class CharacterImport extends Application {
   static async removeItems(items, itemsToRemove) {
     const newItems = await items.filter(
       (item) =>
-        !itemsToRemove.some(
-          (originalItem) => item.name === originalItem.name && item.type === originalItem.type
-        )
+        !itemsToRemove.some((originalItem) => item.name === originalItem.name && item.type === originalItem.type)
     );
     return newItems;
   }
@@ -199,6 +197,7 @@ export default class CharacterImport extends Application {
     const compendiumName = compendiumLookup.find((c) => c.type == type).compendium;
     const compendiumLabel = game.settings.get("vtta-dndbeyond", compendiumName);
     const compendium = await game.packs.find((pack) => pack.collection === compendiumLabel);
+    compendium.locked = false;
 
     if (game.user.isGM && importPolicy !== 2) {
       const initialIndex = await compendium.getIndex();

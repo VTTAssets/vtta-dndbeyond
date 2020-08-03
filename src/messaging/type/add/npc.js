@@ -61,12 +61,16 @@ const addNPCToCompendium = async (npc, name) => {
     // update existing (1) or overwrite (0)
     const compendium = await getCompendium();
     if (compendium) {
+      // unlock the compendium for update/create
+      compendium.locked = false;
+
       let index = await compendium.getIndex();
       let entity = index.find((entity) => entity.name.toLowerCase() === name.toLowerCase());
       if (entity) {
         if (SAVE_ALL) {
           const compendiumNPC = JSON.parse(JSON.stringify(npc));
           compendiumNPC.data._id = entity._id;
+
           await compendium.updateEntity(compendiumNPC.data);
         }
       } else {
@@ -172,34 +176,36 @@ let buildNPC = async (data) => {
 
       let npcType = data.data.details.type;
       let ext = dndBeyondImageUrl
-              .split(".")
-              .pop()
-              .split(/#|\?|&/)[0];
-              
-      if (dndBeyondImageUrl.endsWith(npcType + "." + ext)) {
-          let filename = "npc-generic-" + npcType
-              .replace(/[^a-zA-Z]/g, "-")
-              .replace(/-+/g, "-")
-              .trim();
-              
-          if (!(await utils.fileExists(uploadDirectory, filename + "." + ext))) {
-              // eslint-disable-next-line require-atomic-updates
-              data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
-          } else {
-              // eslint-disable-next-line require-atomic-updates
-              data.img = utils.getFileUrl(uploadDirectory, filename + "." + ext);
-          }
-      } else {
-          // image upload
-          let filename =
-            "npc-" +
-            data.name
-              .replace(/[^a-zA-Z]/g, "-")
-              .replace(/-+/g, "-")
-              .trim();
+        .split(".")
+        .pop()
+        .split(/#|\?|&/)[0];
 
+      if (dndBeyondImageUrl.endsWith(npcType + "." + ext)) {
+        let filename =
+          "npc-generic-" +
+          npcType
+            .replace(/[^a-zA-Z]/g, "-")
+            .replace(/-+/g, "-")
+            .trim();
+
+        if (!(await utils.fileExists(uploadDirectory, filename + "." + ext))) {
           // eslint-disable-next-line require-atomic-updates
           data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
+        } else {
+          // eslint-disable-next-line require-atomic-updates
+          data.img = utils.getFileUrl(uploadDirectory, filename + "." + ext);
+        }
+      } else {
+        // image upload
+        let filename =
+          "npc-" +
+          data.name
+            .replace(/[^a-zA-Z]/g, "-")
+            .replace(/-+/g, "-")
+            .trim();
+
+        // eslint-disable-next-line require-atomic-updates
+        data.img = await utils.uploadImage(dndBeyondImageUrl, uploadDirectory, filename);
       }
     }
 
@@ -232,6 +238,9 @@ const processSpells = async (spells) => {
       console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
       return;
     }
+
+    // unlock the compendium for update/create
+    compendium.locked = false;
 
     let index = await compendium.getIndex();
     for (let spell of spells) {

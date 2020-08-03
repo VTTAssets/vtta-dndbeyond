@@ -7,8 +7,13 @@ export default async function () {
   if (!compendium) {
     compendiumCreated = true;
     // create a compendium for the user
-    await Compendium.create({ entity: "Item", label: "My DDB Spells", name: "ddb-spells", package: "world" });
-    await game.settings.set("vtta-dndbeyond", "entity-spell-compendium", "world.ddb-spells");
+    await Compendium.create({
+      entity: "Item",
+      label: "My DDB Spells",
+      name: `${game.world.name}-ddb-spells`,
+      package: "world",
+    });
+    await game.settings.set("vtta-dndbeyond", "entity-spell-compendium", `world.${game.world.name}-ddb-spells`);
   }
 
   compendiumName = game.settings.get("vtta-dndbeyond", "entity-item-compendium");
@@ -17,8 +22,13 @@ export default async function () {
   if (!compendium) {
     compendiumCreated = true;
     // create a compendium for the user
-    await Compendium.create({ entity: "Item", label: "My DDB Items", name: "ddb-items", package: "world" });
-    await game.settings.set("vtta-dndbeyond", "entity-item-compendium", "world.ddb-items");
+    await Compendium.create({
+      entity: "Item",
+      label: "My DDB Items",
+      name: `${game.world.name}-ddb-items`,
+      package: "world",
+    });
+    await game.settings.set("vtta-dndbeyond", "entity-item-compendium", `world.${game.world.name}-ddb-items`);
   }
 
   compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
@@ -27,8 +37,13 @@ export default async function () {
   if (!compendium) {
     compendiumCreated = true;
     // create a compendium for the user
-    await Compendium.create({ entity: "Actor", label: "My DDB Monsters", name: "ddb-monsters", package: "world" });
-    await game.settings.set("vtta-dndbeyond", "entity-monster-compendium", "world.ddb-monsters");
+    await Compendium.create({
+      entity: "Actor",
+      label: "My DDB Monsters",
+      name: `${game.world.name}-ddb-monsters`,
+      package: "world",
+    });
+    await game.settings.set("vtta-dndbeyond", "entity-monster-compendium", `world.${game.world.name}-ddb-monsters`);
   }
 
   if (compendiumCreated) location.reload();
