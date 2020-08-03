@@ -112,6 +112,15 @@ export default function () {
     default: false,
   });
 
+  game.settings.register("vtta-dndbeyond", "character-update-policy-use-existing", {
+    name: "vtta-dndbeyond.character-update-policy-use-existing.name",
+    hint: "vtta-dndbeyond.character-update-policy-use-existing.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: false,
+  });
+
   game.settings.register("vtta-dndbeyond", "character-update-policy-class", {
     name: "vtta-dndbeyond.character-update-policy-class.name",
     hint: "vtta-dndbeyond.character-update-policy-class.hint",
