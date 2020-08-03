@@ -4,14 +4,14 @@ export default function () {
   const actorCompendiums = game.packs
     .filter((pack) => pack.entity === "Actor")
     .reduce((choices, pack) => {
-      choices[pack.collection] = pack.metadata.label;
+      choices[pack.collection] = `[${pack.metadata.package}] ${pack.metadata.label}`;
       return choices;
     }, {});
 
   const itemCompendiums = game.packs
     .filter((pack) => pack.entity === "Item")
     .reduce((choices, pack) => {
-      choices[pack.collection] = pack.metadata.label;
+      choices[pack.collection] = `[${pack.metadata.package}] ${pack.metadata.label}`;
       return choices;
     }, {});
 
