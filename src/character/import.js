@@ -618,7 +618,7 @@ export default class CharacterImport extends Application {
 
         if (importKeepExistingActorItems) {
           // removed existing items from those to be imported
-          items = await this.removeItems(items, this.actorOriginal.items);
+          items = await CharacterImport.removeItems(items, this.actorOriginal.items);
         }
 
         const compendiumInventoryItems = await CharacterImport.getCompendiumItems(items, "inventory");
