@@ -643,7 +643,11 @@ export default class CharacterImport extends Application {
             compendiumInventoryItems,
             compendiumSpellItems,
             compendiumFeatureItems,
+<<<<<<< HEAD
             compendiumClassItems,
+=======
+            compendiumClassItems
+>>>>>>> Resolve compendium import API issues
           );
           // removed existing items from those to be imported
           items = await CharacterImport.removeItems(items, compendiumItems);
