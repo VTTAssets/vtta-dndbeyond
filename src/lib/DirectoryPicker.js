@@ -72,7 +72,7 @@ class DirectoryPicker extends FilePicker {
       .find(`input[data-dtype="Directory"]`)
       .each((index, element) => {
         // disable the input field raw editing
-        $(element).prop("disabled", true);
+        $(element).prop("readonly", true);
 
         // if there is no button next to this input element yet, we add it
         if (!$(element).next().length) {
