@@ -82,6 +82,26 @@ export default function () {
     choices: itemCompendiums,
   });
 
+  game.settings.register("vtta-dndbeyond", "entity-feature-compendium", {
+    name: "vtta-dndbeyond.entity-feature-compendium.name",
+    hint: "vtta-dndbeyond.entity-feature-compendium.hint",
+    scope: "world",
+    config: true,
+    type: String,
+    isSelect: true,
+    choices: itemCompendiums,
+  });
+
+  game.settings.register("vtta-dndbeyond", "entity-class-compendium", {
+    name: "vtta-dndbeyond.entity-class-compendium.name",
+    hint: "vtta-dndbeyond.entity-class-compendium.hint",
+    scope: "world",
+    config: true,
+    type: String,
+    isSelect: true,
+    choices: itemCompendiums,
+  });
+
   game.settings.register("vtta-dndbeyond", "entity-spell-compendium", {
     name: "vtta-dndbeyond.entity-spell-compendium.name",
     hint: "vtta-dndbeyond.entity-spell-compendium.hint",
