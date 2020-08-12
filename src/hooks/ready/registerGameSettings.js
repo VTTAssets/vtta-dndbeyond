@@ -190,6 +190,16 @@ export default function () {
     }
   );
 
+  game.settings.register("vtta-dndbeyond", "character-update-policy-currency", {
+    name: "vtta-dndbeyond.character-update-policy-currency.name",
+    hint: "vtta-dndbeyond.character-update-policy-currency.hint",
+    scope: "player",
+    config: false,
+    type: Boolean,
+    default: true,
+  }
+  );
+
   game.settings.register("vtta-dndbeyond", "character-update-policy-spell", {
     name: "vtta-dndbeyond.character-update-policy-spell.name",
     hint: "vtta-dndbeyond.character-update-policy-spell.hint",

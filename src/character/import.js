@@ -478,6 +478,11 @@ export default class CharacterImport extends Application {
         description: "Other inventory items",
       },
       {
+        name: "currency",
+        isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-currency"),
+        description: "Currency",
+      },
+      {
         name: "spell",
         isChecked: game.settings.get("vtta-dndbeyond", "character-update-policy-spell"),
         description: "Spells",
@@ -599,6 +604,12 @@ export default class CharacterImport extends Application {
         if (!importKeepExistingActorItems) {
           CharacterImport.showCurrentTask(html, "Clearing inventory");
           await this.clearItemsByUserSelection();
+        }
+
+        // manage updates of basic character data more intelligently
+        if (!game.settings.get("vtta-dndbeyond", "character-update-policy-currency")) {
+          // revert currency if user didn't select to update it
+          this.actor.data.data.currency = this.actorOriginal.data.currency;
         }
 
         // store all spells in the folder specific for Dynamic Items
