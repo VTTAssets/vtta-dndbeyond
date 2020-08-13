@@ -290,8 +290,8 @@ export default function parseFeatures(ddb, character) {
     .filter((feat) => !ddb.character.actions.feat.some((action) => action.name === feat.name))
     .forEach((feat) => {
       const source = utils.parseSource(feat.definition);
-      let items = parseFeature(feat, ddb, character, source, "feat");
-      items.forEach((item) => {
+      let feats = parseFeature(feat, ddb, character, source, "feat");
+      feats.forEach((item) => {
         items.push(item);
       });
     });
