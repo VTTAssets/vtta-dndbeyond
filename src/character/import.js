@@ -624,7 +624,7 @@ export default class CharacterImport extends Application {
         this.updateCompendium("spells");
         this.updateCompendium("features");
         // Issue #263 hotfix - remove Classes Compendium (for now)
-        //this.updateCompendium("classes");
+        // this.updateCompendium("classes");
         
         // Adding all items to the actor
         const FILTER_SECTIONS = ["classes", "features", "actions", "inventory", "spells"];
@@ -651,14 +651,14 @@ export default class CharacterImport extends Application {
           const compendiumSpellItems = await CharacterImport.getCompendiumItems(items, "spells");
           const compendiumFeatureItems = await CharacterImport.getCompendiumItems(items, "features");
           // Issue #263 hotfix - remove Classes Compendium (for now)
-          //const compendiumClassItems = await CharacterImport.getCompendiumItems(items, "classes");
+          // const compendiumClassItems = await CharacterImport.getCompendiumItems(items, "classes");
           
           compendiumItems = compendiumItems.concat(
             compendiumInventoryItems,
             compendiumSpellItems,
             compendiumFeatureItems,
             // Issue #263 hotfix - remove Classes Compendium (for now)
-            //compendiumClassItems,
+            // compendiumClassItems,
           );
           // removed existing items from those to be imported
           items = await CharacterImport.removeItems(items, compendiumItems);
