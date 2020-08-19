@@ -46,20 +46,20 @@ export default async function () {
     await game.settings.set("vtta-dndbeyond", "entity-feature-compendium", `world.${game.world.name}-ddb-features`);
   }
 
-  compendiumName = game.settings.get("vtta-dndbeyond", "entity-class-compendium");
-  compendium = game.packs.find((pack) => pack.collection === compendiumName);
+  // compendiumName = game.settings.get("vtta-dndbeyond", "entity-class-compendium");
+  // compendium = game.packs.find((pack) => pack.collection === compendiumName);
 
-  if (!compendium) {
-    compendiumCreated = true;
-    // create a compendium for the user
-    await Compendium.create({
-      entity: "Item",
-      label: "My DDB Classes",
-      name: `${game.world.name}-ddb-classes`,
-      package: "world",
-    });
-    await game.settings.set("vtta-dndbeyond", "entity-class-compendium", `world.${game.world.name}-ddb-classes`);
-  }
+  // if (!compendium) {
+  //   compendiumCreated = true;
+  //   // create a compendium for the user
+  //   await Compendium.create({
+  //     entity: "Item",
+  //     label: "My DDB Classes",
+  //     name: `${game.world.name}-ddb-classes`,
+  //     package: "world",
+  //   });
+  //   await game.settings.set("vtta-dndbeyond", "entity-class-compendium", `world.${game.world.name}-ddb-classes`);
+  // }
 
   compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
   compendium = game.packs.find((pack) => pack.collection === compendiumName);
