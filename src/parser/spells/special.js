@@ -70,6 +70,13 @@ export function fixSpells(ddb, items) {
         spell.data.range = { value: 30, units: "ft", long: null };
         spell.data.target.type = "creature";
         break;
+      case "Cloud of Daggers":
+      case "Magic Missile":
+        spell.data.actionType = "other";
+        break;
+      case "Chaos Bolt":
+        spell.data.damage = { parts: [["2d8", ""], ["1d6", ""]], versatile: "", value: "" };
+        break;
       // no default
     }
   });
