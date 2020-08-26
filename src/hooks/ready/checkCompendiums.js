@@ -1,80 +1,35 @@
 export default async function () {
   let compendiumCreated = false;
 
-  let compendiumName = game.settings.get("vtta-dndbeyond", "entity-spell-compendium");
-  let compendium = game.packs.find((pack) => pack.collection === compendiumName);
-
-  if (!compendium) {
-    compendiumCreated = true;
+  let createIfNotExists = async (settingName, compendiumType, compendiumLabel) => {
+    let compendiumName = game.settings.get("vtta-dndbeyond", settingName);
+    let compendium = game.packs.find((pack) => pack.collection === compendiumName);
+    let sanitizedLabel = sanitize(compendiumLabel);
+    if (compendium) { return false; }
     // create a compendium for the user
     await Compendium.create({
-      entity: "Item",
-      label: "My DDB Spells",
-      name: `${game.world.name}-ddb-spells`,
-      package: "world",
+      entity: compendiumType,
+      label: `My DDB ${compendiumLabel}`,
+      name: `${game.world.name}-ddb-${sanitizedLabel}`,
+      package: "world"
     });
-    await game.settings.set("vtta-dndbeyond", "entity-spell-compendium", `world.${game.world.name}-ddb-spells`);
+    await game.settings.set("vtta-dndbeyond", settingName, `world.${game.world.name}-ddb-${sanitizedLabel}`);
+    return true;
+  };
+
+  let sanitize = (text) => {
+    if (text && typeof text === "string") {
+      return text.replace(/\s/g, '-').toLowerCase();
+    }
+    return text;
   }
 
-  compendiumName = game.settings.get("vtta-dndbeyond", "entity-item-compendium");
-  compendium = game.packs.find((pack) => pack.collection === compendiumName);
-
-  if (!compendium) {
-    compendiumCreated = true;
-    // create a compendium for the user
-    await Compendium.create({
-      entity: "Item",
-      label: "My DDB Items",
-      name: `${game.world.name}-ddb-items`,
-      package: "world",
-    });
-    await game.settings.set("vtta-dndbeyond", "entity-item-compendium", `world.${game.world.name}-ddb-items`);
-  }
-
-  compendiumName = game.settings.get("vtta-dndbeyond", "entity-feature-compendium");
-  compendium = game.packs.find((pack) => pack.collection === compendiumName);
-
-  if (!compendium) {
-    compendiumCreated = true;
-    // create a compendium for the user
-    await Compendium.create({
-      entity: "Item",
-      label: "My DDB Features",
-      name: `${game.world.name}-ddb-features`,
-      package: "world",
-    });
-    await game.settings.set("vtta-dndbeyond", "entity-feature-compendium", `world.${game.world.name}-ddb-features`);
-  }
-
-  // compendiumName = game.settings.get("vtta-dndbeyond", "entity-class-compendium");
-  // compendium = game.packs.find((pack) => pack.collection === compendiumName);
-
-  // if (!compendium) {
-  //   compendiumCreated = true;
-  //   // create a compendium for the user
-  //   await Compendium.create({
-  //     entity: "Item",
-  //     label: "My DDB Classes",
-  //     name: `${game.world.name}-ddb-classes`,
-  //     package: "world",
-  //   });
-  //   await game.settings.set("vtta-dndbeyond", "entity-class-compendium", `world.${game.world.name}-ddb-classes`);
-  // }
-
-  compendiumName = game.settings.get("vtta-dndbeyond", "entity-monster-compendium");
-  compendium = game.packs.find((pack) => pack.collection === compendiumName);
-
-  if (!compendium) {
-    compendiumCreated = true;
-    // create a compendium for the user
-    await Compendium.create({
-      entity: "Actor",
-      label: "My DDB Monsters",
-      name: `${game.world.name}-ddb-monsters`,
-      package: "world",
-    });
-    await game.settings.set("vtta-dndbeyond", "entity-monster-compendium", `world.${game.world.name}-ddb-monsters`);
-  }
+  compendiumCreated = createIfNotExists("entity-spell-compendium", "Item", "Spells")
+    || createIfNotExists("entity-item-compendium", "Item", "Items")
+    || createIfNotExists("entity-feature-compendium", "Item", "Features")
+    || createIfNotExists("entity-monster-compendium", "Actor", "Monsters")
+    //||createIfNotExists("entity-class-compendium", "Item", "Classes")
+    || createIfNotExists("entity-monster-feature-compendium", "Item", "Monster Features");
 
   if (compendiumCreated) location.reload();
 }
