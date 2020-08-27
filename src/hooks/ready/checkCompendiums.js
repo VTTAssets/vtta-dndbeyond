@@ -24,12 +24,14 @@ export default async function () {
     return text;
   }
 
-  compendiumCreated = createIfNotExists("entity-spell-compendium", "Item", "Spells")
-    || createIfNotExists("entity-item-compendium", "Item", "Items")
-    || createIfNotExists("entity-feature-compendium", "Item", "Features")
-    || createIfNotExists("entity-monster-compendium", "Actor", "Monsters")
-    //||createIfNotExists("entity-class-compendium", "Item", "Classes")
-    || createIfNotExists("entity-monster-feature-compendium", "Item", "Monster Features");
+  let results = await Promise.allSettled([
+    createIfNotExists("entity-spell-compendium", "Item", "Spells"),
+    createIfNotExists("entity-item-compendium", "Item", "Items"),
+    createIfNotExists("entity-feature-compendium", "Item", "Features"),
+    createIfNotExists("entity-monster-compendium", "Actor", "Monsters"),
+    //createIfNotExists("entity-class-compendium", "Item", "Classes"),
+    createIfNotExists("entity-monster-feature-compendium", "Item", "Monster Features")
+  ]);
 
-  if (compendiumCreated) location.reload();
+  if (results.some(result => result.value)) location.reload();
 }
