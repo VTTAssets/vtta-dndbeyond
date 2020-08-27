@@ -23,6 +23,8 @@
   "vtta-dndbeyond.entity-spell-compendium.hint": "Zielkompendium für importierte Zauber",
   "vtta-dndbeyond.entity-monster-compendium.name": "Kompendium für Monster ",
   "vtta-dndbeyond.entity-monster-compendium.hint": "Zielkompendium für importierte Monster",
+  "vtta-dndbeyond.entity-monster-feature-compendium.name": "Needs Translation: Monster features compendium",
+  "vtta-dndbeyond.entity-monster-feature-compendium.hint": "Needs Translation: Target compendium for imported monster features",
   "vtta-dndbeyond.item-type.character": "Spieler",
   "vtta-dndbeyond.item-type.npc": "Monster",
   "vtta-dndbeyond.item-type.spell": "Zauber",
