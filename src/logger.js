@@ -58,6 +58,7 @@ const logger = {
                     console.error(msg);// eslint-disable-line no-console
                 }
                 break;
+            default: break;
         }
     },
 
