@@ -1,4 +1,5 @@
 import utils from "../../../utils.js";
+import logger from "../../../logger.js";
 
 const SAVE_ALL = 0;
 const SAVE_NONE = 2;
@@ -56,7 +57,7 @@ const addSpellToCompendium = async (spell, name) => {
         await compendium.createEntity(spell.data);
       }
     } else {
-      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
+      logger.error("Error opening compendium, check your settings");
     }
   }
 };
@@ -85,7 +86,7 @@ let addSpell = (body) => {
         resolve(spell.data);
       })
       .catch((error) => {
-        console.error(`error parsing spell: ${error}`); // eslint-disable-line no-console
+        logger.error(`error parsing spell: ${error}`);
         reject(error);
       });
   });

@@ -25,6 +25,8 @@
   "vtta-dndbeyond.entity-monster-compendium.hint": "Zielkompendium für importierte Monster",
   "vtta-dndbeyond.entity-monster-feature-compendium.name": "Needs Translation: Monster features compendium",
   "vtta-dndbeyond.entity-monster-feature-compendium.hint": "Needs Translation: Target compendium for imported monster features",
+  "vtta-dndbeyond.log-level.name": "Needs Translation: Log Level",
+  "vtta-dndbeyond.log-level.hint": "Needs Translation: The level of console log statements that should be displayed in the console.",
   "vtta-dndbeyond.item-type.character": "Spieler",
   "vtta-dndbeyond.item-type.npc": "Monster",
   "vtta-dndbeyond.item-type.spell": "Zauber",

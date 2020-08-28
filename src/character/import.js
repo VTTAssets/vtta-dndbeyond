@@ -1,5 +1,6 @@
 import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
+import logger from "../logger.js";
 
 /**
  * Checks a given URL to see if it is of one of the supported formats:
@@ -414,9 +415,9 @@ export default class CharacterImport extends Application {
   }
 
   async showErrorMessage(html, error) {
-    console.log("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000"); // eslint-disable-line no-console
-    console.log("%c #### ", "color: #ff0000"); // eslint-disable-line no-console
-    console.log("%c #### --------------- COPY BELOW --------------- #####", "color: #ff0000"); // eslint-disable-line no-console
+    logger.info("%c #### PLEASE PASTE TO https://discord.gg/YEnjUHd #####", "color: #ff0000");
+    logger.info("%c #### ", "color: #ff0000");
+    logger.info("%c #### --------------- COPY BELOW --------------- #####", "color: #ff0000");
     if (
       this.actor.data.flags.vtta &&
       this.actor.data.flags.vtta.dndbeyond &&
@@ -425,16 +426,16 @@ export default class CharacterImport extends Application {
       const characterId = this.actor.data.flags.vtta.dndbeyond.url.split("/").pop();
       if (characterId) {
         const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
-        console.log("%c **Character JSON          :** " + jsonUrl, "color: #ff0000"); // eslint-disable-line no-console
+        logger.info("%c **Character JSON          :** " + jsonUrl, "color: #ff0000");
       }
     }
-    console.log(`%c **Foundry version         :** ${game.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
-    console.log(`%c **DND5e version           :** ${game.system.data.version}`, "color: #ff0000"); // eslint-disable-line no-console
+    logger.info(`%c **Foundry version         :** ${game.data.version}`, "color: #ff0000");
+    logger.info(`%c **DND5e version           :** ${game.system.data.version}`, "color: #ff0000");
     // eslint-disable-line no-console
     const moduleVersion = game.modules.get("vtta-dndbeyond").data.version;
-    console.log(`%c **VTTA D&D Beyond version :** ${moduleVersion}`, "color: #ff0000"); // eslint-disable-line no-console
-    console.log(error); // eslint-disable-line no-console
-    console.log("%c #### --------------- COPY ABOVE --------------- #####", "color: #ff0000"); // eslint-disable-line no-console
+    logger.info(`%c **VTTA D&D Beyond version :** ${moduleVersion}`, "color: #ff0000");
+    logger.info(error);
+    logger.info("%c #### --------------- COPY ABOVE --------------- #####", "color: #ff0000");
     CharacterImport.showCurrentTask(
       html,
       "I guess you are special!",
@@ -625,7 +626,7 @@ export default class CharacterImport extends Application {
         this.updateCompendium("features");
         // Issue #263 hotfix - remove Classes Compendium (for now)
         // this.updateCompendium("classes");
-        
+
         // Adding all items to the actor
         const FILTER_SECTIONS = ["classes", "features", "actions", "inventory", "spells"];
         let items = filterItemsByUserSelection(this.result, FILTER_SECTIONS);
@@ -652,7 +653,7 @@ export default class CharacterImport extends Application {
           const compendiumFeatureItems = await CharacterImport.getCompendiumItems(items, "features");
           // Issue #263 hotfix - remove Classes Compendium (for now)
           // const compendiumClassItems = await CharacterImport.getCompendiumItems(items, "classes");
-          
+
           compendiumItems = compendiumItems.concat(
             compendiumInventoryItems,
             compendiumSpellItems,

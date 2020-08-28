@@ -1,4 +1,5 @@
 import utils from "../../utils.js";
+import logger from "../../logger.js";
 
 /**
  * Get the scaling type for a spell mod
@@ -111,8 +112,8 @@ export function getSpellScaling(data) {
                 definition.dice && definition.dice.diceString // if dice string
                   ? definition.dice.diceString // use dice string
                   : definition.dice && definition.dice.fixedValue // else if fixed value
-                  ? definition.dice.fixedValue // use fixed value
-                  : definition.value; // else use value
+                    ? definition.dice.fixedValue // use fixed value
+                    : definition.value; // else use value
 
               // some spells have multiple scaling damage (e.g. Wall of Ice,
               // Glyph of warding, Acid Arrow, Arcane Hand, Dragon's Breath,
@@ -130,7 +131,7 @@ export function getSpellScaling(data) {
                 scaleDamage = modScaleDamage;
               }
             } else {
-              console.warn("No definition found for " + data.definition.name); // eslint-disable-line no-console
+              logger.warn("No definition found for " + data.definition.name);
             }
           }
 

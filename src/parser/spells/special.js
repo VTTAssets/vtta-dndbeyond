@@ -1,4 +1,5 @@
 import DICTIONARY from "../dictionary.js";
+import logger from "../../logger.js";
 
 let getEldritchInvocations = (data) => {
   let damage = 0;
@@ -20,7 +21,7 @@ let getEldritchInvocations = (data) => {
         range = mod.value;
         break;
       default:
-        console.warn(`Not yet able to process ${mod.subType}, please raise an issue.`); // eslint-disable-line no-console
+        logger.warn(`Not yet able to process ${mod.subType}, please raise an issue.`);
     }
   });
 

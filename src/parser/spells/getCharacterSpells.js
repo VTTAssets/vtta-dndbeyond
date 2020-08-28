@@ -5,6 +5,7 @@ import { getLookups } from "./metadata.js";
 import { fixSpells } from "./special.js";
 import { parseSpell } from "./parseSpell.js";
 import { getSpellCastingAbility, hasSpellCastingAbility, convertSpellCastingAbilityId } from "./ability.js";
+import logger from "../../logger.js";
 
 export function getCharacterSpells(ddb, character) {
   let items = [];
@@ -63,7 +64,7 @@ export function getCharacterSpells(ddb, character) {
         items[duplicateSpell] = parseSpell(spell, character);
       } else {
         // we'll emit a console message if it doesn't match this case for future debugging
-        console.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`); // eslint-disable-line no-console
+        logger.warn(`Duplicate Spell ${spell.definition.name} detected in class ${classInfo.definition.name}.`);
       }
     });
   });

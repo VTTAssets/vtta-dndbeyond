@@ -1,4 +1,5 @@
 import utils from "../../../utils.js";
+import logger from "../../../logger.js";
 
 // const SAVE_ALL = 0;
 // const SAVE_NEW = 1;
@@ -510,7 +511,7 @@ let addPage = (body) => {
         resolve(true);
       })
       .catch((error) => {
-        console.error(`error parsing page: ${error}`); // eslint-disable-line no-console
+        logger.error(`error parsing page: ${error}`);
         reject(error);
       });
   });

@@ -2,6 +2,8 @@
 // const SAVE_NEW = 1;
 // const SAVE_NONE = 2;
 
+import logger from "../../../logger.js";
+
 const FOLDER_BASE_COLOR = "#98020a"; // DDB red
 
 /**
@@ -248,7 +250,7 @@ let addSourcebookSection = (body) => {
         resolve(true);
       })
       .catch((error) => {
-        console.error(`error parsing section: ${error}`); // eslint-disable-line no-console
+        logger.error(`error parsing section: ${error}`);
         reject(error);
       });
   });

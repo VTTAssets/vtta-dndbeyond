@@ -132,6 +132,24 @@ export default function () {
     choices: itemCompendiums,
   });
 
+  game.settings.register("vtta-dndbeyond", "log-level", {
+    name: "vtta-dndbeyond.log-level.name",
+    hint: "vtta-dndbeyond.log-level.hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      "VERBOSE": "VERBOSE",
+      "DEBUG": "DEBUG",
+      "INFO": "INFO",
+      "WARN": "WARN",
+      "ERROR": "ERROR",
+      "FATAL": "FATAL",
+      "OFF": "OFF"
+    },
+    default: "INFO"
+  });
+
   /** Character update settings, stored per user and non-configurable in the settings screen */
   game.settings.register("vtta-dndbeyond", "character-update-policy-new", {
     name: "vtta-dndbeyond.character-update-policy-new.name",
