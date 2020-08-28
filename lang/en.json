@@ -27,6 +27,8 @@
   "vtta-dndbeyond.entity-monster-compendium.hint": "Target compendium for imported monsters",
   "vtta-dndbeyond.entity-monster-feature-compendium.name": "Monster features compendium",
   "vtta-dndbeyond.entity-monster-feature-compendium.hint": "Target compendium for imported monster features",
+  "vtta-dndbeyond.log-level.name": "Log Level",
+  "vtta-dndbeyond.log-level.hint": "The level of console log statements that should be displayed in the console.",
   "vtta-dndbeyond.item-type.character": "Player",
   "vtta-dndbeyond.item-type.npc": "Monster",
   "vtta-dndbeyond.item-type.spell": "Spell",

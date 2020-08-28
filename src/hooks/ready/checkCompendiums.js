@@ -1,3 +1,5 @@
+import logger from '../../logger.js';
+
 export default async function () {
   let sanitize = (text) => {
     if (text && typeof text === "string") {
@@ -11,8 +13,11 @@ export default async function () {
     let compendium = game.packs.find((pack) => pack.collection === compendiumName);
     let sanitizedLabel = sanitize(compendiumLabel);
     if (compendium) {
+      logger.verbose(`Compendium '${compendiumName}' found, will not create compendium.`);
       return false;
     }
+
+    logger.verbose(`Compendium '${compendiumName}' was not found, creating it now.`);
     // create a compendium for the user
     await Compendium.create({
       entity: compendiumType,

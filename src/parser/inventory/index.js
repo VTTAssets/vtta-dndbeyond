@@ -24,6 +24,7 @@ import utils from "../../utils.js";
 
 // magicitems support
 import parseMagicItem from "./magicify.js";
+import logger from "../../logger.js";
 
 /**
  * We get extra damage to a weapon attack here, for example Improved
@@ -137,7 +138,7 @@ let otherGear = (ddb, data, character) => {
 };
 
 let parseItem = (ddb, data, character) => {
- try {
+  try {
     // is it a weapon?
     let item = {};
     if (data.definition.filterType) {
@@ -183,7 +184,7 @@ let parseItem = (ddb, data, character) => {
     }
     return item;
   } catch (err) {
-    console.warn( // eslint-disable-line no-console
+    logger.warn(
       `Unable to parse item: ${data.definition.name}, ${data.definition.type}/${data.definition.filterType}. ${err.message}`,
       "character"
     );
@@ -217,8 +218,8 @@ export default function getInventory(ddb, character, itemSpells) {
 
   const customItems = ddb.character.customItems
     ? ddb.character.customItems.map((customItem) => ({
-        definition: customItem,
-      }))
+      definition: customItem,
+    }))
     : [];
 
   for (let entry of ddb.character.inventory.concat(customItems)) {

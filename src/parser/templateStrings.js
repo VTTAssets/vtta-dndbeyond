@@ -1,4 +1,5 @@
 import utils from "../utils.js";
+import logger from "../logger.js";
 
 /**
  * Gets the levelscaling value for a feature
@@ -41,14 +42,14 @@ let parseMatch = (ddb, character, match, feature) => {
     matches.forEach((match) => {
       const saves = match.slice(1);
       const saveDCs = saves
-      .filter((save) => save)
-      .map((save) => {
-        const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
-        // not sure if we should add this, probably not.
-        // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
-        const dc = 8 + character.data.attributes.prof + abilityModifier;
-        return dc;
-      });
+        .filter((save) => save)
+        .map((save) => {
+          const abilityModifier = utils.calculateModifier(character.data.abilities[save].value);
+          // not sure if we should add this, probably not.
+          // const bonus = utils.getModifierSum(utils.filterBaseModifiers(ddb, "bonus", "spell-save-dc"), character);
+          const dc = 8 + character.data.attributes.prof + abilityModifier;
+          return dc;
+        });
       const saveRegexp = RegExp(match[0], "g");
       result = result.replace(saveRegexp, Math.max(...saveDCs));
     });
@@ -83,7 +84,7 @@ let parseMatch = (ddb, character, match, feature) => {
       if (optionCls) {
         result = result.replace("classlevel", optionCls.level);
       } else {
-        console.error("Unable to parse option class info, please log a bug report"); // eslint-disable-line no-console
+        logger.error("Unable to parse option class info, please log a bug report");
       }
     }
   }
@@ -147,7 +148,7 @@ const applyConstraint = (value, constraint) => {
       }
       default: {
         utils.log(`Missed match is ${match}`);
-        console.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`); // eslint-disable-line no-console
+        logger.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`); // eslint-disable-line no-console
       }
     }
   } else {
@@ -162,7 +163,7 @@ const applyConstraint = (value, constraint) => {
         break;
       }
       default: {
-        console.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`); // eslint-disable-line no-console
+        logger.warn(`vtta-dndbeyond does not know about template constraint {{@${constraint}}}. Please log a bug.`); // eslint-disable-line no-console
       }
     }
   }
@@ -175,11 +176,11 @@ const escapeRegExp = (string) => {
 };
 
 const getNumber = (theNumber) => {
-    if (theNumber >= 0) {
-        return "+" + theNumber;
-    } else {
-        return theNumber.toString();
-    }
+  if (theNumber >= 0) {
+    return "+" + theNumber;
+  } else {
+    return theNumber.toString();
+  }
 };
 
 /**
@@ -221,7 +222,7 @@ export default function parseTemplateString(ddb, character, text, feature) {
       } catch (err) {
         utils.log(err);
         result = result.replace(replacePattern, `{{${match}}}`);
-        console.warn(`vtta-dndbeyond does not know about template value {{${match}}}. Please log a bug.`); // eslint-disable-line no-console
+        logger.warn(`vtta-dndbeyond does not know about template value {{${match}}}. Please log a bug.`);
       }
     }
   });

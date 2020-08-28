@@ -1,4 +1,5 @@
 import utils from "../../../utils.js";
+import logger from "../../../logger.js";
 
 const SAVE_ALL = 0;
 const SAVE_NONE = 2;
@@ -77,7 +78,7 @@ const addNPCToCompendium = async (npc, name) => {
         await compendium.createEntity(npc.data);
       }
     } else {
-      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
+      logger.error("Error opening compendium, check your settings");
     }
   }
 };
@@ -235,7 +236,7 @@ const processSpells = async (spells) => {
     // update existing (1) or overwrite (0)
     const compendium = await getSpellCompendium();
     if (!compendium) {
-      console.error("Error opening compendium, check your settings"); // eslint-disable-line no-console
+      logger.error("Error opening compendium, check your settings");
       return;
     }
 
@@ -271,6 +272,7 @@ const cleanUp = async (npc) => {
 };
 
 const parseNPC = async (body) => {
+  logger.debug("parseNPC body parameter:", body);
   let npc = await buildNPC(body.data);
   // adding spells to the compendium, if necessary
   processSpells(npc.items.filter((i) => i.type === "spell").map((spell) => spell.data));
@@ -287,7 +289,7 @@ let addNPC = (body) => {
         resolve(npc.data);
       })
       .catch((error) => {
-        console.error(`error parsing NPC: ${error}`); // eslint-disable-line no-console
+        logger.error(`error parsing NPC: ${error}`);
         reject(error);
       });
   });
