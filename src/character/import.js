@@ -3,43 +3,52 @@ import utils from "../utils.js";
 import logger from "../logger.js";
 
 /**
- * Checks a given URL to see if it is of one of the supported formats:
+ * Retrieves the character ID from a given URL, which can be one of the following:
  * - regular character sheet
  * - public sharing link
  * - direct link to the endpoint already
- * @param {string} url a given URL
- * @returns {string|boolean} false if the given URL is not recognized/ supported, or the API endpoint pointing to that character otherwise
+ * @param {string} url A given URL pointing to a character. Contains the character ID
+ * @returns {string} characterId or null
  */
-const getCharacterAPIEndpoint = (url) => {
+const getCharacterId = (url) => {
   let matches;
   const CONFIGS = [
     () => {
       const PATTERN = /.*dndbeyond\.com\/profile\/[\w-_]+\/characters\/(\d+)/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
     },
     () => {
       const PATTERN = /ddb.ac\/characters\/(\d+)\/[\w-_]+/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
     },
     () => {
       const PATTERN = /character-service.dndbeyond.com\/character\/v3\/character\/(\d+)/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
     },
   ];
 
-  return CONFIGS.map((fn) => fn(url)).reduce((prev, cur) => (!prev && cur ? cur : prev), false);
+  return CONFIGS.map((fn) => fn(url)).reduce((prev, cur) => (!prev && cur ? cur : prev), null);
+};
+
+/**
+ * Creates the Character Endpoint URL from a given character ID
+ * @param {string} characterId The character ID
+ * @returns {string|null} The API endpoint
+ */
+const getCharacterAPIEndpoint = (characterId) => {
+  return characterId !== null ? `https://character-service.dndbeyond.com/character/v3/character/${characterId}` : null;
 };
 
 // a mapping of compendiums with content type
@@ -111,7 +120,7 @@ export default class CharacterImport extends Application {
   static get defaultOptions() {
     const options = super.defaultOptions;
     options.title = game.i18n.localize("vtta-dndbeyond.module-name");
-    options.template = "modules/vtta-dndbeyond/src/character/import.hbs";
+    options.template = "modules/vtta-dndbeyond/src/character/import.handlebars";
     options.width = 800;
     options.height = "auto";
     options.classes = ["vtta"];
@@ -512,6 +521,18 @@ export default class CharacterImport extends Application {
 
   /* -------------------------------------------- */
 
+  loadCharacterData = () => {
+    return new Promise((resolve, reject) => {
+      fetch(`https://ddb-character.vttassets.com/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
+        .then((res) => {
+          if (res.status !== 200) reject(res.statusText);
+          return res.json();
+        })
+        .then((json) => resolve(json))
+        .catch((error) => reject(error));
+    });
+  };
+
   activateListeners(html) {
     // watch the change of the import-policy-selector checkboxes
     $(html)
@@ -523,6 +544,7 @@ export default class CharacterImport extends Application {
           event.currentTarget.checked
         );
       });
+
     $(html)
       .find('.import-config input[type="checkbox"]')
       .on("change", (event) => {
@@ -533,52 +555,24 @@ export default class CharacterImport extends Application {
         );
       });
 
+    // $(html)
+    //   .find("#json")
+    //   .on("paste", async (event) => {
+
     $(html)
-      .find("#json")
-      .on("paste", async (event) => {
+      .find("#dndbeyond-character-import-start")
+      .on("click", async (event) => {
+        // retrieve the character data from the proxy
         event.preventDefault();
-        var pasteData = event.originalEvent.clipboardData.getData("text");
 
         let data = undefined;
         try {
-          data = JSON.parse(pasteData);
+          CharacterImport.showCurrentTask(html, "Loading Character data");
+          data = { character: await this.loadCharacterData() };
+          CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
+          console.log(data);
         } catch (error) {
-          if (error.message === "Unexpected end of JSON input") {
-            CharacterImport.showCurrentTask(
-              html,
-              "JSON invalid",
-              "I could not parse your JSON data because it was cut off. Make sure to wait for the page to stop loading before copying the data into your clipboard.",
-              true
-            );
-          } else {
-            CharacterImport.showCurrentTask(html, "JSON invalid", error.message, true);
-          }
-        }
-
-        // // check if the character is set to public
-        // if (!data.success) {
-        //   CharacterImport.showCurrentTask(
-        //     html,
-        //     "JSON retrieval failed",
-        //     `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
-        //       <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
-        //       <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
-        //       `,
-        //     true
-        //   );
-        //   return false;
-        // }
-
-        // the expected data structure is
-        // data: {
-        //    character: {...}
-        // }
-        if (!Object.hasOwnProperty.call(data, "character")) {
-          if (Object.hasOwnProperty.call(data, "data")) {
-            data.character = data.data;
-          } else {
-            data.character = data;
-          }
+          return CharacterImport.showCurrentTask(html, "Error retrieving Character", error, true);
         }
 
         try {
@@ -657,7 +651,7 @@ export default class CharacterImport extends Application {
           compendiumItems = compendiumItems.concat(
             compendiumInventoryItems,
             compendiumSpellItems,
-            compendiumFeatureItems,
+            compendiumFeatureItems
             // Issue #263 hotfix - remove Classes Compendium (for now)
             // compendiumClassItems,
           );
@@ -701,20 +695,23 @@ export default class CharacterImport extends Application {
       .find("input[name=dndbeyond-url]")
       .on("input", async (event) => {
         let URL = event.target.value;
-        if (URL.indexOf("https://") === -1) URL = "https://" + URL;
-        const API_ENDPOINT_CHARACTER = getCharacterAPIEndpoint(URL);
+        const characterId = getCharacterId(URL);
 
-        if (API_ENDPOINT_CHARACTER !== false) {
+        if (characterId) {
+          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith('<i class="fas fa-check-circle" style="color: green"></i>');
+          $(html).find("span.dndbeyond-character-id").text(characterId);
+          $(html).find("#dndbeyond-character-import-start").prop("disabled", false);
+
           CharacterImport.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
               vtta: {
                 dndbeyond: {
-                  url: URL,
-                  json: API_ENDPOINT_CHARACTER,
+                  url: apiEndpointUrl,
+                  characterId: characterId,
                 },
               },
             },
