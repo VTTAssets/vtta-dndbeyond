@@ -523,8 +523,8 @@ export default class CharacterImport extends Application {
 
   loadCharacterData = () => {
     return new Promise((resolve, reject) => {
-      //const host = "https://ddb-character.vttassets.com";
-      const host = "http://localhost:3000";
+      const host = "https://ddb-character.vttassets.com";
+      //const host = "http://localhost:3000";
       fetch(`${host}/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
         .then((res) => res.json())
         .then((json) => resolve(json))
