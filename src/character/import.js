@@ -522,12 +522,21 @@ export default class CharacterImport extends Application {
   /* -------------------------------------------- */
 
   loadCharacterData = () => {
+    const checkStatus = (res) => {
+      if (res.ok) {
+        // res.status >= 200 && res.status < 300
+        return res;
+      } else {
+        throw res.statusText;
+      }
+    };
+
     return new Promise((resolve, reject) => {
       const host = "https://ddb-character.vttassets.com";
       //const host = "http://localhost:3000";
       fetch(`${host}/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
-        .then((res) => res.json())
-        .then((json) => resolve(json))
+        .then((response) => response.json())
+        .then((data) => resolve(data))
         .catch((error) => reject(error));
     });
   };
@@ -568,14 +577,16 @@ export default class CharacterImport extends Application {
         try {
           CharacterImport.showCurrentTask(html, "Loading Character data");
           const characterData = await this.loadCharacterData();
+          console.log(characterData);
           if (characterData.success) {
-            data = { character: characterData };
+            data = { character: characterData.data };
             CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
           } else {
             CharacterImport.showCurrentTask(html, characterData.message, null, true);
             return false;
           }
         } catch (error) {
+          console.log("### WITHIN CATCH ");
           console.log(error);
           if (error === "Forbidden")
             CharacterImport.showCurrentTask(html, "Error retrieving Character: " + error, error, true);
