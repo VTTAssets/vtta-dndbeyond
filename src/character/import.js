@@ -129,7 +129,7 @@ export default class CharacterImport extends Application {
 
   static showCurrentTask(html, title, message = null, isError = false) {
     let element = $(html).find(".task-name");
-    element.html(`<h2 ${isError ? " class='error'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
+    element.html(`<h2 ${isError ? " style='color:red'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
     $(html).parent().parent().css("height", "auto");
   }
 
@@ -523,11 +523,10 @@ export default class CharacterImport extends Application {
 
   loadCharacterData = () => {
     return new Promise((resolve, reject) => {
-      fetch(`https://ddb-character.vttassets.com/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
-        .then((res) => {
-          if (res.status !== 200) reject(res.statusText);
-          return res.json();
-        })
+      //const host = "https://ddb-character.vttassets.com";
+      const host = "http://localhost:3000";
+      fetch(`${host}/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
+        .then((res) => res.json())
         .then((json) => resolve(json))
         .catch((error) => reject(error));
     });
@@ -568,11 +567,19 @@ export default class CharacterImport extends Application {
         let data = undefined;
         try {
           CharacterImport.showCurrentTask(html, "Loading Character data");
-          data = { character: await this.loadCharacterData() };
-          CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
-          console.log(data);
+          const characterData = await this.loadCharacterData();
+          if (characterData.success) {
+            data = { character: characterData };
+            CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
+          } else {
+            CharacterImport.showCurrentTask(html, characterData.message, null, true);
+            return false;
+          }
         } catch (error) {
-          return CharacterImport.showCurrentTask(html, "Error retrieving Character", error, true);
+          console.log(error);
+          if (error === "Forbidden")
+            CharacterImport.showCurrentTask(html, "Error retrieving Character: " + error, error, true);
+          return false;
         }
 
         try {
