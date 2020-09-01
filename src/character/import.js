@@ -110,8 +110,27 @@ export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
     this.actor = game.actors.entities.find((a) => a.id === actor._id);
+    this.migrateMetadata();
     this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
+  }
+
+  migrateMetadata() {
+    if (this.actor.data.flags && this.actor.data.flags.vtta) {
+      const url = this.actor.data.flags.vtta.url;
+
+      if (url && !this.actor.data.flags.vtta.characterId) {
+        const characterId = getCharacterId(url);
+        if (characterId) {
+          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
+          this.actor.data.flags.vtta.characterId = characterId;
+          this.actor.data.flaggs.vtta.url = apiEndpointUrl;
+        } else {
+          // clear the url, because it's malformed anyway
+          this.actor.data.flags.vtta.dndbeyond.url = null;
+        }
+      }
+    }
   }
 
   /**
