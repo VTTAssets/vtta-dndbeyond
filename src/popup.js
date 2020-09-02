@@ -14,8 +14,10 @@ export default async () => {
   let result = await window.vtta.hint.show(
     `<h1>VTTA D&D Beyond Integration v${game.modules.get("vtta-dndbeyond").data.version}</h1>
     <h2>Character Import</h2>
-    <p>Please note that the <b>character import is now working differently</b> by using a more user-friendly workflow, you can find the <b>updated instructions</b> found in the character import window accessible by the [B] button.</p>
-    <p>We don't know if that workflow is reliably working or if D&amp;D Beyond is <b>flagging us as a bot</b> in the future, rendering this possibility unusable. This preview version is part of finding that out before rolling it out to the masses.</p>
+    <p>Please note that the <b>character import is now working differently</b> by using a more user-friendly workflow, you can find the updated instructions found in the <b>character import window</b> accessible by the [B] button on an player's character sheet.</p>
+    <p>We <b>don't know if that workflow is reliably working</b> or if D&amp;D Beyond is <b>flagging us as a bot</b> in the future, rendering this possibility unusable. By this release, we are using the new mechanism the first time at scale (there are roughly 3.000 character imports <b>per day</b>),
+    so we will either see a reaction rather quickly or none at all. <b>Let 's find out!</b></p>
+    <p>Expect the new feature to be a bit bumpy. Please report any errors regarding this feature here: <a href="https://discord.gg/2CDbRCP">on the #dndbeyond-v3-feedback channel</a>.</p>
     <hr />
        `,
     {
