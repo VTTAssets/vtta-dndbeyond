@@ -20,9 +20,13 @@
                 <span class="dndbeyond-url-status">{{#if actor.data.flags.vtta.dndbeyond.characterId}}<i
                         class="fas fa-check-circle" style="color: green"></i>{{else}}<i></i>{{/if}}</span>
             </div>
-            <div class="form-content">
-                <input type="text" name="dndbeyond-url"
+            <div class="form-content" style="display: flex">
+                <input type="text" name="dndbeyond-url" style="flex: 0 1 auto" ;
                     value="{{#if actor.data.flags.vtta.dndbeyond.url}}{{actor.data.flags.vtta.dndbeyond.url}}{{/if}}" />
+                <button type="button" id="open-dndbeyond-url" name="open-dndbeyond-url"
+                    style="flex-basis: 20px; flex-grow: 0;line-height: 20px;"
+                    {{#if actor.data.flags.vtta.dndbeyond.characterId}}enabled{{else}}disabled{{/if}}><i
+                        class="fas fa-external-link-alt"></i></button>
             </div>
             <div class="form-caption">
                 Character ID
@@ -37,13 +41,30 @@
         <div>
             <hr>
         </div>
+
         <div class="form-section">
+            <div class="form-caption">
+                Paste JSON here
+            </div>
+            <div class="form-content" style="display: flex">
+                <textarea id="json"></textarea>
+            </div>
             <div class="form-description">
 
-                <div>
-                    <button type="button" id="dndbeyond-character-import-start"
-                        {{#if actor.data.flags.vtta.dndbeyond.characterId}}enabled{{else}}disabled{{/if}}>Start
-                        Import</button>
+                <div style="font-weight:bold; text-align: center; margin: 5px;">
+                    OR
+                </div>
+            </div>
+
+            <div class="form-description">
+
+                <div class="form-description">
+
+                    <div>
+                        <button type="button" id="dndbeyond-character-import-start"
+                            {{#if actor.data.flags.vtta.dndbeyond.characterId}}enabled{{else}}disabled{{/if}}>Start
+                            Import</button>
+                    </div>
                 </div>
             </div>
         </div>
