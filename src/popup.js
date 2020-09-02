@@ -14,21 +14,10 @@ export default async () => {
   let result = await window.vtta.hint.show(
     `<h1>VTTA D&D Beyond Integration v${game.modules.get("vtta-dndbeyond").data.version}</h1>
     <h2>Character Import</h2>
-    <p>Please note that the character import URL changed to</p>
-    <p><code>https://www.dndbeyond.com/profile/SolFolango/characters/<b>[number]</b></code></p>
-    <p>You can find the number at the end of the URL from your regular D&amp;D Beyond character sheet. This message will be displayed for the next couple of versions</p>
-    <h2>Module Import</h2>
-    <ol>
-      <li>You can choose which image format you want to use when importing scenes, defaulting to WEBP. The only reason changing this default is 
-      having players insisting on using Apple Safari as their main browser. Everyone else can enjoy greatly reduced (1.7GB vs 800MB in total) file sizes and the tears of joy of your low-bandwidth players.
-      <li>Re-import of scenes will update existing Journal Entries and Scenes instead of generating duplicates</li>
-      <li>All scenes have their respective Journal Entries assigned now and will import correctly.</li>
-      <li>Numbering of the Journal Entry <b>names</b> is harmonized: [1K, 2K, ...], [A, B, ...] or [Area 1, Area 2, ...] will now changed to a numeric ordering: [01, 02, 03, ...].</li>
-      <li>Map Notes based on the imported Journal Entries will now be displayed with a numeric icon corresponding to the harmonized numbering scheme.</li>
-    </ol>
-    <h2>Scene Sharing</h2>
-    <p>While logged in and being a Patreon, you can access Scene Sharing in the context menu of the scene navigation on top of the screen. You can use that to submit your scene adjustments for review and for
-      a possible update for future imports of that scene. Walls, Lights, Map Notes and grid/ image dimensions adjustments will be transferred. Hop onto the Discord to get more details.</p>
+    <p>Please note that the <b>character import is now working differently</b> by using a more user-friendly workflow, you can find the updated instructions found in the <b>character import window</b> accessible by the [B] button on an player's character sheet.</p>
+    <p>We <b>don't know if that workflow is reliably working</b> or if D&amp;D Beyond is <b>flagging us as a bot</b> in the future, rendering this possibility unusable. By this release, we are using the new mechanism the first time at scale (there are roughly 3.000 character imports <b>per day</b>),
+    so we will either see a reaction rather quickly or none at all. <b>Let 's find out!</b></p>
+    <p>Expect the new feature to be a bit bumpy. Please report any errors regarding this feature here: <a href="https://discord.gg/2CDbRCP">on the #dndbeyond-v3-feedback channel</a>.</p>
     <hr />
        `,
     {
