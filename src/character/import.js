@@ -636,15 +636,22 @@ export default class CharacterImport extends Application {
           );
           return spellLevelAccess;
         };
-        const getCasterLevel = (cls) => {
+        const getCasterLevel = (cls, isMultiClassing) => {
           let casterLevel = 0;
-          // get the casting level if the character is a multiclassed spellcaster
-          if (cls.definition.spellRules && cls.definition.spellRules.multiClassSpellSlotDivisor) {
-            casterLevel = Math.floor(cls.level / cls.definition.spellRules.multiClassSpellSlotDivisor);
+          if (isMultiClassing) {
+            // get the casting level if the character is a multiclassed spellcaster
+            if (cls.definition.spellRules && cls.definition.spellRules.multiClassSpellSlotDivisor) {
+              casterLevel = Math.floor(cls.level / cls.definition.spellRules.multiClassSpellSlotDivisor);
+            }
+          } else {
+            casterLevel = cls.level;
           }
+
           return casterLevel;
         };
         const getClassIds = (data) => {
+          const isMultiClassing = data.classes.length > 1;
+
           return data.classes.map((characterClass) => {
             return {
               characterClassId: characterClass.id,
@@ -656,7 +663,7 @@ export default class CharacterImport extends Application {
                 characterClass.subclassDefinition && characterClass.subclassDefinition.id
                   ? characterClass.subclassDefinition.id
                   : characterClass.definition.id,
-              level: getCasterLevel(characterClass),
+              level: getCasterLevel(characterClass, isMultiClassing),
               spellLevelAccess: getSpellLevelAccess(characterClass, getCasterLevel(characterClass)),
               spells: [],
             };
