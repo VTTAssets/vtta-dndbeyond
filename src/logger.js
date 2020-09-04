@@ -1,19 +1,24 @@
 const logger = {
-    log: (logLevel, ...data) => {
+    _showMessage: (logLevel, data) => {
         if (!logLevel || !data || typeof (logLevel) !== 'string') {
+            return false;
+        }
+
+        const setting = game.settings.get("vtta-dndbeyond", "log-level");
+        const logLevels = ["VERBOSE", "DEBUG", "INFO", "WARN", "ERR", "FATAL", "OFF"];
+        const logLevelIndex = logLevels.indexOf(logLevel.toUpperCase());
+        if (setting == "OFF" ||
+            logLevelIndex === -1 ||
+            logLevelIndex < logLevels.indexOf(setting)) {
+            return false;
+        }
+    },
+    log: (logLevel, ...data) => {
+        if (!logger._showMessage) {
             return;
         }
 
         logLevel = logLevel.toUpperCase();
-
-        const setting = game.settings.get("vtta-dndbeyond", "log-level");
-        const logLevels = ["VERBOSE", "DEBUG", "INFO", "WARN", "ERR", "FATAL", "OFF"];
-        const logLevelIndex = logLevels.indexOf(logLevel);
-        if (setting == "OFF" ||
-            logLevelIndex === -1 ||
-            logLevelIndex < logLevels.indexOf(setting)) {
-            return;
-        }
 
         const LOG_PREFIX = "VTTA D&D Beyond";
         let msg = "No logging message provided.  Please see the payload for more information.";
