@@ -134,9 +134,9 @@ let buildNPC = async (data) => {
     };
   });
   try {
-    utils.log("Querying iconizer for icons");
+    logger.debug("Querying iconizer for icons");
     icons = await queryIcons(icons);
-    utils.log(icons);
+    logger.verbose("Icons found", icons);
 
     // replace the icons
     for (let item of data.items) {
@@ -146,14 +146,14 @@ let buildNPC = async (data) => {
       }
     }
   } catch (exception) {
-    utils.log("Iconizer not responding");
+    logger.warn("Iconizer not responding");
   }
 
-  utils.log("Importing NPC");
+  logger.debug("Importing NPC");
   // check if there is an NPC with that name in that folder already
   let npc = folder.content ? folder.content.find((actor) => actor.name === data.name) : undefined;
   if (npc) {
-    utils.log("NPC exists");
+    logger.verbose("NPC exists");
     // remove the inventory of said npc
     await npc.deleteEmbeddedEntity(
       "OwnedItem",
@@ -161,10 +161,9 @@ let buildNPC = async (data) => {
     );
     // update items and basic data
     await npc.update(data);
-    utils.log("NPC updated");
+    logger.verbose("NPC updated");
     if (data.flags.vtta.dndbeyond.spells && data.flags.vtta.dndbeyond.spells.length !== 0) {
-      utils.log("Retrieving spells:");
-      utils.log(data.flags.vtta.dndbeyond.spells);
+      logger.debug("Retrieving spells:", data.flags.vtta.dndbeyond.spells);
       let spells = await retrieveSpells(data.flags.vtta.dndbeyond.spells);
       spells = spells.filter((spell) => spell !== null);
       await npc.createEmbeddedEntity("OwnedItem", spells);
@@ -265,14 +264,12 @@ const cleanUp = async (npc) => {
   const cleanupAfterImport =
     game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_ALL ||
     game.settings.get("vtta-dndbeyond", "entity-cleanup-policy") === CLEAN_MONSTERS;
-
   if (cleanupAfterImport) {
     await npc.delete();
   }
 };
 
 const parseNPC = async (body) => {
-  logger.debug("parseNPC body parameter:", body);
   let npc = await buildNPC(body.data);
   // adding spells to the compendium, if necessary
   processSpells(npc.items.filter((i) => i.type === "spell").map((spell) => spell.data));
@@ -284,8 +281,10 @@ const parseNPC = async (body) => {
 
 let addNPC = (body) => {
   return new Promise((resolve, reject) => {
+    logger.verbose("npc.js addNPC body parameter", body);
     parseNPC(body)
       .then((npc) => {
+        logger.verbose("npc.js addNPC parseNPC result", npc);
         resolve(npc.data);
       })
       .catch((error) => {

@@ -143,7 +143,7 @@ export default function () {
       "DEBUG": "DEBUG",
       "INFO": "INFO",
       "WARN": "WARN",
-      "ERROR": "ERROR",
+      "ERR": "ERROR",
       "FATAL": "FATAL",
       "OFF": "OFF"
     },

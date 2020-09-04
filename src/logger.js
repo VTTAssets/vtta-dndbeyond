@@ -7,7 +7,7 @@ const logger = {
         logLevel = logLevel.toUpperCase();
 
         const setting = game.settings.get("vtta-dndbeyond", "log-level");
-        const logLevels = ["VERBOSE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"];
+        const logLevels = ["VERBOSE", "DEBUG", "INFO", "WARN", "ERR", "FATAL", "OFF"];
         const logLevelIndex = logLevels.indexOf(logLevel);
         if (setting == "OFF" ||
             logLevelIndex === -1 ||
@@ -29,6 +29,12 @@ const logger = {
         msg = `${LOG_PREFIX} | ${logLevel} > ${msg}`;
         switch (logLevel) {
             case "VERBOSE":
+                if (payload) {
+                    console.trace(msg, ...payload);// eslint-disable-line no-console
+                } else {
+                    console.trace(msg);// eslint-disable-line no-console
+                }
+                break;
             case "DEBUG":
                 if (payload) {
                     console.debug(msg, ...payload);// eslint-disable-line no-console
@@ -51,7 +57,7 @@ const logger = {
                 }
                 break;
             case "FATAL":
-            case "ERROR":
+            case "ERR":
                 if (payload) {
                     console.error(msg, ...payload);// eslint-disable-line no-console
                 } else {
@@ -79,7 +85,7 @@ const logger = {
     },
 
     error: (...data) => {
-        logger.log("ERROR", ...data);
+        logger.log("ERR", ...data);
     },
 
     fatal: (...data) => {
