@@ -12,6 +12,7 @@ const logger = {
             logLevelIndex < logLevels.indexOf(setting)) {
             return false;
         }
+        return true;
     },
     log: (logLevel, ...data) => {
         if (!logger._showMessage) {

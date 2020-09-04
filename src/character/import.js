@@ -579,7 +579,8 @@ export default class CharacterImport extends Application {
         .catch((error) => reject(error));
     });
   }
-  // eslint-disable class-methods-use-this
+
+  /* eslint-disable class-methods-use-this */
   getAlwaysPreparedSpellsOnly(data) {
     return new Promise((resolve, reject) => {
       const host = "https://ddb-character.vttassets.com";
@@ -601,7 +602,8 @@ export default class CharacterImport extends Application {
         .catch((error) => reject(error));
     });
   }
-  // eslint-enable class-methods-use-this
+  /* eslint-enable class-methods-use-this */
+
   activateListeners(html) {
     // watch the change of the import-policy-selector checkboxes
     $(html)
