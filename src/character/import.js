@@ -315,7 +315,7 @@ export default class CharacterImport extends Application {
           this.result[type].map(async (item) => {
             const searchResult = await updatedIndex.find((idx) => idx.name === item.name);
             if (!searchResult) {
-              utils.log(`Couldn't find ${item.name} in the compendium`);
+              logger.debug(`Couldn't find ${item.name} in the compendium`);
               return null;
             } else {
               const entity = compendium.getEntity(searchResult._id);
@@ -489,7 +489,6 @@ export default class CharacterImport extends Application {
     }
     logger.info(`%c **Foundry version         :** ${game.data.version}`, "color: #ff0000");
     logger.info(`%c **DND5e version           :** ${game.system.data.version}`, "color: #ff0000");
-    // eslint-disable-line no-console
     const moduleVersion = game.modules.get("vtta-dndbeyond").data.version;
     logger.info(`%c **VTTA D&D Beyond version :** ${moduleVersion}`, "color: #ff0000");
     logger.info(error);
@@ -573,7 +572,7 @@ export default class CharacterImport extends Application {
   loadCharacterData() {
     return new Promise((resolve, reject) => {
       const host = "https://ddb-character.vttassets.com";
-      //const host = "http://localhost:3000";
+      // const host = "http://localhost:3000";
       fetch(`${host}/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
         .then((response) => response.json())
         .then((data) => resolve(data))
@@ -581,10 +580,11 @@ export default class CharacterImport extends Application {
     });
   }
 
+  /* eslint-disable class-methods-use-this */
   getAlwaysPreparedSpellsOnly(data) {
     return new Promise((resolve, reject) => {
       const host = "https://ddb-character.vttassets.com";
-      //const host = "http://localhost:3000";
+      // const host = "http://localhost:3000";
       fetch(`${host}/alwaysPreparedSpells`, {
         method: "POST",
         mode: "cors", // no-cors, *cors, same-origin
@@ -602,6 +602,7 @@ export default class CharacterImport extends Application {
         .catch((error) => reject(error));
     });
   }
+  /* eslint-enable class-methods-use-this */
 
   activateListeners(html) {
     // watch the change of the import-policy-selector checkboxes
@@ -699,7 +700,7 @@ export default class CharacterImport extends Application {
 
           // get the character info from the paste
           let classInfo = getClassIds(data);
-          console.log(classInfo);
+          logger.verbose(classInfo);
 
           this.getAlwaysPreparedSpellsOnly(classInfo)
             .then((result) => {
@@ -723,10 +724,10 @@ export default class CharacterImport extends Application {
                   if (alwaysPreparedSpells) {
                     alwaysPreparedSpells.spells.forEach((spell) => {
                       if (classSpells.spells.find((s) => s.definition.name === spell.definition.name) === undefined) {
-                        console.log("Adding new always prepared spell: " + spell.definition.name);
+                        logger.verbose("Adding new always prepared spell: " + spell.definition.name);
                         classSpells.spells.push(spell);
                       } else {
-                        console.log("Already in list: " + spell.definition.name);
+                        logger.verbose("Already in list: " + spell.definition.name);
                       }
                     });
                   }
@@ -760,7 +761,7 @@ export default class CharacterImport extends Application {
         try {
           CharacterImport.showCurrentTask(html, "Loading Character data");
           const characterData = await this.loadCharacterData();
-          console.log(characterData);
+          logger.debug("import.js loadCharacterData result", characterData);
           if (characterData.success) {
             data = { character: characterData.data };
             // begin parsing the character data
@@ -828,7 +829,7 @@ export default class CharacterImport extends Application {
 
     $(html)
       .find("#open-dndbeyond-url")
-      .on("click", (event) => {
+      .on("click", () => {
         try {
           const characterId = this.actor.data.flags.vtta.dndbeyond.characterId;
           const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
