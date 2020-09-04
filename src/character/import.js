@@ -2,44 +2,83 @@ import parser from "../../src/parser/index.js";
 import utils from "../utils.js";
 import logger from "../logger.js";
 
+// reference to the D&D Beyond popup
+const POPUPS = {
+  json: null,
+  web: null,
+};
+const renderPopup = (type, url) => {
+  if (POPUPS[type] && !POPUPS[type].close) {
+    POPUPS[type].focus();
+    POPUPS[type].location.href = url;
+  } else {
+    const ratio = window.innerWidth / window.innerHeight;
+    const width = Math.round(window.innerWidth * 0.5);
+    const height = Math.round(window.innerWidth * 0.5 * ratio);
+    POPUPS[type] = window.open(
+      url,
+      "ddb_sheet_popup",
+      `resizeable,scrollbars,location=no,width=${width},height=${height},toolbar=1`
+    );
+  }
+  return true;
+};
+
 /**
- * Checks a given URL to see if it is of one of the supported formats:
+ * Retrieves the character ID from a given URL, which can be one of the following:
  * - regular character sheet
  * - public sharing link
  * - direct link to the endpoint already
- * @param {string} url a given URL
- * @returns {string|boolean} false if the given URL is not recognized/ supported, or the API endpoint pointing to that character otherwise
+ * @param {string} url A given URL pointing to a character. Contains the character ID
+ * @returns {string} characterId or null
  */
-const getCharacterAPIEndpoint = (url) => {
+const getCharacterId = (url) => {
   let matches;
   const CONFIGS = [
     () => {
       const PATTERN = /.*dndbeyond\.com\/profile\/[\w-_]+\/characters\/(\d+)/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
     },
     () => {
       const PATTERN = /ddb.ac\/characters\/(\d+)\/[\w-_]+/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
+    },
+    () => {
+      const PATTERN = /dndbeyond.com\/characters\/(\d+)/;
+      matches = url.match(PATTERN);
+      if (matches) {
+        return matches[1];
+      }
+      return null;
     },
     () => {
       const PATTERN = /character-service.dndbeyond.com\/character\/v3\/character\/(\d+)/;
       matches = url.match(PATTERN);
       if (matches) {
-        return "https://character-service.dndbeyond.com/character/v3/character/" + matches[1];
+        return matches[1];
       }
-      return false;
+      return null;
     },
   ];
 
-  return CONFIGS.map((fn) => fn(url)).reduce((prev, cur) => (!prev && cur ? cur : prev), false);
+  return CONFIGS.map((fn) => fn(url)).reduce((prev, cur) => (!prev && cur ? cur : prev), null);
+};
+
+/**
+ * Creates the Character Endpoint URL from a given character ID
+ * @param {string} characterId The character ID
+ * @returns {string|null} The API endpoint
+ */
+const getCharacterAPIEndpoint = (characterId) => {
+  return characterId !== null ? `https://character-service.dndbeyond.com/character/v3/character/${characterId}` : null;
 };
 
 // a mapping of compendiums with content type
@@ -101,8 +140,27 @@ export default class CharacterImport extends Application {
   constructor(options, actor) {
     super(options);
     this.actor = game.actors.entities.find((a) => a.id === actor._id);
+    this.migrateMetadata();
     this.actorOriginal = JSON.parse(JSON.stringify(this.actor));
     this.result = {};
+  }
+
+  migrateMetadata() {
+    if (this.actor.data.flags && this.actor.data.flags.vtta && this.actor.data.flags.vtta.dndbeyond) {
+      const url = this.actor.data.flags.vtta.dndbeyond.url || this.actor.data.flags.vtta.dndbeyond.roUrl;
+
+      if (url && !this.actor.data.flags.vtta.characterId) {
+        const characterId = getCharacterId(url);
+        if (characterId) {
+          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
+          this.actor.data.flags.vtta.dndbeyond.characterId = characterId;
+          this.actor.data.flags.vtta.dndbeyond.url = apiEndpointUrl;
+        } else {
+          // clear the url, because it's malformed anyway
+          this.actor.data.flags.vtta.dndbeyond.url = null;
+        }
+      }
+    }
   }
 
   /**
@@ -111,7 +169,7 @@ export default class CharacterImport extends Application {
   static get defaultOptions() {
     const options = super.defaultOptions;
     options.title = game.i18n.localize("vtta-dndbeyond.module-name");
-    options.template = "modules/vtta-dndbeyond/src/character/import.hbs";
+    options.template = "modules/vtta-dndbeyond/src/character/import.handlebars";
     options.width = 800;
     options.height = "auto";
     options.classes = ["vtta"];
@@ -120,7 +178,7 @@ export default class CharacterImport extends Application {
 
   static showCurrentTask(html, title, message = null, isError = false) {
     let element = $(html).find(".task-name");
-    element.html(`<h2 ${isError ? " class='error'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
+    element.html(`<h2 ${isError ? " style='color:red'" : ""}>${title}</h2>${message ? `<p>${message}</p>` : ""}`);
     $(html).parent().parent().css("height", "auto");
   }
 
@@ -512,6 +570,39 @@ export default class CharacterImport extends Application {
 
   /* -------------------------------------------- */
 
+  loadCharacterData() {
+    return new Promise((resolve, reject) => {
+      const host = "https://ddb-character.vttassets.com";
+      //const host = "http://localhost:3000";
+      fetch(`${host}/${this.actor.data.flags.vtta.dndbeyond.characterId}`)
+        .then((response) => response.json())
+        .then((data) => resolve(data))
+        .catch((error) => reject(error));
+    });
+  }
+
+  getAlwaysPreparedSpellsOnly(data) {
+    return new Promise((resolve, reject) => {
+      const host = "https://ddb-character.vttassets.com";
+      //const host = "http://localhost:3000";
+      fetch(`${host}/alwaysPreparedSpells`, {
+        method: "POST",
+        mode: "cors", // no-cors, *cors, same-origin
+        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: "same-origin", // include, *same-origin, omit
+        headers: {
+          "Content-Type": "application/json",
+        },
+        redirect: "follow", // manual, *follow, error
+        referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body: JSON.stringify(data), // body data type must match "Content-Type" header
+      })
+        .then((response) => response.json())
+        .then((data) => resolve(data))
+        .catch((error) => reject(error));
+    });
+  }
+
   activateListeners(html) {
     // watch the change of the import-policy-selector checkboxes
     $(html)
@@ -523,6 +614,7 @@ export default class CharacterImport extends Application {
           event.currentTarget.checked
         );
       });
+
     $(html)
       .find('.import-config input[type="checkbox"]')
       .on("change", (event) => {
@@ -536,6 +628,48 @@ export default class CharacterImport extends Application {
     $(html)
       .find("#json")
       .on("paste", async (event) => {
+        const getSpellLevelAccess = (cls, casterLevel) => {
+          const spellSlots = cls.definition.spellRules.levelSpellSlots[casterLevel];
+          const spellLevelAccess = spellSlots.reduce(
+            (count, numSpellSlots) => (numSpellSlots > 0 ? count + 1 : count),
+            0
+          );
+          return spellLevelAccess;
+        };
+        const getCasterLevel = (cls, isMultiClassing) => {
+          let casterLevel = 0;
+          if (isMultiClassing) {
+            // get the casting level if the character is a multiclassed spellcaster
+            if (cls.definition.spellRules && cls.definition.spellRules.multiClassSpellSlotDivisor) {
+              casterLevel = Math.floor(cls.level / cls.definition.spellRules.multiClassSpellSlotDivisor);
+            }
+          } else {
+            casterLevel = cls.level;
+          }
+
+          return casterLevel;
+        };
+        const getClassIds = (data) => {
+          const isMultiClassing = data.classes.length > 1;
+
+          return data.classes.map((characterClass) => {
+            return {
+              characterClassId: characterClass.id,
+              name:
+                characterClass.subclassDefinition && characterClass.subclassDefinition.name
+                  ? characterClass.definition.name + `(${characterClass.subclassDefinition.name})`
+                  : characterClass.definition.name,
+              id:
+                characterClass.subclassDefinition && characterClass.subclassDefinition.id
+                  ? characterClass.subclassDefinition.id
+                  : characterClass.definition.id,
+              level: getCasterLevel(characterClass, isMultiClassing),
+              spellLevelAccess: getSpellLevelAccess(characterClass, getCasterLevel(characterClass)),
+              spells: [],
+            };
+          });
+        };
+
         event.preventDefault();
         var pasteData = event.originalEvent.clipboardData.getData("text");
 
@@ -555,145 +689,100 @@ export default class CharacterImport extends Application {
           }
         }
 
-        // // check if the character is set to public
-        // if (!data.success) {
-        //   CharacterImport.showCurrentTask(
-        //     html,
-        //     "JSON retrieval failed",
-        //     `D&D Beyond's server states that it could not provide the JSON for your character. The most likely cause is that the <b>Character Privacy</b> is set to <b>Private</b></p>
-        //       <p>You can change that setting if you open the Character Builder at dndbeyond.com, go to the <b>Home</b> section at the very left and then scroll down all the way to the bottom.</p>
-        //       <p><img src="modules/vtta-dndbeyond/img/dndbeyond-character-builder.png"/></p>
-        //       `,
-        //     true
-        //   );
-        //   return false;
-        // }
+        // check for malformed data structures
+        if (data.message !== undefined && data.success !== undefined && data.data !== undefined) {
+          CharacterImport.showCurrentTask(html, data.message, null, data.success);
+          if (data.success === false) return;
 
-        // the expected data structure is
-        // data: {
-        //    character: {...}
-        // }
-        if (!Object.hasOwnProperty.call(data, "character")) {
-          if (Object.hasOwnProperty.call(data, "data")) {
-            data.character = data.data;
-          } else {
-            data.character = data;
-          }
+          // remove all unnecessary object structure from now on
+          data = data.data;
+
+          // get the character info from the paste
+          let classInfo = getClassIds(data);
+          console.log(classInfo);
+
+          this.getAlwaysPreparedSpellsOnly(classInfo)
+            .then((result) => {
+              if (result.success && result.data) {
+                CharacterImport.showCurrentTask(
+                  html,
+                  "Always prepared spells received, adding them to your import",
+                  null,
+                  false
+                );
+
+                // insert the data into the main import
+                classInfo = result.data;
+
+                data.classSpells = data.classSpells.map((classSpells) => {
+                  // find always prepared spells in the results
+                  const alwaysPreparedSpells = classInfo.find(
+                    (classInfo) => classInfo.characterClassId === classSpells.characterClassId
+                  );
+
+                  if (alwaysPreparedSpells) {
+                    alwaysPreparedSpells.spells.forEach((spell) => {
+                      if (classSpells.spells.find((s) => s.definition.name === spell.definition.name) === undefined) {
+                        console.log("Adding new always prepared spell: " + spell.definition.name);
+                        classSpells.spells.push(spell);
+                      } else {
+                        console.log("Already in list: " + spell.definition.name);
+                      }
+                    });
+                  }
+                  return classSpells;
+                });
+
+                // begin parsing the character data
+                this.parseCharacterData(html, data);
+              }
+            })
+            .catch(() => {
+              CharacterImport.showCurrentTask(
+                html,
+                "Error during fetching always prepared spells",
+                "We will continue without them, you might be missing some spells in that import",
+                true
+              );
+            });
+        } else {
+          CharacterImport.showCurrentTask(html, "Malformed data received, please try again", null, true);
         }
+      });
 
+    $(html)
+      .find("#dndbeyond-character-import-start")
+      .on("click", async (event) => {
+        // retrieve the character data from the proxy
+        event.preventDefault();
+
+        let data = undefined;
         try {
-          this.result = parser.parseJson(data);
+          CharacterImport.showCurrentTask(html, "Loading Character data");
+          const characterData = await this.loadCharacterData();
+          console.log(characterData);
+          if (characterData.success) {
+            data = { character: characterData.data };
+            // begin parsing the character data
+            this.parseCharacterData(html, data);
+            CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
+            this.close();
+          } else {
+            CharacterImport.showCurrentTask(html, characterData.message, null, true);
+            return false;
+          }
         } catch (error) {
-          await this.showErrorMessage(html, error);
+          switch (error) {
+            case "Forbidden":
+              CharacterImport.showCurrentTask(html, "Error retrieving Character: " + error, error, true);
+              break;
+            default:
+              CharacterImport.showCurrentTask(html, "Unknown error etrieving Character: " + error, error, true);
+              break;
+          }
           return false;
         }
 
-        utils.log("Parsing finished");
-        utils.log(this.result);
-
-        // is magicitems installed
-        const magicItemsInstalled = !!game.modules.get("magicitems");
-
-        await this.updateImage(html, data);
-
-        // basic import
-        CharacterImport.showCurrentTask(html, "Updating basic character information");
-        await this.actor.update(this.result.character);
-
-        // clear items
-        const importKeepExistingActorItems = game.settings.get("vtta-dndbeyond", "character-update-policy-new");
-        if (!importKeepExistingActorItems) {
-          CharacterImport.showCurrentTask(html, "Clearing inventory");
-          await this.clearItemsByUserSelection();
-        }
-
-        // manage updates of basic character data more intelligently
-        if (!game.settings.get("vtta-dndbeyond", "character-update-policy-currency")) {
-          // revert currency if user didn't select to update it
-          this.actor.data.data.currency = this.actorOriginal.data.currency;
-        }
-
-        // store all spells in the folder specific for Dynamic Items
-        if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
-          CharacterImport.showCurrentTask(html, "Preparing magicitem spells");
-          await this.updateWorldItems();
-        }
-
-        // Update compendium packs with spells and inventory
-        CharacterImport.showCurrentTask(html, "Updating compendium(s)");
-        this.updateCompendium("inventory");
-        this.updateCompendium("spells");
-        this.updateCompendium("features");
-        // Issue #263 hotfix - remove Classes Compendium (for now)
-        // this.updateCompendium("classes");
-
-        // Adding all items to the actor
-        const FILTER_SECTIONS = ["classes", "features", "actions", "inventory", "spells"];
-        let items = filterItemsByUserSelection(this.result, FILTER_SECTIONS);
-
-        // If there is no magicitems module fall back to importing the magic
-        // item spells as normal spells fo the character
-        if (!magicItemsInstalled) {
-          items.push(this.result.itemSpells.filter((item) => item.flags.vtta.dndbeyond.active === true));
-          items = items.flat();
-        }
-
-        if (importKeepExistingActorItems) {
-          // removed existing items from those to be imported
-          items = await CharacterImport.removeItems(items, this.actorOriginal.items);
-        }
-
-        let compendiumItems = [];
-        const useExistingCompendiumItems = game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing");
-
-        if (useExistingCompendiumItems) {
-          utils.log("Removing compendium items");
-          const compendiumInventoryItems = await CharacterImport.getCompendiumItems(items, "inventory");
-          const compendiumSpellItems = await CharacterImport.getCompendiumItems(items, "spells");
-          const compendiumFeatureItems = await CharacterImport.getCompendiumItems(items, "features");
-          // Issue #263 hotfix - remove Classes Compendium (for now)
-          // const compendiumClassItems = await CharacterImport.getCompendiumItems(items, "classes");
-
-          compendiumItems = compendiumItems.concat(
-            compendiumInventoryItems,
-            compendiumSpellItems,
-            compendiumFeatureItems,
-            // Issue #263 hotfix - remove Classes Compendium (for now)
-            // compendiumClassItems,
-          );
-          // removed existing items from those to be imported
-          items = await CharacterImport.removeItems(items, compendiumItems);
-        }
-
-        // if we still have items to add, add them
-        if (items.length > 0) {
-          CharacterImport.showCurrentTask(html, "Copying existing flags");
-          await this.copySupportedCharacterItemFlags(items);
-
-          utils.log("Character items", "character");
-          utils.log(items, "character");
-
-          CharacterImport.showCurrentTask(html, "Adding items to character");
-          this.importItems(items);
-        }
-
-        // now import any compendium items that we matched
-        if (useExistingCompendiumItems) {
-          CharacterImport.showCurrentTask(html, "Importing compendium items");
-          utils.log("Importing compendium items");
-          this.importItems(compendiumItems);
-        }
-
-        // We loop back over the spell slots to update them to our computed
-        // available value as per DDB.
-        CharacterImport.showCurrentTask(html, "Updating spell slots");
-        for (const [type, info] of Object.entries(this.result.character.data.spells)) {
-          this.actor.update({
-            [`data.spells.${type}.value`]: parseInt(info.value),
-          });
-        }
-
-        this.close();
         return true;
       });
 
@@ -701,20 +790,24 @@ export default class CharacterImport extends Application {
       .find("input[name=dndbeyond-url]")
       .on("input", async (event) => {
         let URL = event.target.value;
-        if (URL.indexOf("https://") === -1) URL = "https://" + URL;
-        const API_ENDPOINT_CHARACTER = getCharacterAPIEndpoint(URL);
+        const characterId = getCharacterId(URL);
 
-        if (API_ENDPOINT_CHARACTER !== false) {
+        if (characterId) {
+          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
           $(html)
             .find(".dndbeyond-url-status i")
             .replaceWith('<i class="fas fa-check-circle" style="color: green"></i>');
+          $(html).find("span.dndbeyond-character-id").text(characterId);
+          $(html).find("#dndbeyond-character-import-start").prop("disabled", false);
+          $(html).find("#open-dndbeyond-url").prop("disabled", false);
+
           CharacterImport.showCurrentTask(html, "Saving reference");
           await this.actor.update({
             flags: {
               vtta: {
                 dndbeyond: {
-                  url: URL,
-                  json: API_ENDPOINT_CHARACTER,
+                  url: apiEndpointUrl,
+                  characterId: characterId,
                 },
               },
             },
@@ -732,5 +825,136 @@ export default class CharacterImport extends Application {
             .replaceWith('<i class="fas fa-exclamation-triangle" style="color:red"></i>');
         }
       });
+
+    $(html)
+      .find("#open-dndbeyond-url")
+      .on("click", (event) => {
+        try {
+          const characterId = this.actor.data.flags.vtta.dndbeyond.characterId;
+          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
+          renderPopup("json", apiEndpointUrl);
+        } catch (error) {
+          CharacterImport.showCurrentTask(html, "Error opening JSON URL", error, true);
+        }
+      });
+  }
+
+  async parseCharacterData(html, data) {
+    // construct the expected { character: {...} } object
+    data = data.character === undefined ? { character: data } : data;
+    try {
+      this.result = parser.parseJson(data);
+    } catch (error) {
+      throw new Error(error);
+      // await this.showErrorMessage(html, error);
+      // return false;
+    }
+
+    utils.log("Parsing finished");
+    utils.log(this.result);
+
+    // is magicitems installed
+    const magicItemsInstalled = !!game.modules.get("magicitems");
+
+    await this.updateImage(html, data);
+
+    // basic import
+    CharacterImport.showCurrentTask(html, "Updating basic character information");
+    await this.actor.update(this.result.character);
+
+    // clear items
+    const importKeepExistingActorItems = game.settings.get("vtta-dndbeyond", "character-update-policy-new");
+    if (!importKeepExistingActorItems) {
+      CharacterImport.showCurrentTask(html, "Clearing inventory");
+      await this.clearItemsByUserSelection();
+    }
+
+    // manage updates of basic character data more intelligently
+    if (!game.settings.get("vtta-dndbeyond", "character-update-policy-currency")) {
+      // revert currency if user didn't select to update it
+      this.actor.data.data.currency = this.actorOriginal.data.currency;
+    }
+
+    // store all spells in the folder specific for Dynamic Items
+    if (magicItemsInstalled && this.result.itemSpells && Array.isArray(this.result.itemSpells)) {
+      CharacterImport.showCurrentTask(html, "Preparing magicitem spells");
+      await this.updateWorldItems();
+    }
+
+    // Update compendium packs with spells and inventory
+    CharacterImport.showCurrentTask(html, "Updating compendium(s)");
+    this.updateCompendium("inventory");
+    this.updateCompendium("spells");
+    this.updateCompendium("features");
+    // Issue #263 hotfix - remove Classes Compendium (for now)
+    // this.updateCompendium("classes");
+
+    // Adding all items to the actor
+    const FILTER_SECTIONS = ["classes", "features", "actions", "inventory", "spells"];
+    let items = filterItemsByUserSelection(this.result, FILTER_SECTIONS);
+
+    // If there is no magicitems module fall back to importing the magic
+    // item spells as normal spells fo the character
+    if (!magicItemsInstalled) {
+      items.push(this.result.itemSpells.filter((item) => item.flags.vtta.dndbeyond.active === true));
+      items = items.flat();
+    }
+
+    if (importKeepExistingActorItems) {
+      // removed existing items from those to be imported
+      items = await CharacterImport.removeItems(items, this.actorOriginal.items);
+    }
+
+    let compendiumItems = [];
+    const useExistingCompendiumItems = game.settings.get("vtta-dndbeyond", "character-update-policy-use-existing");
+
+    if (useExistingCompendiumItems) {
+      utils.log("Removing compendium items");
+      const compendiumInventoryItems = await CharacterImport.getCompendiumItems(items, "inventory");
+      const compendiumSpellItems = await CharacterImport.getCompendiumItems(items, "spells");
+      const compendiumFeatureItems = await CharacterImport.getCompendiumItems(items, "features");
+      // Issue #263 hotfix - remove Classes Compendium (for now)
+      // const compendiumClassItems = await CharacterImport.getCompendiumItems(items, "classes");
+
+      compendiumItems = compendiumItems.concat(
+        compendiumInventoryItems,
+        compendiumSpellItems,
+        compendiumFeatureItems
+        // Issue #263 hotfix - remove Classes Compendium (for now)
+        // compendiumClassItems,
+      );
+      // removed existing items from those to be imported
+      items = await CharacterImport.removeItems(items, compendiumItems);
+    }
+
+    // if we still have items to add, add them
+    if (items.length > 0) {
+      CharacterImport.showCurrentTask(html, "Copying existing flags");
+      await this.copySupportedCharacterItemFlags(items);
+
+      utils.log("Character items", "character");
+      utils.log(items, "character");
+
+      CharacterImport.showCurrentTask(html, "Adding items to character");
+      this.importItems(items);
+    }
+
+    // now import any compendium items that we matched
+    if (useExistingCompendiumItems) {
+      CharacterImport.showCurrentTask(html, "Importing compendium items");
+      utils.log("Importing compendium items");
+      this.importItems(compendiumItems);
+    }
+
+    // We loop back over the spell slots to update them to our computed
+    // available value as per DDB.
+    CharacterImport.showCurrentTask(html, "Updating spell slots");
+    for (const [type, info] of Object.entries(this.result.character.data.spells)) {
+      this.actor.update({
+        [`data.spells.${type}.value`]: parseInt(info.value),
+      });
+    }
+
+    this.close();
   }
 }
