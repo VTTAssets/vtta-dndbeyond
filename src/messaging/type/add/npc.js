@@ -120,12 +120,45 @@ let createNPC = async (npc, options) => {
   return result;
 };
 
+const setTokenVision = (npc) => {
+  npc.token = {
+    vision: true,
+    dimSight: 0,
+    brightSight: 0,
+  };
+
+  const senseTypes = {
+    blindsight: "dimSight",
+    darkvision: "dimSight",
+    tremorsense: "brightSight",
+    truesight: "brightSight",
+  };
+
+  npc.data.traits.senses.split(",").forEach((sense) => {
+    sense = sense.trim();
+    let [name, range, ...rest] = sense.split(" ");
+
+    if (name !== undefined && range !== undefined) {
+      name = name.toLowerCase();
+      range = range.match(/\d+/)[0];
+      if (senseTypes[name] !== undefined && range !== undefined) {
+        const senseType = senseTypes[name];
+        npc.token[senseType] = npc.token[senseType] < range ? range : npc.token[senseType];
+      }
+    }
+  });
+  return npc;
+};
+
 let buildNPC = async (data) => {
   // get the folder to add this npc into
   const folder = await utils.getFolder("npc", data.data.details.type, data.data.details.race);
   // in this instance I can't figure out how to make this safe, but the risk seems minimal.
   // eslint-disable-next-line require-atomic-updates
   data.folder = folder._id;
+
+  // update the token vision
+  data = setTokenVision(data);
 
   // replace icons by iconizer, if available
   let icons = data.items.map((item) => {
@@ -159,6 +192,7 @@ let buildNPC = async (data) => {
       "OwnedItem",
       npc.getEmbeddedCollection("OwnedItem").map((item) => item._id)
     );
+
     // update items and basic data
     await npc.update(data);
     logger.verbose("NPC updated");

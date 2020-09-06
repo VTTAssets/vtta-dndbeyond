@@ -832,7 +832,7 @@ export default class CharacterImport extends Application {
       .on("click", () => {
         try {
           const characterId = this.actor.data.flags.vtta.dndbeyond.characterId;
-          const apiEndpointUrl = getCharacterAPIEndpoint(characterId);
+          const apiEndpointUrl = `https://ddb-character.vttassets.com/${characterId}`; //getCharacterAPIEndpoint(characterId);
           renderPopup("json", apiEndpointUrl);
         } catch (error) {
           CharacterImport.showCurrentTask(html, "Error opening JSON URL", error, true);

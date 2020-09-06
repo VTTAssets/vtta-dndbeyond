@@ -22,13 +22,35 @@ let getEquipped = (data) => {
   }
 };
 
+const getItemType = (data) => {
+  const foundryTypes = ["weapon", "equipment", "consumable", "tool", "loot", "class", "spell", "feat", "backpack"];
+
+  const itemTypes =
+    data.definition.tags && Array.isArray(data.definition.tags)
+      ? [data.definition.type.toLowerCase(), ...data.definition.tags.map((t) => t.toLowerCase())]
+      : [data.definition.type.toLowerCase()];
+  [data.definition.type.toLowerCase(), ...data.definition.tags.map((t) => t.toLowerCase())];
+
+  let itemType = itemTypes
+    .map((itemType) => {
+      if (itemType === "container") return "backpack";
+      return foundryTypes.find((t) => t.indexOf(itemType) !== -1 || itemType.indexOf(t) !== -1);
+    })
+    .reduce(
+      (itemType, currentType) => (currentType !== undefined && itemType === undefined ? currentType : itemType),
+      undefined
+    );
+
+  return itemType === undefined ? "loot" : itemType;
+};
+
 export default function parseLoot(data) {
   /**
    * MAIN parseLoot
    */
   let loot = {
     name: data.definition.name,
-    type: "loot",
+    type: getItemType(data),
     data: JSON.parse(utils.getTemplate("loot")), // was: tool
     flags: {
       vtta: {
