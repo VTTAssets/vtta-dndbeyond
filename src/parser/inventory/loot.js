@@ -29,7 +29,6 @@ const getItemType = (data) => {
     data.definition.tags && Array.isArray(data.definition.tags)
       ? [data.definition.type.toLowerCase(), ...data.definition.tags.map((t) => t.toLowerCase())]
       : [data.definition.type.toLowerCase()];
-  [data.definition.type.toLowerCase(), ...data.definition.tags.map((t) => t.toLowerCase())];
 
   let itemType = itemTypes
     .map((itemType) => {

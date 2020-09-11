@@ -120,8 +120,8 @@ let createNPC = async (npc, options) => {
   return result;
 };
 
-const setTokenVision = (npc) => {
-  npc.token = {
+const getTokenSenses = async (senses) => {
+   let token = {
     vision: true,
     dimSight: 0,
     brightSight: 0,
@@ -134,31 +134,32 @@ const setTokenVision = (npc) => {
     truesight: "brightSight",
   };
 
-  npc.data.traits.senses.split(",").forEach((sense) => {
-    sense = sense.trim();
-    let [name, range, ...rest] = sense.split(" ");
+  senses.split(",").forEach((sense) => {
+    let [name, range] = sense.trim().split(" ", 2);
 
     if (name !== undefined && range !== undefined) {
       name = name.toLowerCase();
       range = range.match(/\d+/)[0];
       if (senseTypes[name] !== undefined && range !== undefined) {
         const senseType = senseTypes[name];
-        npc.token[senseType] = npc.token[senseType] < range ? range : npc.token[senseType];
+        token[senseType] = token[senseType] < range ? range : token[senseType];
       }
     }
   });
-  return npc;
+  return token;
 };
 
 let buildNPC = async (data) => {
   // get the folder to add this npc into
   const folder = await utils.getFolder("npc", data.data.details.type, data.data.details.race);
-  // in this instance I can't figure out how to make this safe, but the risk seems minimal.
+  // in this instance I can't figure out how to make these safe, but the risk seems minimal.
   // eslint-disable-next-line require-atomic-updates
   data.folder = folder._id;
 
   // update the token vision
-  data = setTokenVision(data);
+  const token = await getTokenSenses(data.data.traits.senses);
+  // eslint-disable-next-line require-atomic-updates
+  data.token = token;
 
   // replace icons by iconizer, if available
   let icons = data.items.map((item) => {
