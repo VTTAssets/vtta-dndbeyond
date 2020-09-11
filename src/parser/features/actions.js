@@ -96,6 +96,21 @@ function getActivation(action) {
   return {};
 }
 
+function getResource(character, action) {
+  let consume = null;
+  Object.keys(character.data.resources).forEach((resource) => {
+    const detail = character.data.resources[resource];
+    if (action.name === detail.label) {
+      consume = {
+        type: "attribute",
+        target: `resources.${resource}.value`,
+        amount: null
+      };
+    }
+  });
+  return consume;
+}
+
 function getWeaponType(action) {
   const entry = DICTIONARY.actions.attackTypes.find((type) => type.attackSubtype === action.attackSubtype);
   const range = DICTIONARY.weapon.weaponRange.find((type) => type.attackType === action.attackTypeRange);
@@ -173,6 +188,7 @@ function getAttackAction(ddb, character, action) {
 
     weapon.data.weaponType = getWeaponType(action);
     weapon.data.uses = getLimitedUse(action, character);
+    weapon.data.consume = getResource(character, action);
   } catch (err) {
     utils.log(
       `Unable to Import Attack Action: ${action.name}, please log a bug report. Err: ${err.message}`,
@@ -257,6 +273,7 @@ function getOtherActions(ddb, character, items) {
       feat.data.activation = getActivation(action);
       feat.data.description = getDescription(ddb, character, action);
       feat.data.uses = getLimitedUse(action, character);
+      feat.data.consume = getResource(character, action);
 
       return feat;
     });
