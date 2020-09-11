@@ -153,8 +153,7 @@ function parseClassFeatures(ddb, character) {
       (feat) =>
         feat.name !== "Proficiencies" &&
         feat.name !== "Ability Score Improvement" &&
-        feat.requiredLevel <= klass.level &&
-        !ddb.character.actions.class.some((action) => action.name === feat.name)
+        feat.requiredLevel <= klass.level
     );
     const klassName = klass.definition.name;
     const klassFeatureList = classFeatures
