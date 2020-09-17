@@ -431,12 +431,16 @@ const DICTIONARY = {
       { name: "poison", id: 10 },
       { name: "psychic", id: 11 },
       { name: "", id: 12 },
+      { name: null, id: null },
       // thunder
       // radiant
       // necrotic
     ],
     aoeType: [
       { id: 1, value: "cone" },
+      { id: 2, value: "" },
+      { id: 3, value: "" },
+      { id: 4, value: "line" },
       // presumably others here too! add when found
     ],
   },
