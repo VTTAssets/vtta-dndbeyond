@@ -6,6 +6,25 @@ function isMartialArtists(classes) {
   return classes.some((cls) => cls.classFeatures.some((feature) => feature.definition.name === "Martial Arts"));
 }
 
+function getDamage(action) {
+  let damage = {};
+  if (action.dice) {
+    const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
+    if (action.dice.diceString) {
+      damage = {
+        parts: [[action.dice.diceString, damageType]],
+        versatile: "",
+      };
+    } else if (action.dice.fixedValue) {
+      damage = {
+        parts: [[action.dice.fixedValue, damageType]],
+        versatile: "",
+      };
+    }
+  }
+  return damage;
+}
+
 function martialArtsDamage(ddb, action) {
   const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
 
@@ -158,13 +177,6 @@ function getAttackAction(ddb, character, action) {
       weapon.data.range = { value: 5, units: "ft.", long: "" };
     }
 
-    weapon.data.ability =
-      action.isMartialArts && isMartialArtists(ddb.character.classes)
-        ? character.data.abilities.dex.value >= character.data.abilities.str.value
-          ? "dex"
-          : "str"
-        : "str";
-
     // lets see if we have a save stat for things like Dragon born Breath Weapon
     if (action.saveStatId) {
       const damageType = DICTIONARY.actions.damageType.find((type) => type.id === action.damageTypeId).name;
@@ -181,9 +193,19 @@ function getAttackAction(ddb, character, action) {
       weapon.data.ability = DICTIONARY.character.abilities.find(
         (stat) => stat.id === action.abilityModifierStatId
       ).value;
-    } else {
+    } else if (action.actionType === 1) { // unheld assumption that actionType 1 is a melee attack
+      weapon.data.ability =
+      action.isMartialArts && isMartialArtists(ddb.character.classes)
+        ? character.data.abilities.dex.value >= character.data.abilities.str.value
+          ? "dex"
+          : "str"
+        : "str";
       weapon.data.actionType = "mwak";
       weapon.data.damage = martialArtsDamage(ddb, action);
+    } else { // these are typically actionType 3
+      weapon.data.ability = "";
+      weapon.data.actionType = "other";
+      weapon.data.damage = getDamage(action);
     }
 
     weapon.data.weaponType = getWeaponType(action);
