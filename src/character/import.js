@@ -78,7 +78,7 @@ const getCharacterId = (url) => {
  * @returns {string|null} The API endpoint
  */
 const getCharacterAPIEndpoint = (characterId) => {
-  return characterId !== null ? `https://character-service.dndbeyond.com/character/v3/character/${characterId}` : null;
+  return characterId !== null ? `https://character-service.dndbeyond.com/character/v4/character/${characterId}` : null;
 };
 
 // a mapping of compendiums with content type
@@ -483,7 +483,7 @@ export default class CharacterImport extends Application {
     ) {
       const characterId = this.actor.data.flags.vtta.dndbeyond.url.split("/").pop();
       if (characterId) {
-        const jsonUrl = "https://character-service.dndbeyond.com/character/v3/character/" + characterId;
+        const jsonUrl = "https://character-service.dndbeyond.com/character/v4/character/" + characterId;
         logger.info("%c **Character JSON          :** " + jsonUrl, "color: #ff0000");
       }
     }

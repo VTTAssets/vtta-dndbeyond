@@ -79,7 +79,7 @@ export default function () {
           const characterId = url.split("/").pop();
           if (characterId) {
             event.preventDefault();
-            return renderPopup("json", "https://character-service.dndbeyond.com/character/v3/character/" + characterId);
+            return renderPopup("json", "https://character-service.dndbeyond.com/character/v4/character/" + characterId);
           }
         }
 
