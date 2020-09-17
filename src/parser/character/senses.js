@@ -42,10 +42,9 @@ export function getSensesLookup(data) {
       }
     });
 
-  // Magical bonuses
+  // Magical bonuses and additional, e.g. Gloom Stalker
   utils
-    .getActiveItemModifiers(data)
-    .filter((mod) => mod.type === "sense")
+    .filterBaseModifiers(data, "sense", "darkvision")
     .map((mod) => {
       return {
         name: DICTIONARY.character.senses.find((s) => s.id === mod.entityId).name,
