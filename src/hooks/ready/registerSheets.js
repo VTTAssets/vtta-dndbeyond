@@ -35,6 +35,9 @@ export default function () {
       // only for GMs or the owner of this character
       if (!data.owner || !data.actor) return;
 
+      // don't add the button multiple times
+      if ($(html).find("#ddbImportButton").length > 0) return;
+
       let button = $('<button type="button" id="ddbImportButton" class="inactive"></button>');
       if (
         app.entity.data.flags.vtta &&
@@ -109,6 +112,10 @@ export default function () {
     Hooks.on("render" + sheetName, (app, html, data) => {
       // only for GMs or the owner of this npc
       if (!data.owner || !data.actor) return;
+
+      // don't add the button multiple times
+      if ($(html).find("#ddbImportButton").length > 0) return;
+
       let button = $('<button type="button" id="ddbImportButton"></button>');
 
       if (
