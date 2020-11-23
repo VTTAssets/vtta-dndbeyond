@@ -80,6 +80,14 @@ let parseMatch = (ddb, character, match, feature) => {
       const classOption = [ddb.character.options.race, ddb.character.options.class, ddb.character.options.feat]
         .flat()
         .find((option) => option.definition.id === feature.componentId);
+
+      if (!classOption) {
+        throw new Error(
+          `Unable to associate feature "${feature.name}" to a class via component ID "${feature.componentId}" ` +
+          `to parse the template "${result}", please log a bug report and supply your character sheet JSON`
+        );
+      }
+
       const optionCls = utils.findClassByFeatureId(ddb, classOption.componentId);
       if (optionCls) {
         result = result.replace("classlevel", optionCls.level);
