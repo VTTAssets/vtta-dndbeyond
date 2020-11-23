@@ -843,13 +843,7 @@ export default class CharacterImport extends Application {
   async parseCharacterData(html, data) {
     // construct the expected { character: {...} } object
     data = data.character === undefined ? { character: data } : data;
-    try {
-      this.result = parser.parseJson(data);
-    } catch (error) {
-      throw new Error(error);
-      // await this.showErrorMessage(html, error);
-      // return false;
-    }
+    this.result = parser.parseJson(data);
 
     utils.log("Parsing finished");
     utils.log(this.result);
