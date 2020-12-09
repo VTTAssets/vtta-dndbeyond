@@ -1,6 +1,7 @@
 import { DND5E } from "../../../systems/dnd5e/module/config.js";
 import DirectoryPicker from "./lib/DirectoryPicker.js";
 import DICTIONARY from "./parser/dictionary.js";
+import logger from "./logger.js";
 
 let utils = {
   debug: () => {
@@ -221,6 +222,11 @@ let utils = {
         return classFeatures.find((feature) => feature.id === featureId) !== undefined;
       }
     });
+
+    if (!cls) {
+      logger.warn(`Unable to find class for feature ID "${featureId}"`);
+    }
+
     return cls;
   },
 

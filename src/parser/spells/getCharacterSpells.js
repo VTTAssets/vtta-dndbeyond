@@ -75,6 +75,15 @@ export function getCharacterSpells(ddb, character) {
     // If the spell has an ability attached, use that
     let spellCastingAbility = undefined;
     const classInfo = lookups.classFeature.find((cls) => cls.id === spell.componentId);
+
+    if (!classInfo) {
+      // No class features found with an ID of the given spell.componentId
+      throw new Error(
+        `Unable to associate the spell "${spell.definition.name}" to a class feature ` +
+        `with ID "${spell.componentId}", please log a bug report and supply your character sheet JSON`
+      );
+    }
+
     const klass = utils.getClassFromOptionID(ddb, spell.componentId);
 
     if (hasSpellCastingAbility(spell.spellCastingAbilityId)) {

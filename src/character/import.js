@@ -735,7 +735,17 @@ export default class CharacterImport extends Application {
                 });
 
                 // begin parsing the character data
-                this.parseCharacterData(html, data);
+                try {
+                  this.parseCharacterData(html, data);
+                } catch (error) {
+                  CharacterImport.showCurrentTask(
+                    html,
+                    "Error in parsing character data",
+                    error,
+                    true
+                  );
+                  throw error;
+                }
               }
             })
             .catch(() => {
@@ -765,7 +775,7 @@ export default class CharacterImport extends Application {
           if (characterData.success) {
             data = { character: characterData.data };
             // begin parsing the character data
-            this.parseCharacterData(html, data);
+            await this.parseCharacterData(html, data);
             CharacterImport.showCurrentTask(html, "Loading Character data", "Done.", false);
             this.close();
           } else {
@@ -775,10 +785,10 @@ export default class CharacterImport extends Application {
         } catch (error) {
           switch (error) {
             case "Forbidden":
-              CharacterImport.showCurrentTask(html, "Error retrieving Character: " + error, error, true);
+              CharacterImport.showCurrentTask(html, "Error retrieving Character", error, true);
               break;
             default:
-              CharacterImport.showCurrentTask(html, "Unknown error etrieving Character: " + error, error, true);
+              CharacterImport.showCurrentTask(html, "Unknown error retrieving Character", error, true);
               break;
           }
           return false;
@@ -843,13 +853,7 @@ export default class CharacterImport extends Application {
   async parseCharacterData(html, data) {
     // construct the expected { character: {...} } object
     data = data.character === undefined ? { character: data } : data;
-    try {
-      this.result = parser.parseJson(data);
-    } catch (error) {
-      throw new Error(error);
-      // await this.showErrorMessage(html, error);
-      // return false;
-    }
+    this.result = parser.parseJson(data);
 
     utils.log("Parsing finished");
     utils.log(this.result);
